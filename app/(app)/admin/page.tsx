@@ -11,8 +11,12 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetch('/api/admin/agencies')
-      .then(r => r.json())
-      .then(data => { setAgencies(data); setLoading(false) })
+      .then(r => {
+        if (!r.ok) throw new Error('Failed to load agencies')
+        return r.json()
+      })
+      .then((data: Agency[]) => { setAgencies(data); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   async function handleCreate(e: React.FormEvent) {
@@ -81,7 +85,7 @@ export default function AdminPage() {
                     <td style={{ padding: '12px 22px', fontSize: 13, fontWeight: 500, color: 'var(--text)', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>{a.name}</td>
                     <td style={{ padding: '12px 22px', fontSize: 12, color: 'var(--muted)', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>{a.email}</td>
                     <td style={{ padding: '12px 22px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
-                      <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: 'rgba(201,168,76,0.1)', color: 'var(--gold)' }}>{a.plan.toUpperCase()}</span>
+                      <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: 'rgba(201,168,76,0.1)', color: 'var(--gold)' }}>{(a.plan ?? 'free').toUpperCase()}</span>
                     </td>
                     <td style={{ padding: '12px 22px', fontSize: 12, color: 'var(--muted)', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>{new Date(a.created_at).toLocaleDateString('pt-PT')}</td>
                   </tr>

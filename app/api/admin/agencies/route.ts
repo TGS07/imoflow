@@ -29,7 +29,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { name, email, password } = await request.json()
+  let name: string, email: string, password: string
+  try {
+    const body = await request.json()
+    name = body.name
+    email = body.email
+    password = body.password
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
   if (!name || !email || !password) {
     return NextResponse.json({ error: 'name, email e password são obrigatórios' }, { status: 400 })
   }
@@ -59,7 +67,7 @@ export async function POST(request: Request) {
 
   // 3. Criar perfil do utilizador
   const initials = name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
-  await admin.from('users').insert({
+  const { error: profileError } = await admin.from('users').insert({
     id: authUser.user.id,
     agency_id: agency.id,
     name,
@@ -67,6 +75,12 @@ export async function POST(request: Request) {
     role: 'admin',
     avatar_initials: initials,
   })
+
+  if (profileError) {
+    await admin.auth.admin.deleteUser(authUser.user.id)
+    await admin.from('agencies').delete().eq('id', agency.id)
+    return NextResponse.json({ error: profileError.message }, { status: 500 })
+  }
 
   return NextResponse.json({ agency, user: authUser.user }, { status: 201 })
 }
