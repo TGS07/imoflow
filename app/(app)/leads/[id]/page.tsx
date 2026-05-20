@@ -154,15 +154,23 @@ export default function LeadPage() {
               </div>
               <div style={{ padding: '16px 18px' }}>
                 {/* FORM novo contacto */}
-                <form onSubmit={addContact} style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-                  <select value={newContactType} onChange={e => setNewContactType(e.target.value as Contact['type'])} style={{ ...inputStyle, width: 'auto' }}>
-                    <option value="nota">Nota</option>
-                    <option value="chamada">Chamada</option>
-                    <option value="visita">Visita</option>
-                    <option value="email">Email</option>
-                  </select>
-                  <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Título do contacto..." value={newContactTitle} onChange={e => setNewContactTitle(e.target.value)} required />
-                  <button type="submit" style={{ ...inputStyle, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Registar</button>
+                <form onSubmit={addContact} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <select value={newContactType} onChange={e => setNewContactType(e.target.value as Contact['type'])} style={{ ...inputStyle, width: 'auto' }}>
+                      <option value="nota">Nota</option>
+                      <option value="chamada">Chamada</option>
+                      <option value="visita">Visita</option>
+                      <option value="email">Email</option>
+                    </select>
+                    <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Título do contacto..." value={newContactTitle} onChange={e => setNewContactTitle(e.target.value)} required />
+                    <button type="submit" style={{ ...inputStyle, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Registar</button>
+                  </div>
+                  <textarea
+                    style={{ ...inputStyle, width: '100%', resize: 'vertical', minHeight: 60, lineHeight: 1.5 }}
+                    placeholder="Descrição (opcional)..."
+                    value={newContactDesc}
+                    onChange={e => setNewContactDesc(e.target.value)}
+                  />
                 </form>
                 {/* TIMELINE */}
                 <div>
