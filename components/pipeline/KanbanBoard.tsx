@@ -76,12 +76,14 @@ export function KanbanBoard({ initialLeads }: Props) {
 
     if (!targetStage || targetStage === draggedLead.stage) return
 
+    const previous = [...leads]
     setLeads(prev => prev.map(l => l.id === draggedLead.id ? { ...l, stage: targetStage } : l))
-    await fetch(`/api/leads/${draggedLead.id}`, {
+    const res = await fetch(`/api/leads/${draggedLead.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage: targetStage }),
     })
+    if (!res.ok) setLeads(previous)
   }
 
   const activeLead = activeId ? leads.find(l => l.id === activeId) : null
