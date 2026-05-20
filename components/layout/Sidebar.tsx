@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const navItems = [
-  { href: '/dashboard', icon: '▦', label: 'Dashboard' },
-  { href: '/leads', icon: '◎', label: 'Leads' },
-  { href: '/pipeline', icon: '◈', label: 'Pipeline' },
+  { href: '/dashboard', icon: '▦', label: 'Dashboard', section: 'Principal' },
+  { href: '/leads', icon: '◎', label: 'Leads', section: 'Principal' },
+  { href: '/pipeline', icon: '◈', label: 'Pipeline', section: 'Principal' },
 ]
 
 type Props = {
