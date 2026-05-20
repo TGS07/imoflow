@@ -15,11 +15,10 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('users').select('name').eq('id', user.id).single()
-
-  const [{ data: leads }, { data: recentContacts }] = await Promise.all([
-    supabase.from('leads').select('*').order('created_at', { ascending: false }),
-    supabase.from('contacts').select('*, leads(name), users(name)').order('created_at', { ascending: false }).limit(5),
+  const [{ data: profile }, { data: leads }, { data: recentContacts }] = await Promise.all([
+    supabase.from('users').select('name').eq('id', user.id).single(),
+    supabase.from('leads').select('id, name, stage, typology, zone, budget, created_at').order('created_at', { ascending: false }),
+    supabase.from('contacts').select('id, title, created_at, leads(name), users(name)').order('created_at', { ascending: false }).limit(5),
   ])
 
   const allLeads = leads ?? []
@@ -71,8 +70,8 @@ export default async function DashboardPage() {
               Pipeline de Vendas
               <Link href="/pipeline" style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: 'var(--gold)', fontWeight: 500, textDecoration: 'none' }}>Ver tudo →</Link>
             </div>
-            <div style={{ display: 'flex', gap: 2, height: 6, borderRadius: 4, overflow: 'hidden', marginBottom: 16 }}>
-              {Object.entries(stageCounts).map(([stage, count]) => (
+            <div style={{ display: 'flex', gap: 2, height: 6, borderRadius: 4, overflow: 'hidden', marginBottom: 16, background: 'var(--border)' }}>
+              {allLeads.length > 0 && Object.entries(stageCounts).map(([stage, count]) => (
                 <div key={stage} style={{ background: STAGE_COLORS[stage] ?? '#666', width: `${(count / total) * 100}%` }} />
               ))}
             </div>
@@ -114,7 +113,7 @@ export default async function DashboardPage() {
                     {i < (recentContacts?.length ?? 0) - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 4, minHeight: 20 }} />}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ color: 'var(--text)', lineHeight: 1.5 }}>{c.title} — <strong style={{ color: 'var(--gold)', fontWeight: 500 }}>{(c.leads as any)?.name}</strong></div>
+                    <div style={{ color: 'var(--text)', lineHeight: 1.5 }}>{c.title} — <strong style={{ color: 'var(--gold)', fontWeight: 500 }}>{(c.leads as unknown as { name: string } | null)?.name}</strong></div>
                     <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>{new Date(c.created_at).toLocaleDateString('pt-PT')}</div>
                   </div>
                 </div>
