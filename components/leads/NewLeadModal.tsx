@@ -25,13 +25,20 @@ export function NewLeadModal({ onClose, onCreated }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    await fetch('/api/leads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, budget: form.budget ? Number(form.budget) : null }),
-    })
-    onCreated()
-    onClose()
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, budget: form.budget ? Number(form.budget) : null }),
+      })
+      if (!res.ok) throw new Error('Erro ao criar lead')
+      onCreated()
+      onClose()
+    } catch {
+      // keep modal open on error
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

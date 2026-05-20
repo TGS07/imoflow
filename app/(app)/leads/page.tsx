@@ -19,15 +19,28 @@ export default function LeadsPage() {
   const [showModal, setShowModal] = useState(false)
   const router = useRouter()
 
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
   const fetchLeads = useCallback(async () => {
     const params = new URLSearchParams()
-    if (search) params.set('search', search)
+    if (debouncedSearch) params.set('search', debouncedSearch)
     if (stageFilter) params.set('stage', stageFilter)
-    const res = await fetch(`/api/leads?${params}`)
-    const data = await res.json()
-    setLeads(data)
-    setLoading(false)
-  }, [search, stageFilter])
+    try {
+      const res = await fetch(`/api/leads?${params}`)
+      if (!res.ok) throw new Error('Erro ao carregar leads')
+      const data: Lead[] = await res.json()
+      setLeads(data)
+    } catch {
+      setLeads([])
+    } finally {
+      setLoading(false)
+    }
+  }, [debouncedSearch, stageFilter])
 
   useEffect(() => { fetchLeads() }, [fetchLeads])
 
