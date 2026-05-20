@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (isAdmin && user?.email !== process.env.SUPER_ADMIN_EMAIL) {
+  if (isAdmin && user && user.email !== process.env.SUPER_ADMIN_EMAIL) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
@@ -38,5 +38,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/).*)'],
 }
