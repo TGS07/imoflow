@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Lead, LeadStage } from '@/types'
@@ -45,6 +45,11 @@ function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
       </div>
     </div>
   )
+}
+
+function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
+  const { setNodeRef } = useDroppable({ id })
+  return <div ref={setNodeRef} style={{ minHeight: 120 }}>{children}</div>
 }
 
 type Props = { initialLeads: Lead[] }
@@ -101,11 +106,11 @@ export function KanbanBoard({ initialLeads }: Props) {
                 <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--muted)', background: 'var(--border)', padding: '1px 7px', borderRadius: 10 }}>{stageLeads.length}</span>
               </div>
               <SortableContext items={stageLeads.map(l => l.id)} strategy={verticalListSortingStrategy}>
-                <div style={{ minHeight: 80 }}>
+                <DroppableColumn id={stage.id}>
                   {stageLeads.map(lead => (
                     <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} />
                   ))}
-                </div>
+                </DroppableColumn>
               </SortableContext>
             </div>
           )
