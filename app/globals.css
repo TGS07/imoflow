@@ -1,26 +1,32 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Jost:wght@300;400;500;600&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --bg: #0D0D0F;
+  --surface: #141416;
+  --card: #1A1A1E;
+  --border: #262629;
+  --gold: #C9A84C;
+  --gold-dim: #8B6F30;
+  --gold-glow: rgba(201,168,76,0.12);
+  --text: #E8E4DC;
+  --muted: #7A7870;
+  --green: #4ECCA3;
+  --red: #E05C5C;
+  --blue: #5C9EE0;
+  --purple: #9B7FE8;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Jost', sans-serif;
+  background: var(--bg);
+  color: var(--text);
 }
+
+.font-display {
+  font-family: 'Playfair Display', serif;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }

@@ -1,0 +1,49 @@
+'use client'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+
+const navItems = [
+  { href: '/dashboard', icon: '▦', label: 'Dashboard' },
+  { href: '/leads', icon: '◎', label: 'Leads' },
+  { href: '/pipeline', icon: '◈', label: 'Pipeline' },
+]
+
+type Props = {
+  userName: string
+  userInitials: string
+}
+
+export function Sidebar({ userName, userInitials }: Props) {
+  const pathname = usePathname()
+
+  return (
+    <aside style={{ width: 240, minHeight: '100vh', background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: '28px 0', flexShrink: 0 }}>
+      <div style={{ padding: '0 24px 32px', borderBottom: '1px solid var(--border)' }}>
+        <div className="font-display" style={{ fontSize: 22, color: 'var(--gold)' }}>ImoFlow</div>
+        <div style={{ fontSize: 10, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase', marginTop: 2 }}>CRM Imobiliário</div>
+      </div>
+
+      <nav style={{ padding: '24px 0', flex: 1 }}>
+        <div style={{ fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--muted)', padding: '0 24px', marginBottom: 6, marginTop: 16 }}>Principal</div>
+        {navItems.map(item => {
+          const active = pathname === item.href || pathname.startsWith(item.href + '/')
+          return (
+            <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', fontSize: 13, color: active ? 'var(--gold)' : 'var(--muted)', background: active ? 'var(--gold-glow)' : 'transparent', borderLeft: active ? '2px solid var(--gold)' : '2px solid transparent', textDecoration: 'none', transition: 'all 0.2s' }}>
+              <span style={{ fontSize: 15, width: 18, textAlign: 'center' }}>{item.icon}</span>
+              {item.label}
+            </Link>
+          )
+        })}
+      </nav>
+
+      <div style={{ padding: '20px 24px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, color: '#0D0D0F', flexShrink: 0 }}>
+          {userInitials}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName}</div>
+        </div>
+      </div>
+    </aside>
+  )
+}
