@@ -25,19 +25,21 @@ export async function POST(request: Request) {
   }
 
   // Registar em emails_sent
-  await supabase.from('emails_sent').insert({
+  const { error: logError } = await supabase.from('emails_sent').insert({
     lead_id, sent_by: user.id, subject, body, status
   })
+  if (logError) console.error('Failed to log email_sent:', logError.message)
 
   // Registar no histórico de contactos
   if (status === 'sent') {
-    await supabase.from('contacts').insert({
+    const { error: contactError } = await supabase.from('contacts').insert({
       lead_id,
       user_id: user.id,
       type: 'email',
       title: `Email enviado: ${subject}`,
       description: body,
     })
+    if (contactError) console.error('Failed to log contact:', contactError.message)
   }
 
   if (status === 'failed') {

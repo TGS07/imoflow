@@ -16,7 +16,10 @@ export async function GET(request: Request) {
     .order('created_at', { ascending: false })
 
   if (stage) query = query.eq('stage', stage)
-  if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+  if (search) {
+    const term = search.replace(/[%_\\]/g, '\\$&')
+    query = query.or(`name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`)
+  }
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
