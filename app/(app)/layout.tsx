@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -20,6 +21,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         userInitials={profile?.avatar_initials ?? 'XX'}
       />
       <main style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <header style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          padding: '8px 16px',
+          borderBottom: '1px solid #e5e7eb',
+          background: 'white',
+          position: 'sticky',
+          top: 0,
+          zIndex: 40,
+        }}>
+          <NotificationBell />
+        </header>
         {children}
       </main>
     </div>
