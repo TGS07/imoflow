@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { createNotification } from '@/lib/notifications'
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -27,6 +28,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
+
+  // Buscar estado anterior para detectar mudança de etapa
+  const { data: before } = await supabase
+    .from('leads')
+    .select('stage, name, assigned_to, agency_id')
+    .eq('id', id)
+    .single()
+
   const { data, error } = await supabase
     .from('leads')
     .update(body)
@@ -35,6 +44,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Notificar se a etapa mudou
+  if (before && body.stage && body.stage !== before.stage && before.assigned_to && before.agency_id) {
+    await createNotification({
+      userId: before.assigned_to,
+      agencyId: before.agency_id,
+      type: 'lead_stage_changed',
+      title: `Lead ${before.name} movida para ${body.stage}`,
+      body: `A lead ${before.name} foi movida de "${before.stage}" para "${body.stage}".`,
+      link: `/leads/${id}`,
+    })
+  }
+
   return NextResponse.json(data)
 }
 

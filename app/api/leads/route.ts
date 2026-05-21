@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { createNotification } from '@/lib/notifications'
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -47,5 +48,16 @@ export async function POST(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Notificar o agente atribuído
+  await createNotification({
+    userId: user.id,
+    agencyId: profile.agency_id,
+    type: 'new_lead',
+    title: `Nova lead: ${data.name}`,
+    body: `Foi-te atribuída uma nova lead.${data.phone ? ` Telefone: ${data.phone}` : ''}`,
+    link: `/leads/${data.id}`,
+  })
+
   return NextResponse.json(data, { status: 201 })
 }
