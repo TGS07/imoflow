@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { resend } from '@/lib/resend'
 import { NextResponse } from 'next/server'
+import { createNotification } from '@/lib/notifications'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -40,6 +41,24 @@ export async function POST(request: Request) {
       description: body,
     })
     if (contactError) console.error('Failed to log contact:', contactError.message)
+
+    // Buscar nome da lead e dados do agente para a notificação
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('name, assigned_to, agency_id')
+      .eq('id', lead_id)
+      .single()
+
+    if (lead?.assigned_to && lead?.agency_id) {
+      await createNotification({
+        userId: lead.assigned_to,
+        agencyId: lead.agency_id,
+        type: 'email_received',
+        title: `Email recebido de ${lead.name}`,
+        body: `Recebeste um email de ${lead.name}: "${subject}"`,
+        link: `/leads/${lead_id}`,
+      })
+    }
   }
 
   if (status === 'failed') {
