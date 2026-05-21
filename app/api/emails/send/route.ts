@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   let status: 'sent' | 'failed' = 'sent'
   try {
     await resend.emails.send({
-      from: 'ImoFlow <noreply@imoflow.pt>',
+      from: 'ImoFlow <onboarding@resend.dev>',
       to: to_email,
       subject,
       text: body,

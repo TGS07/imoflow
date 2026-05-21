@@ -60,7 +60,7 @@ export async function createNotification(params: CreateNotificationParams): Prom
 
   try {
     await resend.emails.send({
-      from: 'ImoFlow <noreply@imoflow.pt>',
+      from: 'ImoFlow <onboarding@resend.dev>',
       to: toEmail,
       subject: `[ImoFlow] ${title}`,
       text: [
