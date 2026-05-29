@@ -6,6 +6,8 @@ const navItems = [
   { href: '/dashboard', icon: '▦', label: 'Dashboard', section: 'Principal' },
   { href: '/leads', icon: '◎', label: 'Leads', section: 'Principal' },
   { href: '/pipeline', icon: '◈', label: 'Pipeline', section: 'Principal' },
+  { href: '/people', icon: '👤', label: 'Pessoas', section: 'Principal' },
+  { href: '/organizations', icon: '🏢', label: 'Organizações', section: 'Principal' },
   { href: '/settings/pipeline', icon: '⚙', label: 'Configurações', section: 'Sistema' },
 ]
 

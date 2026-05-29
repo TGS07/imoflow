@@ -113,6 +113,20 @@ export default function LeadPage() {
                   Fecho: {new Date(lead.expected_close_date).toLocaleDateString('pt-PT')}
                 </span>
               )}
+              {lead.people && (
+                <Link href={`/people/${lead.people.id}`} style={{ textDecoration: 'none' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(212,175,55,0.1)', color: 'var(--gold)', cursor: 'pointer' }}>
+                    👤 {lead.people.name}
+                  </span>
+                </Link>
+              )}
+              {lead.organizations && (
+                <Link href={`/organizations/${lead.organizations.id}`} style={{ textDecoration: 'none' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(139,92,246,0.1)', color: '#8B5CF6', cursor: 'pointer' }}>
+                    🏢 {lead.organizations.name}
+                  </span>
+                </Link>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {visibleStages.map(s => (

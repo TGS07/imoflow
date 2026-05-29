@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('leads')
-    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost)')
+    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), people(id, name, email, phone), organizations(id, name)')
     .order('created_at', { ascending: false })
 
   if (stageId) query = query.eq('stage_id', stageId)

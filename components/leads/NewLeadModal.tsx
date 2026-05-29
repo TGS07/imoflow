@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { LeadSource, CustomField } from '@/types'
+import { useState, useEffect, useRef } from 'react'
+import { LeadSource, CustomField, Person, Organization } from '@/types'
 
 type Props = {
   onClose: () => void
@@ -21,11 +21,55 @@ export function NewLeadModal({ onClose, onCreated }: Props) {
   const [customValues, setCustomValues] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
+  // Person autocomplete
+  const [personSearch, setPersonSearch] = useState('')
+  const [personResults, setPersonResults] = useState<Person[]>([])
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
+  const [showPersonDropdown, setShowPersonDropdown] = useState(false)
+  const personRef = useRef<HTMLDivElement>(null)
+
+  // Organization autocomplete
+  const [orgSearch, setOrgSearch] = useState('')
+  const [orgResults, setOrgResults] = useState<Organization[]>([])
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
+  const [showOrgDropdown, setShowOrgDropdown] = useState(false)
+  const orgRef = useRef<HTMLDivElement>(null)
+
   const inputStyle = { width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
   const labelStyle = { fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--muted)', display: 'block', marginBottom: 5 }
 
   useEffect(() => {
     fetch('/api/custom-fields').then(r => r.json()).then(setCustomFields)
+  }, [])
+
+  // Person search
+  useEffect(() => {
+    if (!personSearch || selectedPerson) { setPersonResults([]); return }
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/people?search=${encodeURIComponent(personSearch)}`)
+      if (res.ok) setPersonResults(await res.json())
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [personSearch, selectedPerson])
+
+  // Organization search
+  useEffect(() => {
+    if (!orgSearch || selectedOrg) { setOrgResults([]); return }
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/organizations?search=${encodeURIComponent(orgSearch)}`)
+      if (res.ok) setOrgResults(await res.json())
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [orgSearch, selectedOrg])
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (personRef.current && !personRef.current.contains(e.target as Node)) setShowPersonDropdown(false)
+      if (orgRef.current && !orgRef.current.contains(e.target as Node)) setShowOrgDropdown(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -52,6 +96,8 @@ export function NewLeadModal({ onClose, onCreated }: Props) {
           budget: form.budget ? Number(form.budget) : null,
           deal_value: form.deal_value ? Number(form.deal_value) : null,
           expected_close_date: form.expected_close_date || null,
+          person_id: selectedPerson?.id ?? null,
+          organization_id: selectedOrg?.id ?? null,
           custom_fields: Object.keys(cfValues).length > 0 ? cfValues : undefined,
         }),
       })
@@ -73,6 +119,53 @@ export function NewLeadModal({ onClose, onCreated }: Props) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
         </div>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Person autocomplete */}
+          <div ref={personRef} style={{ position: 'relative' }}>
+            <label style={labelStyle}>Pessoa</label>
+            {selectedPerson ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, ...inputStyle, background: 'var(--card)' }}>
+                <span style={{ fontSize: 13, flex: 1 }}>{selectedPerson.name}</span>
+                <button type="button" onClick={() => { setSelectedPerson(null); setPersonSearch('') }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+              </div>
+            ) : (
+              <input style={inputStyle} placeholder="Pesquisar pessoa..." value={personSearch} onChange={e => { setPersonSearch(e.target.value); setShowPersonDropdown(true) }} onFocus={() => setShowPersonDropdown(true)} />
+            )}
+            {showPersonDropdown && personSearch && !selectedPerson && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', zIndex: 10 }}>
+                {personResults.map(p => (
+                  <div key={p.id} onClick={() => { setSelectedPerson(p); setPersonSearch(p.name); setShowPersonDropdown(false); if (!form.email && p.email) setForm(f => ({ ...f, email: p.email! })); if (!form.phone && p.phone) setForm(f => ({ ...f, phone: p.phone! })) }} style={{ padding: '8px 12px', fontSize: 12, cursor: 'pointer', borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ fontWeight: 500 }}>{p.name}</div>
+                    {p.email && <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.email}</div>}
+                  </div>
+                ))}
+                {personResults.length === 0 && <div style={{ padding: '8px 12px', fontSize: 11, color: 'var(--muted)' }}>Nenhuma pessoa encontrada</div>}
+              </div>
+            )}
+          </div>
+
+          {/* Organization autocomplete */}
+          <div ref={orgRef} style={{ position: 'relative' }}>
+            <label style={labelStyle}>Organização</label>
+            {selectedOrg ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, ...inputStyle, background: 'var(--card)' }}>
+                <span style={{ fontSize: 13, flex: 1 }}>{selectedOrg.name}</span>
+                <button type="button" onClick={() => { setSelectedOrg(null); setOrgSearch('') }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+              </div>
+            ) : (
+              <input style={inputStyle} placeholder="Pesquisar organização..." value={orgSearch} onChange={e => { setOrgSearch(e.target.value); setShowOrgDropdown(true) }} onFocus={() => setShowOrgDropdown(true)} />
+            )}
+            {showOrgDropdown && orgSearch && !selectedOrg && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', zIndex: 10 }}>
+                {orgResults.map(o => (
+                  <div key={o.id} onClick={() => { setSelectedOrg(o); setOrgSearch(o.name); setShowOrgDropdown(false) }} style={{ padding: '8px 12px', fontSize: 12, cursor: 'pointer', borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ fontWeight: 500 }}>{o.name}</div>
+                  </div>
+                ))}
+                {orgResults.length === 0 && <div style={{ padding: '8px 12px', fontSize: 11, color: 'var(--muted)' }}>Nenhuma organização encontrada</div>}
+              </div>
+            )}
+          </div>
+
           <div><label style={labelStyle}>Nome *</label><input style={inputStyle} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required /></div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div><label style={labelStyle}>Email</label><input type="email" style={inputStyle} value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>

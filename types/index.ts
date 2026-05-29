@@ -50,6 +50,29 @@ export type CustomFieldValue = {
   created_at: string
 }
 
+export type Person = {
+  id: string
+  agency_id: string
+  name: string
+  email: string | null
+  phone: string | null
+  address: string | null
+  notes: string | null
+  created_at: string
+}
+
+export type Organization = {
+  id: string
+  agency_id: string
+  name: string
+  email: string | null
+  phone: string | null
+  website: string | null
+  address: string | null
+  notes: string | null
+  created_at: string
+}
+
 export type LeadSource = 'site' | 'instagram' | 'facebook' | 'referencia' | 'outro'
 
 export type Lead = {
@@ -68,10 +91,14 @@ export type Lead = {
   notes: string | null
   deal_value: number | null
   expected_close_date: string | null
+  person_id: string | null
+  organization_id: string | null
   created_at: string
   users?: User
   pipeline_stages?: PipelineStage
   custom_field_values?: CustomFieldValue[]
+  people?: Person
+  organizations?: Organization
 }
 
 export type Contact = {
