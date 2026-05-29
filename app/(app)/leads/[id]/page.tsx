@@ -2,16 +2,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Lead, Contact, Task } from '@/types'
+import { Lead, Contact, Task, PipelineStage } from '@/types'
 import { SendEmailModal } from '@/components/leads/SendEmailModal'
-
-const STAGE_COLORS: Record<string, string> = {
-  lead: '#5C9EE0', visita: '#9B7FE8', proposta: '#E0A35C', negociacao: '#E0595C', fechado: '#4ECCA3'
-}
-const STAGE_LABELS: Record<string, string> = {
-  lead: 'Lead', visita: 'Visita', proposta: 'Proposta', negociacao: 'Negociação', fechado: 'Fechado'
-}
-const STAGES = ['lead', 'visita', 'proposta', 'negociacao', 'fechado']
 
 export default function LeadPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,6 +11,7 @@ export default function LeadPage() {
   const [lead, setLead] = useState<Lead | null>(null)
   const [contacts, setContacts] = useState<Contact[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
+  const [stages, setStages] = useState<PipelineStage[]>([])
   const [showEmail, setShowEmail] = useState(false)
   const [newContactTitle, setNewContactTitle] = useState('')
   const [newContactType, setNewContactType] = useState<Contact['type']>('nota')
@@ -27,21 +20,23 @@ export default function LeadPage() {
   const [newTaskDue, setNewTaskDue] = useState('')
 
   const fetchAll = useCallback(async () => {
-    const [l, c, t] = await Promise.all([
+    const [l, c, t, s] = await Promise.all([
       fetch(`/api/leads/${id}`).then(r => r.json()),
       fetch(`/api/contacts?lead_id=${id}`).then(r => r.json()),
       fetch(`/api/tasks?lead_id=${id}`).then(r => r.json()),
+      fetch('/api/pipeline-stages').then(r => r.json()),
     ])
     setLead(l)
     setContacts(c)
     setTasks(t)
+    setStages(s)
   }, [id])
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  async function updateStage(stage: string) {
-    await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage }) })
-    setLead(prev => prev ? { ...prev, stage: stage as Lead['stage'] } : prev)
+  async function updateStage(stageId: string) {
+    await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage_id: stageId }) })
+    setLead(prev => prev ? { ...prev, stage_id: stageId } : prev)
   }
 
   async function addContact(e: React.FormEvent) {
@@ -71,6 +66,10 @@ export default function LeadPage() {
 
   if (!lead) return <div style={{ padding: 40, color: 'var(--muted)', fontSize: 13 }}>A carregar...</div>
 
+  const currentStage = lead.pipeline_stages ?? stages.find(s => s.id === lead.stage_id)
+  const stageColor = currentStage?.color ?? '#666'
+  const stageName = currentStage?.name ?? '—'
+  const visibleStages = stages.filter(s => !s.is_lost)
   const initials = lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')
   const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
 
@@ -78,7 +77,6 @@ export default function LeadPage() {
     <>
       {showEmail && <SendEmailModal leadId={id} leadEmail={lead.email} onClose={() => setShowEmail(false)} onSent={fetchAll} />}
 
-      {/* TOPBAR */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--muted)' }}>
           <Link href="/leads" style={{ color: 'var(--muted)', textDecoration: 'none' }}>Leads</Link>
@@ -92,26 +90,34 @@ export default function LeadPage() {
       </div>
 
       <div style={{ padding: '24px 32px' }}>
-        {/* HERO */}
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, marginBottom: 20, display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 20, alignItems: 'start' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg, ${STAGE_COLORS[lead.stage]}, ${STAGE_COLORS[lead.stage]}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Playfair Display, serif', fontSize: 22, color: '#fff' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg, ${stageColor}, ${stageColor}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Playfair Display, serif', fontSize: 22, color: '#fff' }}>
             {initials}
           </div>
           <div>
             <h2 className="font-display" style={{ fontSize: 22, marginBottom: 8 }}>{lead.name}</h2>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-              <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: `${STAGE_COLORS[lead.stage]}22`, color: STAGE_COLORS[lead.stage] }}>
-                {STAGE_LABELS[lead.stage]}
+              <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: `${stageColor}22`, color: stageColor }}>
+                {stageName}
               </span>
               <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)' }}>
                 {lead.source}
               </span>
+              {lead.deal_value && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
+                  {(lead.deal_value / 1000).toFixed(0)}K€
+                </span>
+              )}
+              {lead.expected_close_date && (
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)' }}>
+                  Fecho: {new Date(lead.expected_close_date).toLocaleDateString('pt-PT')}
+                </span>
+              )}
             </div>
-            {/* STAGE SELECTOR */}
-            <div style={{ display: 'flex', gap: 6 }}>
-              {STAGES.map(s => (
-                <button key={s} onClick={() => updateStage(s)} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 4, border: `1px solid ${lead.stage === s ? STAGE_COLORS[s] : 'var(--border)'}`, background: lead.stage === s ? `${STAGE_COLORS[s]}22` : 'transparent', color: lead.stage === s ? STAGE_COLORS[s] : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
-                  {STAGE_LABELS[s]}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {visibleStages.map(s => (
+                <button key={s.id} onClick={() => updateStage(s.id)} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 4, border: `1px solid ${lead.stage_id === s.id ? s.color : 'var(--border)'}`, background: lead.stage_id === s.id ? `${s.color}22` : 'transparent', color: lead.stage_id === s.id ? s.color : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
+                  {s.name}
                 </button>
               ))}
             </div>
@@ -125,14 +131,13 @@ export default function LeadPage() {
           </div>
         </div>
 
-        {/* CONTACT PILLS */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
           {[
             { icon: '📞', label: 'Telefone', value: lead.phone },
             { icon: '✉', label: 'Email', value: lead.email },
             { icon: '📍', label: 'Zona', value: lead.zone },
             { icon: '🏠', label: 'Tipologia', value: lead.typology },
-            { icon: '€', label: 'Orçamento', value: lead.budget ? `${(lead.budget/1000).toFixed(0)}K€` : null },
+            { icon: '€', label: 'Orcamento', value: lead.budget ? `${(lead.budget/1000).toFixed(0)}K€` : null },
           ].filter(p => p.value).map(p => (
             <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px' }}>
               <span style={{ fontSize: 14 }}>{p.icon}</span>
@@ -144,16 +149,13 @@ export default function LeadPage() {
           ))}
         </div>
 
-        {/* GRID */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20 }}>
-          {/* ESQUERDA — HISTÓRICO */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
               <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="font-display" style={{ fontSize: 14 }}>Histórico de Contactos</div>
+                <div className="font-display" style={{ fontSize: 14 }}>Historico de Contactos</div>
               </div>
               <div style={{ padding: '16px 18px' }}>
-                {/* FORM novo contacto */}
                 <form onSubmit={addContact} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <select value={newContactType} onChange={e => setNewContactType(e.target.value as Contact['type'])} style={{ ...inputStyle, width: 'auto' }}>
@@ -162,17 +164,16 @@ export default function LeadPage() {
                       <option value="visita">Visita</option>
                       <option value="email">Email</option>
                     </select>
-                    <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Título do contacto..." value={newContactTitle} onChange={e => setNewContactTitle(e.target.value)} required />
+                    <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Titulo do contacto..." value={newContactTitle} onChange={e => setNewContactTitle(e.target.value)} required />
                     <button type="submit" style={{ ...inputStyle, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Registar</button>
                   </div>
                   <textarea
                     style={{ ...inputStyle, width: '100%', resize: 'vertical', minHeight: 60, lineHeight: 1.5 }}
-                    placeholder="Descrição (opcional)..."
+                    placeholder="Descricao (opcional)..."
                     value={newContactDesc}
                     onChange={e => setNewContactDesc(e.target.value)}
                   />
                 </form>
-                {/* TIMELINE */}
                 <div>
                   {contacts.map((c, i) => (
                     <div key={c.id} style={{ display: 'flex', gap: 12, paddingBottom: 16 }}>
@@ -187,13 +188,12 @@ export default function LeadPage() {
                       </div>
                     </div>
                   ))}
-                  {contacts.length === 0 && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Sem histórico ainda.</p>}
+                  {contacts.length === 0 && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Sem historico ainda.</p>}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* DIREITA — TAREFAS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
               <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
@@ -224,7 +224,6 @@ export default function LeadPage() {
               </div>
             </div>
 
-            {/* NOTAS */}
             {lead.notes && (
               <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px' }}>
                 <div className="font-display" style={{ fontSize: 14, marginBottom: 10 }}>Notas</div>
