@@ -39,12 +39,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
   if (!name || !email || !password) {
-    return NextResponse.json({ error: 'name, email e password são obrigatórios' }, { status: 400 })
+    return NextResponse.json({ error: 'name, email e password sao obrigatorios' }, { status: 400 })
   }
 
   const admin = getAdminClient()
 
-  // 1. Criar agência
+  // 1. Criar agencia
   const { data: agency, error: agencyError } = await admin
     .from('agencies')
     .insert({ name, email })
@@ -53,7 +53,17 @@ export async function POST(request: Request) {
 
   if (agencyError) return NextResponse.json({ error: agencyError.message }, { status: 500 })
 
-  // 2. Criar utilizador no Auth
+  // 2. Seed default pipeline stages
+  await admin.from('pipeline_stages').insert([
+    { agency_id: agency.id, name: 'Lead',        color: '#3B82F6', position: 0, probability: 10,  is_won: false, is_lost: false },
+    { agency_id: agency.id, name: 'Visita',      color: '#F59E0B', position: 1, probability: 30,  is_won: false, is_lost: false },
+    { agency_id: agency.id, name: 'Proposta',    color: '#8B5CF6', position: 2, probability: 50,  is_won: false, is_lost: false },
+    { agency_id: agency.id, name: 'Negociacao',  color: '#F97316', position: 3, probability: 70,  is_won: false, is_lost: false },
+    { agency_id: agency.id, name: 'Fechado',     color: '#10B981', position: 4, probability: 100, is_won: true,  is_lost: false },
+    { agency_id: agency.id, name: 'Perdido',     color: '#EF4444', position: 5, probability: 0,   is_won: false, is_lost: true  },
+  ])
+
+  // 3. Criar utilizador no Auth
   const { data: authUser, error: authError } = await admin.auth.admin.createUser({
     email,
     password,
@@ -61,11 +71,12 @@ export async function POST(request: Request) {
   })
 
   if (authError) {
+    await admin.from('pipeline_stages').delete().eq('agency_id', agency.id)
     await admin.from('agencies').delete().eq('id', agency.id)
     return NextResponse.json({ error: authError.message }, { status: 500 })
   }
 
-  // 3. Criar perfil do utilizador
+  // 4. Criar perfil do utilizador
   const initials = name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
   const { error: profileError } = await admin.from('users').insert({
     id: authUser.user.id,
@@ -78,6 +89,7 @@ export async function POST(request: Request) {
 
   if (profileError) {
     await admin.auth.admin.deleteUser(authUser.user.id)
+    await admin.from('pipeline_stages').delete().eq('agency_id', agency.id)
     await admin.from('agencies').delete().eq('id', agency.id)
     return NextResponse.json({ error: profileError.message }, { status: 500 })
   }
