@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const { data, error } = await supabase
     .from('leads')
-    .select('*, users(name, avatar_initials)')
+    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), custom_field_values(id, field_id, value_text, value_number, value_date, value_json)')
     .eq('id', id)
     .single()
 
@@ -28,31 +28,47 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
+  const { custom_fields: customFieldValues, ...leadData } = body
 
-  // Buscar estado anterior para detectar mudança de etapa
   const { data: before } = await supabase
     .from('leads')
-    .select('stage, name, assigned_to, agency_id')
+    .select('stage_id, name, assigned_to, agency_id, pipeline_stages(name)')
     .eq('id', id)
     .single()
 
   const { data, error } = await supabase
     .from('leads')
-    .update(body)
+    .update(leadData)
     .eq('id', id)
-    .select()
+    .select('*, pipeline_stages(id, name, color, position, probability, is_won, is_lost)')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Notificar se a etapa mudou
-  if (before && body.stage && body.stage !== before.stage && before.assigned_to && before.agency_id) {
+  // Upsert custom field values if provided
+  if (customFieldValues && typeof customFieldValues === 'object') {
+    for (const [fieldId, value] of Object.entries(customFieldValues)) {
+      if (value === null || value === '' || value === undefined) {
+        await supabase.from('custom_field_values').delete().eq('lead_id', id).eq('field_id', fieldId)
+      } else {
+        const row: Record<string, unknown> = { lead_id: id, field_id: fieldId, value_text: null, value_number: null, value_date: null, value_json: null }
+        if (typeof value === 'number') row.value_number = value
+        else if (Array.isArray(value)) row.value_json = value
+        else if (typeof value === 'string') row.value_text = value
+        await supabase.from('custom_field_values').upsert(row, { onConflict: 'lead_id,field_id' })
+      }
+    }
+  }
+
+  if (before && leadData.stage_id && leadData.stage_id !== before.stage_id && before.assigned_to && before.agency_id) {
+    const newStageName = data.pipeline_stages?.name ?? 'desconhecida'
+    const oldStageName = (before.pipeline_stages as unknown as { name: string } | null)?.name ?? 'desconhecida'
     await createNotification({
       userId: before.assigned_to,
       agencyId: before.agency_id,
       type: 'lead_stage_changed',
-      title: `Lead ${before.name} movida para ${body.stage}`,
-      body: `A lead ${before.name} foi movida de "${before.stage}" para "${body.stage}".`,
+      title: `Lead ${before.name} movida para ${newStageName}`,
+      body: `A lead ${before.name} foi movida de "${oldStageName}" para "${newStageName}".`,
       link: `/leads/${id}`,
     })
   }

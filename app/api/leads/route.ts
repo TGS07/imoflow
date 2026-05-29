@@ -8,15 +8,15 @@ export async function GET(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
-  const stage = searchParams.get('stage')
+  const stageId = searchParams.get('stage_id')
   const search = searchParams.get('search')
 
   let query = supabase
     .from('leads')
-    .select('*, users(name, avatar_initials)')
+    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost)')
     .order('created_at', { ascending: false })
 
-  if (stage) query = query.eq('stage', stage)
+  if (stageId) query = query.eq('stage_id', stageId)
   if (search) {
     const term = search.replace(/[%_\\]/g, '\\$&')
     query = query.or(`name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`)
@@ -41,21 +41,52 @@ export async function POST(request: Request) {
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
   const body = await request.json()
+  const { custom_fields: customFieldValues, ...leadData } = body
+
+  // If no stage_id provided, use the first stage of the agency
+  if (!leadData.stage_id) {
+    const { data: firstStage } = await supabase
+      .from('pipeline_stages')
+      .select('id')
+      .eq('agency_id', profile.agency_id)
+      .order('position', { ascending: true })
+      .limit(1)
+      .single()
+
+    if (firstStage) leadData.stage_id = firstStage.id
+  }
+
   const { data, error } = await supabase
     .from('leads')
-    .insert({ ...body, agency_id: profile.agency_id, assigned_to: user.id })
+    .insert({ ...leadData, agency_id: profile.agency_id, assigned_to: user.id })
     .select()
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Notificar o agente atribuído
+  // Save custom field values if provided
+  if (customFieldValues && typeof customFieldValues === 'object') {
+    const rows = Object.entries(customFieldValues)
+      .filter(([, v]) => v !== null && v !== '' && v !== undefined)
+      .map(([fieldId, value]) => {
+        const row: Record<string, unknown> = { lead_id: data.id, field_id: fieldId }
+        if (typeof value === 'number') row.value_number = value
+        else if (Array.isArray(value)) row.value_json = value
+        else if (typeof value === 'string') row.value_text = value
+        return row
+      })
+
+    if (rows.length > 0) {
+      await supabase.from('custom_field_values').insert(rows)
+    }
+  }
+
   await createNotification({
     userId: user.id,
     agencyId: profile.agency_id,
     type: 'new_lead',
     title: `Nova lead: ${data.name}`,
-    body: `Foi-te atribuída uma nova lead.${data.phone ? ` Telefone: ${data.phone}` : ''}`,
+    body: `Foi-te atribuida uma nova lead.${data.phone ? ` Telefone: ${data.phone}` : ''}`,
     link: `/leads/${data.id}`,
   })
 
