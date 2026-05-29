@@ -1,17 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
-import { Lead } from '@/types'
+import { Lead, PipelineStage } from '@/types'
 
 export default async function PipelinePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: leads } = await supabase
-    .from('leads')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const [{ data: leads }, { data: stages }] = await Promise.all([
+    supabase.from('leads').select('*, pipeline_stages(id, name, color, position, probability, is_won, is_lost)').order('created_at', { ascending: false }),
+    supabase.from('pipeline_stages').select('*').order('position', { ascending: true }),
+  ])
 
   return (
     <>
@@ -20,7 +20,7 @@ export default async function PipelinePage() {
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{leads?.length ?? 0} leads no pipeline</p>
       </div>
       <div style={{ padding: '24px 32px', flex: 1, overflow: 'hidden' }}>
-        <KanbanBoard initialLeads={(leads ?? []) as Lead[]} />
+        <KanbanBoard initialLeads={(leads ?? []) as Lead[]} stages={(stages ?? []) as PipelineStage[]} />
       </div>
     </>
   )
