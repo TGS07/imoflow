@@ -6,6 +6,7 @@ const navItems = [
   { href: '/dashboard', icon: '▦', label: 'Dashboard', section: 'Principal' },
   { href: '/leads', icon: '◎', label: 'Leads', section: 'Principal' },
   { href: '/pipeline', icon: '◈', label: 'Pipeline', section: 'Principal' },
+  { href: '/settings/pipeline', icon: '⚙', label: 'Configurações', section: 'Sistema' },
 ]
 
 type Props = {
@@ -24,16 +25,20 @@ export function Sidebar({ userName, userInitials }: Props) {
       </div>
 
       <nav style={{ padding: '24px 0', flex: 1 }}>
-        <div style={{ fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--muted)', padding: '0 24px', marginBottom: 6, marginTop: 16 }}>Principal</div>
-        {navItems.map(item => {
-          const active = pathname === item.href || pathname.startsWith(item.href + '/')
-          return (
-            <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', fontSize: 13, color: active ? 'var(--gold)' : 'var(--muted)', background: active ? 'var(--gold-glow)' : 'transparent', borderLeft: active ? '2px solid var(--gold)' : '2px solid transparent', textDecoration: 'none', transition: 'all 0.2s' }}>
-              <span style={{ fontSize: 15, width: 18, textAlign: 'center' }}>{item.icon}</span>
-              {item.label}
-            </Link>
-          )
-        })}
+        {['Principal', 'Sistema'].map(section => (
+          <div key={section}>
+            <div style={{ fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--muted)', padding: '0 24px', marginBottom: 6, marginTop: 16 }}>{section}</div>
+            {navItems.filter(item => item.section === section).map(item => {
+              const active = pathname === item.href || pathname.startsWith(item.href + '/')
+              return (
+                <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', fontSize: 13, color: active ? 'var(--gold)' : 'var(--muted)', background: active ? 'var(--gold-glow)' : 'transparent', borderLeft: active ? '2px solid var(--gold)' : '2px solid transparent', textDecoration: 'none', transition: 'all 0.2s' }}>
+                  <span style={{ fontSize: 15, width: 18, textAlign: 'center' }}>{item.icon}</span>
+                  {item.label}
+                </Link>
+              )
+            })}
+          </div>
+        ))}
       </nav>
 
       <div style={{ padding: '20px 24px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
