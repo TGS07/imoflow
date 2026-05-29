@@ -1,18 +1,12 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lead } from '@/types'
+import { Lead, PipelineStage } from '@/types'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
-
-const STAGE_COLORS: Record<string, string> = {
-  lead: '#5C9EE0', visita: '#9B7FE8', proposta: '#E0A35C', negociacao: '#E0595C', fechado: '#4ECCA3'
-}
-const STAGE_LABELS: Record<string, string> = {
-  lead: 'Lead', visita: 'Visita', proposta: 'Proposta', negociacao: 'Negociação', fechado: 'Fechado'
-}
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
+  const [stages, setStages] = useState<PipelineStage[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [stageFilter, setStageFilter] = useState('')
@@ -26,10 +20,14 @@ export default function LeadsPage() {
     return () => clearTimeout(timer)
   }, [search])
 
+  useEffect(() => {
+    fetch('/api/pipeline-stages').then(r => r.json()).then(setStages)
+  }, [])
+
   const fetchLeads = useCallback(async () => {
     const params = new URLSearchParams()
     if (debouncedSearch) params.set('search', debouncedSearch)
-    if (stageFilter) params.set('stage', stageFilter)
+    if (stageFilter) params.set('stage_id', stageFilter)
     try {
       const res = await fetch(`/api/leads?${params}`)
       if (!res.ok) throw new Error('Erro ao carregar leads')
@@ -43,6 +41,11 @@ export default function LeadsPage() {
   }, [debouncedSearch, stageFilter])
 
   useEffect(() => { fetchLeads() }, [fetchLeads])
+
+  function getStageInfo(lead: Lead) {
+    const stage = lead.pipeline_stages ?? stages.find(s => s.id === lead.stage_id)
+    return stage ?? { name: '—', color: '#666' }
+  }
 
   return (
     <>
@@ -70,7 +73,7 @@ export default function LeadsPage() {
           style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }}
         >
           <option value="">Todas as fases</option>
-          {Object.entries(STAGE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          {stages.filter(s => !s.is_lost).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </div>
 
@@ -79,38 +82,44 @@ export default function LeadsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['Nome', 'Contacto', 'Interesse', 'Origem', 'Score', 'Fase'].map(h => (
+                {['Nome', 'Contacto', 'Interesse', 'Valor', 'Origem', 'Score', 'Fase'].map(h => (
                   <th key={h} style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>A carregar...</td></tr>
+                <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>A carregar...</td></tr>
               )}
               {!loading && leads.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Nenhum lead encontrado.</td></tr>
+                <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Nenhum lead encontrado.</td></tr>
               )}
-              {leads.map(lead => (
-                <tr key={lead.id} onClick={() => router.push(`/leads/${lead.id}`)} style={{ cursor: 'pointer' }}>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{lead.name}</td>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{lead.phone ?? lead.email ?? '—'}</td>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{[lead.typology, lead.zone, lead.budget ? `até ${(lead.budget/1000).toFixed(0)}K€` : null].filter(Boolean).join(' · ') || '—'}</td>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
-                    <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)' }}>{lead.source}</span>
-                  </td>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
-                    <div style={{ width: 60, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', borderRadius: 2, background: lead.score > 70 ? 'var(--green)' : lead.score > 40 ? 'var(--gold)' : 'var(--red)', width: `${lead.score}%` }} />
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
-                    <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: `${STAGE_COLORS[lead.stage]}22`, color: STAGE_COLORS[lead.stage], letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                      {STAGE_LABELS[lead.stage]}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {leads.map(lead => {
+                const stageInfo = getStageInfo(lead)
+                return (
+                  <tr key={lead.id} onClick={() => router.push(`/leads/${lead.id}`)} style={{ cursor: 'pointer' }}>
+                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{lead.name}</td>
+                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{lead.phone ?? lead.email ?? '—'}</td>
+                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{[lead.typology, lead.zone].filter(Boolean).join(' · ') || '—'}</td>
+                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                      {lead.deal_value ? `${(lead.deal_value / 1000).toFixed(0)}K€` : lead.budget ? `${(lead.budget / 1000).toFixed(0)}K€` : '—'}
+                    </td>
+                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
+                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)' }}>{lead.source}</span>
+                    </td>
+                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
+                      <div style={{ width: 60, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', borderRadius: 2, background: lead.score > 70 ? 'var(--green)' : lead.score > 40 ? 'var(--gold)' : 'var(--red)', width: `${lead.score}%` }} />
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
+                      <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: `${stageInfo.color}22`, color: stageInfo.color, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                        {stageInfo.name}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
