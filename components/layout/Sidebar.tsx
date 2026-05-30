@@ -9,6 +9,7 @@ const navItems = [
   { href: '/people', icon: '👤', label: 'Pessoas', section: 'Principal' },
   { href: '/organizations', icon: '🏢', label: 'Organizações', section: 'Principal' },
   { href: '/properties', icon: '🏠', label: 'Imóveis', section: 'Principal' },
+  { href: '/activities', icon: '📅', label: 'Atividades', section: 'Principal' },
   { href: '/settings/pipeline', icon: '⚙', label: 'Configurações', section: 'Sistema' },
 ]
 
