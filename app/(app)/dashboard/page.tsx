@@ -8,10 +8,14 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: leads }, { data: recentContacts }, { data: stages }] = await Promise.all([
+  const todayStart = new Date(new Date().setHours(0,0,0,0)).toISOString()
+  const todayEnd = new Date(new Date().setHours(23,59,59,999)).toISOString()
+
+  const [{ data: profile }, { data: leads }, { data: todayActivities }, { count: pendingCount }, { data: stages }] = await Promise.all([
     supabase.from('users').select('name').eq('id', user.id).single(),
     supabase.from('leads').select('id, name, stage_id, typology, zone, budget, deal_value, expected_close_date, created_at, pipeline_stages(id, name, color, probability, is_won, is_lost)').order('created_at', { ascending: false }),
-    supabase.from('contacts').select('id, title, created_at, leads(name), users(name)').order('created_at', { ascending: false }).limit(5),
+    supabase.from('activities').select('id, type, title, due_date, completed, leads(name), users:assigned_to(name)').gte('due_date', todayStart).lte('due_date', todayEnd).order('due_date', { ascending: true }),
+    supabase.from('activities').select('id', { count: 'exact', head: true }).eq('completed', false),
     supabase.from('pipeline_stages').select('*').order('position', { ascending: true }),
   ])
 
@@ -65,6 +69,9 @@ export default async function DashboardPage() {
     return `${v}€`
   }
 
+  const typeColors: Record<string, string> = { chamada: '#3B82F6', visita: '#F59E0B', email: '#8B5CF6', reuniao: '#10B981', tarefa: '#EF4444', nota: '#6B7280' }
+  const typeIcons: Record<string, string> = { chamada: '📞', visita: '🏠', email: '✉', reuniao: '🤝', tarefa: '✓', nota: '📝' }
+
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -78,11 +85,12 @@ export default async function DashboardPage() {
       </div>
 
       <div style={{ padding: '28px 32px', flex: 1 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
           <StatCard label="Leads Ativos" value={activeLeads} icon="◎" />
           <StatCard label="Pipeline Total" value={formatValue(pipelineTotal)} icon="€" />
           <StatCard label="Pipeline Ponderado" value={formatValue(pipelineWeighted)} icon="◈" />
           <StatCard label="Fechados (mes)" value={closedThisMonth} icon="✓" />
+          <StatCard label="Atividades Pendentes" value={pendingCount ?? 0} icon="📅" />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
@@ -136,21 +144,35 @@ export default async function DashboardPage() {
           </div>
 
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 22 }}>
-            <div className="font-display" style={{ fontSize: 15, marginBottom: 14 }}>Atividade Recente</div>
+            <div className="font-display" style={{ fontSize: 15, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              Atividades de Hoje
+              <Link href="/activities" style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: 'var(--gold)', fontWeight: 500, textDecoration: 'none' }}>Ver tudo →</Link>
+            </div>
             <div>
-              {(recentContacts ?? []).map((c, i) => (
-                <div key={c.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < (recentContacts?.length ?? 0) - 1 ? '1px solid var(--border)' : 'none', fontSize: 12 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 4 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)', flexShrink: 0 }} />
-                    {i < (recentContacts?.length ?? 0) - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 4, minHeight: 20 }} />}
+              {(todayActivities ?? []).map((a: { id: string; type: string; title: string; due_date: string | null; completed: boolean; leads: { name: string }[] | null; users: { name: string }[] | null }, i: number) => {
+                const color = typeColors[a.type] ?? '#6B7280'
+                return (
+                  <div key={a.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < (todayActivities?.length ?? 0) - 1 ? '1px solid var(--border)' : 'none', fontSize: 12, opacity: a.completed ? 0.5 : 1 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 4 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                      {i < (todayActivities?.length ?? 0) - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 4, minHeight: 20 }} />}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: 'var(--text)', lineHeight: 1.5, textDecoration: a.completed ? 'line-through' : 'none' }}>
+                        {typeIcons[a.type] ?? '📝'} {a.title}
+                        {a.leads?.[0]?.name && (
+                          <span> — <strong style={{ color: 'var(--gold)', fontWeight: 500 }}>{a.leads[0].name}</strong></span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>
+                        {a.due_date ? new Date(a.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : ''}
+                        {a.users?.[0]?.name && ` · ${a.users[0].name}`}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: 'var(--text)', lineHeight: 1.5 }}>{c.title} — <strong style={{ color: 'var(--gold)', fontWeight: 500 }}>{(c.leads as unknown as { name: string } | null)?.name}</strong></div>
-                    <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>{new Date(c.created_at).toLocaleDateString('pt-PT')}</div>
-                  </div>
-                </div>
-              ))}
-              {(recentContacts ?? []).length === 0 && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Sem atividade recente.</p>}
+                )
+              })}
+              {(todayActivities ?? []).length === 0 && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Sem atividades para hoje.</p>}
             </div>
           </div>
         </div>
