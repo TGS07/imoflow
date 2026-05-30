@@ -165,3 +165,5 @@ export type EmailSent = {
   status: 'sent' | 'failed'
   sent_at: string
 }
+
+export type { ActivityType, Activity } from './activity'
