@@ -2,35 +2,59 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Lead, Contact, Task, PipelineStage } from '@/types'
+import { Lead, PipelineStage, Activity, ActivityType } from '@/types'
 import { SendEmailModal } from '@/components/leads/SendEmailModal'
+
+const ACTIVITY_COLORS: Record<ActivityType, string> = {
+  chamada: '#3B82F6',
+  visita: '#F59E0B',
+  email: '#8B5CF6',
+  reuniao: '#10B981',
+  tarefa: '#EF4444',
+  nota: '#6B7280',
+}
+
+const ACTIVITY_ICONS: Record<ActivityType, string> = {
+  chamada: '📞',
+  visita: '🏠',
+  email: '✉',
+  reuniao: '🤝',
+  tarefa: '✓',
+  nota: '📝',
+}
+
+const ACTIVITY_LABELS: Record<ActivityType, string> = {
+  chamada: 'Chamada',
+  visita: 'Visita',
+  email: 'Email',
+  reuniao: 'Reunião',
+  tarefa: 'Tarefa',
+  nota: 'Nota',
+}
 
 export default function LeadPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [lead, setLead] = useState<Lead | null>(null)
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [tasks, setTasks] = useState<Task[]>([])
+  const [activities, setActivities] = useState<Activity[]>([])
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [showEmail, setShowEmail] = useState(false)
-  const [newContactTitle, setNewContactTitle] = useState('')
-  const [newContactType, setNewContactType] = useState<Contact['type']>('nota')
-  const [newContactDesc, setNewContactDesc] = useState('')
-  const [newTaskTitle, setNewTaskTitle] = useState('')
-  const [newTaskDue, setNewTaskDue] = useState('')
+  const [activityFilter, setActivityFilter] = useState<ActivityType | ''>('')
+  const [newActivity, setNewActivity] = useState({ type: 'nota' as ActivityType, title: '', description: '', due_date: '' })
 
   const fetchAll = useCallback(async () => {
-    const [l, c, t, s] = await Promise.all([
+    const params = new URLSearchParams({ lead_id: id })
+    if (activityFilter) params.set('type', activityFilter)
+
+    const [l, a, s] = await Promise.all([
       fetch(`/api/leads/${id}`).then(r => r.json()),
-      fetch(`/api/contacts?lead_id=${id}`).then(r => r.json()),
-      fetch(`/api/tasks?lead_id=${id}`).then(r => r.json()),
+      fetch(`/api/activities?${params}`).then(r => r.json()),
       fetch('/api/pipeline-stages').then(r => r.json()),
     ])
     setLead(l)
-    setContacts(c)
-    setTasks(t)
+    setActivities(Array.isArray(a) ? a : [])
     setStages(s)
-  }, [id])
+  }, [id, activityFilter])
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
@@ -39,23 +63,30 @@ export default function LeadPage() {
     setLead(prev => prev ? { ...prev, stage_id: stageId } : prev)
   }
 
-  async function addContact(e: React.FormEvent) {
+  async function addActivity(e: React.FormEvent) {
     e.preventDefault()
-    await fetch('/api/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: id, type: newContactType, title: newContactTitle, description: newContactDesc }) })
-    setNewContactTitle(''); setNewContactDesc('')
+    await fetch('/api/activities', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lead_id: id,
+        type: newActivity.type,
+        title: newActivity.title,
+        description: newActivity.description || null,
+        due_date: newActivity.due_date ? new Date(newActivity.due_date).toISOString() : null,
+      })
+    })
+    setNewActivity({ type: 'nota', title: '', description: '', due_date: '' })
     fetchAll()
   }
 
-  async function addTask(e: React.FormEvent) {
-    e.preventDefault()
-    await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: id, title: newTaskTitle, due_date: newTaskDue || null }) })
-    setNewTaskTitle(''); setNewTaskDue('')
-    fetchAll()
-  }
-
-  async function toggleTask(taskId: string, completed: boolean) {
-    await fetch(`/api/tasks/${taskId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ completed: !completed }) })
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, completed: !completed } : t))
+  async function toggleActivity(activity: Activity) {
+    await fetch(`/api/activities/${activity.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed: !activity.completed })
+    })
+    setActivities(prev => prev.map(a => a.id === activity.id ? { ...a, completed: !a.completed } : a))
   }
 
   async function archiveLead() {
@@ -72,6 +103,9 @@ export default function LeadPage() {
   const visibleStages = stages.filter(s => !s.is_lost)
   const initials = lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')
   const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
+
+  const pendingActivities = activities.filter(a => !a.completed)
+  const completedActivities = activities.filter(a => a.completed)
 
   return (
     <>
@@ -90,6 +124,7 @@ export default function LeadPage() {
       </div>
 
       <div style={{ padding: '24px 32px' }}>
+        {/* Hero Card */}
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, marginBottom: 20, display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 20, alignItems: 'start' }}>
           <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg, ${stageColor}, ${stageColor}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Playfair Display, serif', fontSize: 22, color: '#fff' }}>
             {initials}
@@ -152,6 +187,7 @@ export default function LeadPage() {
           </div>
         </div>
 
+        {/* Info Pills */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
           {[
             { icon: '📞', label: 'Telefone', value: lead.phone },
@@ -170,89 +206,122 @@ export default function LeadPage() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-              <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="font-display" style={{ fontSize: 14 }}>Historico de Contactos</div>
-              </div>
-              <div style={{ padding: '16px 18px' }}>
-                <form onSubmit={addContact} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <select value={newContactType} onChange={e => setNewContactType(e.target.value as Contact['type'])} style={{ ...inputStyle, width: 'auto' }}>
-                      <option value="nota">Nota</option>
-                      <option value="chamada">Chamada</option>
-                      <option value="visita">Visita</option>
-                      <option value="email">Email</option>
-                    </select>
-                    <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Titulo do contacto..." value={newContactTitle} onChange={e => setNewContactTitle(e.target.value)} required />
-                    <button type="submit" style={{ ...inputStyle, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Registar</button>
-                  </div>
-                  <textarea
-                    style={{ ...inputStyle, width: '100%', resize: 'vertical', minHeight: 60, lineHeight: 1.5 }}
-                    placeholder="Descricao (opcional)..."
-                    value={newContactDesc}
-                    onChange={e => setNewContactDesc(e.target.value)}
-                  />
-                </form>
-                <div>
-                  {contacts.map((c, i) => (
-                    <div key={c.id} style={{ display: 'flex', gap: 12, paddingBottom: 16 }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--gold)', marginTop: 3, flexShrink: 0 }} />
-                        {i < contacts.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 4 }} />}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 3 }}>{c.title}</div>
-                        {c.description && <div style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.5 }}>{c.description}</div>}
-                        <div style={{ fontSize: 10, color: 'var(--muted)', opacity: 0.7, marginTop: 4 }}>{new Date(c.created_at).toLocaleString('pt-PT')} · {(c.users as unknown as { name: string } | null)?.name ?? ''}</div>
-                      </div>
-                    </div>
-                  ))}
-                  {contacts.length === 0 && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Sem historico ainda.</p>}
-                </div>
-              </div>
-            </div>
+        {/* Unified Activities Section */}
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="font-display" style={{ fontSize: 14 }}>Atividades</div>
+            <Link href="/activities" style={{ fontSize: 11, color: 'var(--gold)', textDecoration: 'none', fontWeight: 500 }}>Ver calendário →</Link>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-              <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-                <div className="font-display" style={{ fontSize: 14 }}>Tarefas</div>
+          {/* Type Filter Tabs */}
+          <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
+            <button onClick={() => setActivityFilter('')} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === '' ? 600 : 400, color: activityFilter === '' ? 'var(--gold)' : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === '' ? '2px solid var(--gold)' : '2px solid transparent', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+              Todas ({activities.length})
+            </button>
+            {(Object.entries(ACTIVITY_LABELS) as [ActivityType, string][]).map(([type, label]) => {
+              const count = activities.filter(a => a.type === type).length
+              if (count === 0 && activityFilter !== type) return null
+              return (
+                <button key={type} onClick={() => setActivityFilter(activityFilter === type ? '' : type)} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === type ? 600 : 400, color: activityFilter === type ? ACTIVITY_COLORS[type] : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === type ? `2px solid ${ACTIVITY_COLORS[type]}` : '2px solid transparent', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                  {ACTIVITY_ICONS[type]} {label} ({count})
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Add Activity Form */}
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+            <form onSubmit={addActivity} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <select value={newActivity.type} onChange={e => setNewActivity(p => ({ ...p, type: e.target.value as ActivityType }))} style={{ ...inputStyle, width: 'auto' }}>
+                  {Object.entries(ACTIVITY_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+                <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Título da atividade..." value={newActivity.title} onChange={e => setNewActivity(p => ({ ...p, title: e.target.value }))} required />
+                <input type="datetime-local" style={{ ...inputStyle, width: 'auto' }} value={newActivity.due_date} onChange={e => setNewActivity(p => ({ ...p, due_date: e.target.value }))} />
+                <button type="submit" style={{ ...inputStyle, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Adicionar</button>
               </div>
-              <div style={{ padding: '14px 18px' }}>
-                <form onSubmit={addTask} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
-                  <input style={inputStyle} placeholder="Nova tarefa..." value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} required />
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input type="date" style={{ ...inputStyle, flex: 1 }} value={newTaskDue} onChange={e => setNewTaskDue(e.target.value)} />
-                    <button type="submit" style={{ ...inputStyle, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Criar</button>
-                  </div>
-                </form>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {tasks.map(t => (
-                    <div key={t.id} style={{ display: 'flex', gap: 10, padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, opacity: t.completed ? 0.5 : 1 }}>
-                      <div onClick={() => toggleTask(t.id, t.completed)} style={{ width: 16, height: 16, borderRadius: 4, border: t.completed ? 'none' : '1.5px solid var(--border)', background: t.completed ? 'var(--green)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: 1, color: '#0D0D0F', fontSize: 10 }}>
-                        {t.completed ? '✓' : ''}
+              <textarea
+                style={{ ...inputStyle, width: '100%', resize: 'vertical', minHeight: 50, lineHeight: 1.5 }}
+                placeholder="Descrição (opcional)..."
+                value={newActivity.description}
+                onChange={e => setNewActivity(p => ({ ...p, description: e.target.value }))}
+              />
+            </form>
+          </div>
+
+          {/* Activities List */}
+          <div style={{ padding: '14px 18px' }}>
+            {/* Pending */}
+            {pendingActivities.length > 0 && (
+              <div style={{ marginBottom: completedActivities.length > 0 ? 16 : 0 }}>
+                {pendingActivities.map((a, i) => (
+                  <div key={a.id} style={{ display: 'flex', gap: 12, paddingBottom: 14 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div onClick={() => toggleActivity(a)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--border)', cursor: 'pointer', flexShrink: 0, marginTop: 2 }} />
+                      {i < pendingActivities.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 4 }} />}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                        <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: `${ACTIVITY_COLORS[a.type]}22`, color: ACTIVITY_COLORS[a.type], fontWeight: 500 }}>
+                          {ACTIVITY_ICONS[a.type]} {ACTIVITY_LABELS[a.type]}
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{a.title}</span>
                       </div>
-                      <div>
-                        <div style={{ fontSize: 12, fontWeight: 500, color: t.completed ? 'var(--muted)' : 'var(--text)', textDecoration: t.completed ? 'line-through' : 'none' }}>{t.title}</div>
-                        {t.due_date && <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>{new Date(t.due_date).toLocaleDateString('pt-PT')}</div>}
+                      {a.description && <div style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.5 }}>{a.description}</div>}
+                      <div style={{ fontSize: 10, color: 'var(--muted)', opacity: 0.7, marginTop: 4 }}>
+                        {a.due_date ? new Date(a.due_date).toLocaleString('pt-PT') : new Date(a.created_at).toLocaleString('pt-PT')}
+                        {a.users && ` · ${a.users.name}`}
                       </div>
                     </div>
-                  ))}
-                  {tasks.length === 0 && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Sem tarefas.</p>}
-                </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
 
-            {lead.notes && (
-              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px' }}>
-                <div className="font-display" style={{ fontSize: 14, marginBottom: 10 }}>Notas</div>
-                <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>{lead.notes}</p>
+            {/* Completed */}
+            {completedActivities.length > 0 && (
+              <div>
+                {pendingActivities.length > 0 && (
+                  <div style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 10 }}>Concluídas</div>
+                )}
+                {completedActivities.map((a, i) => (
+                  <div key={a.id} style={{ display: 'flex', gap: 12, paddingBottom: 14, opacity: 0.5 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div onClick={() => toggleActivity(a)} style={{ width: 16, height: 16, borderRadius: 4, background: 'var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: 2, color: '#0D0D0F', fontSize: 10 }}>✓</div>
+                      {i < completedActivities.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 4 }} />}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                        <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: `${ACTIVITY_COLORS[a.type]}22`, color: ACTIVITY_COLORS[a.type], fontWeight: 500 }}>
+                          {ACTIVITY_ICONS[a.type]} {ACTIVITY_LABELS[a.type]}
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--muted)', textDecoration: 'line-through' }}>{a.title}</span>
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--muted)', opacity: 0.7, marginTop: 4 }}>
+                        {a.due_date ? new Date(a.due_date).toLocaleString('pt-PT') : new Date(a.created_at).toLocaleString('pt-PT')}
+                        {a.users && ` · ${a.users.name}`}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
+            )}
+
+            {activities.length === 0 && (
+              <p style={{ fontSize: 12, color: 'var(--muted)' }}>Sem atividades ainda.</p>
             )}
           </div>
         </div>
+
+        {/* Notes */}
+        {lead.notes && (
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px', marginTop: 20 }}>
+            <div className="font-display" style={{ fontSize: 14, marginBottom: 10 }}>Notas</div>
+            <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>{lead.notes}</p>
+          </div>
+        )}
       </div>
     </>
   )
