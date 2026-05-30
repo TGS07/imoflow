@@ -27,6 +27,9 @@ function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
         {lead.people?.name && lead.people.name !== lead.name && (
           <div style={{ fontSize: 10, color: 'var(--gold)', marginBottom: 4, opacity: 0.8 }}>👤 {lead.people.name}</div>
         )}
+        {lead.properties && (
+          <div style={{ fontSize: 10, color: '#10B981', marginBottom: 4, opacity: 0.8 }}>🏠 {lead.properties.reference ?? lead.properties.title}</div>
+        )}
         {(lead.typology || lead.zone) && (
           <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4 }}>
             {[lead.typology, lead.zone].filter(Boolean).join(' · ')}

@@ -127,6 +127,13 @@ export default function LeadPage() {
                   </span>
                 </Link>
               )}
+              {lead.properties && (
+                <Link href={`/properties/${lead.properties.id}`} style={{ textDecoration: 'none' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(16,185,129,0.1)', color: '#10B981', cursor: 'pointer' }}>
+                    🏠 {lead.properties.reference ? `${lead.properties.reference} — ` : ''}{lead.properties.title}
+                  </span>
+                </Link>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {visibleStages.map(s => (

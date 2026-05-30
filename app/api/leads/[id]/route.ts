@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const { data, error } = await supabase
     .from('leads')
-    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), custom_field_values(id, field_id, value_text, value_number, value_date, value_json), people(id, name, email, phone), organizations(id, name)')
+    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), custom_field_values(id, field_id, value_text, value_number, value_date, value_json), people(id, name, email, phone), organizations(id, name), properties(id, reference, title, price, type, status, zone, typology, area_m2)')
     .eq('id', id)
     .single()
 

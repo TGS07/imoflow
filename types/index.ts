@@ -73,6 +73,37 @@ export type Organization = {
   created_at: string
 }
 
+export type PropertyType = 'apartamento' | 'moradia' | 'terreno' | 'loja' | 'escritorio' | 'armazem' | 'outro'
+export type PropertyStatus = 'disponivel' | 'reservado' | 'vendido' | 'arrendado'
+export type PropertyCondition = 'novo' | 'usado' | 'renovado' | 'em_construcao'
+
+export type Property = {
+  id: string
+  agency_id: string
+  reference: string | null
+  title: string
+  type: PropertyType
+  status: PropertyStatus
+  price: number | null
+  area_m2: number | null
+  typology: string | null
+  bedrooms: number | null
+  bathrooms: number | null
+  floor: string | null
+  condition: PropertyCondition | null
+  address: string | null
+  city: string | null
+  zone: string | null
+  postal_code: string | null
+  latitude: number | null
+  longitude: number | null
+  description: string | null
+  features: string[]
+  photos: string[]
+  notes: string | null
+  created_at: string
+}
+
 export type LeadSource = 'site' | 'instagram' | 'facebook' | 'referencia' | 'outro'
 
 export type Lead = {
@@ -93,12 +124,14 @@ export type Lead = {
   expected_close_date: string | null
   person_id: string | null
   organization_id: string | null
+  property_id: string | null
   created_at: string
   users?: User
   pipeline_stages?: PipelineStage
   custom_field_values?: CustomFieldValue[]
   people?: Person
   organizations?: Organization
+  properties?: Property
 }
 
 export type Contact = {

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { LeadSource, CustomField, Person, Organization } from '@/types'
+import { LeadSource, CustomField, Person, Organization, Property } from '@/types'
 
 type Props = {
   onClose: () => void
@@ -35,6 +35,13 @@ export function NewLeadModal({ onClose, onCreated }: Props) {
   const [showOrgDropdown, setShowOrgDropdown] = useState(false)
   const orgRef = useRef<HTMLDivElement>(null)
 
+  // Property autocomplete
+  const [propSearch, setPropSearch] = useState('')
+  const [propResults, setPropResults] = useState<Property[]>([])
+  const [selectedProp, setSelectedProp] = useState<Property | null>(null)
+  const [showPropDropdown, setShowPropDropdown] = useState(false)
+  const propRef = useRef<HTMLDivElement>(null)
+
   const inputStyle = { width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
   const labelStyle = { fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--muted)', display: 'block', marginBottom: 5 }
 
@@ -62,11 +69,22 @@ export function NewLeadModal({ onClose, onCreated }: Props) {
     return () => clearTimeout(timer)
   }, [orgSearch, selectedOrg])
 
+  // Property search
+  useEffect(() => {
+    if (!propSearch || selectedProp) { setPropResults([]); return }
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/properties?search=${encodeURIComponent(propSearch)}`)
+      if (res.ok) setPropResults(await res.json())
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [propSearch, selectedProp])
+
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (personRef.current && !personRef.current.contains(e.target as Node)) setShowPersonDropdown(false)
       if (orgRef.current && !orgRef.current.contains(e.target as Node)) setShowOrgDropdown(false)
+      if (propRef.current && !propRef.current.contains(e.target as Node)) setShowPropDropdown(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -98,6 +116,7 @@ export function NewLeadModal({ onClose, onCreated }: Props) {
           expected_close_date: form.expected_close_date || null,
           person_id: selectedPerson?.id ?? null,
           organization_id: selectedOrg?.id ?? null,
+          property_id: selectedProp?.id ?? null,
           custom_fields: Object.keys(cfValues).length > 0 ? cfValues : undefined,
         }),
       })
@@ -162,6 +181,30 @@ export function NewLeadModal({ onClose, onCreated }: Props) {
                   </div>
                 ))}
                 {orgResults.length === 0 && <div style={{ padding: '8px 12px', fontSize: 11, color: 'var(--muted)' }}>Nenhuma organização encontrada</div>}
+              </div>
+            )}
+          </div>
+
+          {/* Property autocomplete */}
+          <div ref={propRef} style={{ position: 'relative' }}>
+            <label style={labelStyle}>Imóvel</label>
+            {selectedProp ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, ...inputStyle, background: 'var(--card)' }}>
+                <span style={{ fontSize: 13, flex: 1 }}>{selectedProp.reference ? `${selectedProp.reference} — ` : ''}{selectedProp.title}</span>
+                <button type="button" onClick={() => { setSelectedProp(null); setPropSearch('') }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+              </div>
+            ) : (
+              <input style={inputStyle} placeholder="Pesquisar imóvel..." value={propSearch} onChange={e => { setPropSearch(e.target.value); setShowPropDropdown(true) }} onFocus={() => setShowPropDropdown(true)} />
+            )}
+            {showPropDropdown && propSearch && !selectedProp && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', zIndex: 10 }}>
+                {propResults.map(p => (
+                  <div key={p.id} onClick={() => { setSelectedProp(p); setPropSearch(p.title); setShowPropDropdown(false) }} style={{ padding: '8px 12px', fontSize: 12, cursor: 'pointer', borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ fontWeight: 500 }}>{p.reference ? `${p.reference} — ` : ''}{p.title}</div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.price ? `€${p.price.toLocaleString('pt-PT')}` : ''} {p.zone ?? ''}</div>
+                  </div>
+                ))}
+                {propResults.length === 0 && <div style={{ padding: '8px 12px', fontSize: 11, color: 'var(--muted)' }}>Nenhum imóvel encontrado</div>}
               </div>
             )}
           </div>
