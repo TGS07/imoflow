@@ -31,7 +31,7 @@ export type AutomationLog = {
   result: Record<string, unknown> | null
   // joins opcionais
   automation_rules?: { name: string }
-  leads?: { id: string; name: string }
+  leads?: { name: string }
 }
 
 export type AutomationEvent = {
@@ -44,6 +44,6 @@ export type AutomationEvent = {
     toStageName?: string
     pipelineId?: string
     activityId?: string
-    inactive_days?: number
+    inactiveDays?: number
   }
 }
