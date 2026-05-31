@@ -11,6 +11,7 @@ const navItems = [
   { href: '/properties', icon: '🏠', label: 'Imóveis', section: 'Principal' },
   { href: '/activities', icon: '📅', label: 'Atividades', section: 'Principal' },
   { href: '/settings/pipeline', icon: '⚙', label: 'Configurações', section: 'Sistema' },
+  { href: '/settings/automations', icon: '⚡', label: 'Automações', section: 'Sistema' },
 ]
 
 type Props = {
