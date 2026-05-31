@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { triggerAutomations } from '@/lib/automations/engine'
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -28,6 +29,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const body = await request.json()
 
+  const wasCompleted = body.completed === true
+
+  // Guardar estado anterior para detectar mudança para completed
+  const { data: before } = await supabase
+    .from('activities')
+    .select('completed, lead_id, assigned_to')
+    .eq('id', id)
+    .single()
+
   if (body.completed === true && !body.completed_at) {
     body.completed_at = new Date().toISOString()
   }
@@ -43,6 +53,27 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Disparar automações quando atividade é marcada como concluída e estava incompleta
+  if (wasCompleted && before && !before.completed && before.lead_id) {
+    // Buscar agencyId do lead
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('agency_id')
+      .eq('id', before.lead_id)
+      .single()
+
+    if (lead?.agency_id) {
+      triggerAutomations({
+        type: 'activity_completed',
+        leadId: before.lead_id,
+        userId: user.id,
+        agencyId: lead.agency_id,
+        meta: { activityId: id },
+      }).catch(console.error)
+    }
+  }
+
   return NextResponse.json(data)
 }
 
