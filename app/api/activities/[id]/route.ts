@@ -31,12 +31,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const wasCompleted = body.completed === true
 
-  // Guardar estado anterior para detectar mudança para completed
-  const { data: before } = await supabase
-    .from('activities')
-    .select('completed, lead_id, assigned_to')
-    .eq('id', id)
-    .single()
+  // Só vai buscar o estado anterior se o pedido pretende marcar como completed
+  let before: { completed: boolean; lead_id: string | null } | null = null
+  if (wasCompleted) {
+    const { data: beforeData } = await supabase
+      .from('activities')
+      .select('completed, lead_id')
+      .eq('id', id)
+      .single()
+    before = beforeData
+  }
 
   if (body.completed === true && !body.completed_at) {
     body.completed_at = new Date().toISOString()
