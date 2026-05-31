@@ -139,7 +139,7 @@ export default function AutomationsPage() {
                           {log.status === 'success' ? '✓' : '✗'}
                         </span>
                         <span style={{ color: 'var(--text)' }}>
-                          {(log as AutomationLog & { leads?: { name: string } }).leads?.name ?? log.lead_id}
+                          {log.leads?.name ?? log.lead_id}
                         </span>
                         <span style={{ color: 'var(--text-muted)', marginLeft: 'auto' }}>
                           {new Date(log.triggered_at).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}

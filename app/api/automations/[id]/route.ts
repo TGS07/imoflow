@@ -9,6 +9,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const body = await request.json()
   const { is_active } = body
+  if (typeof is_active !== 'boolean') {
+    return NextResponse.json({ error: 'is_active must be a boolean' }, { status: 400 })
+  }
 
   const { data, error } = await supabase
     .from('automation_rules')
