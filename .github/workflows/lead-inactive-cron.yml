@@ -1,0 +1,22 @@
+name: Lead Inactive Cron
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # todos os dias às 08:00 UTC
+  workflow_dispatch: # permite correr manualmente
+
+jobs:
+  run-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call lead-inactive endpoint
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -s -X POST "${APP_URL}/api/cron/lead-inactive" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            --fail \
+            --output /dev/null \
+            --write-out "HTTP status: %{http_code}\n"
