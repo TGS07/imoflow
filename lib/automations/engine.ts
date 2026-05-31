@@ -45,7 +45,7 @@ export async function triggerAutomations(event: AutomationEvent): Promise<void> 
       .eq('lead_id', event.leadId)
       .gte('triggered_at', oneHourAgo)
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (recentLog) continue
 
@@ -60,17 +60,23 @@ export async function triggerAutomations(event: AutomationEvent): Promise<void> 
     }
 
     // 5. Registar log
-    await supabase.from('automation_logs').insert({
+    const { error: logError } = await supabase.from('automation_logs').insert({
       rule_id: rule.id,
       lead_id: event.leadId,
       agency_id: agencyId,
       status,
       result,
     })
+    if (logError) {
+      console.error('Failed to insert automation log:', logError.message)
+    }
   }
 }
 
 function matchesTriggerConfig(rule: AutomationRule, event: AutomationEvent): boolean {
+  // Filter by pipeline if rule is pipeline-specific
+  if (rule.pipeline_id && rule.pipeline_id !== event.meta?.pipelineId) return false
+
   const config = rule.trigger_config as Record<string, unknown>
 
   if (rule.trigger_type === 'stage_changed') {
@@ -81,7 +87,7 @@ function matchesTriggerConfig(rule: AutomationRule, event: AutomationEvent): boo
   if (rule.trigger_type === 'lead_inactive') {
     const required = Number(config.inactive_days ?? 0)
     const actual = Number(event.meta?.inactiveDays ?? 0)
-    if (actual !== required) return false
+    if (actual < required) return false
   }
 
   return true
@@ -116,6 +122,7 @@ async function executeAction(
       .single()
 
     if (error) throw new Error(error.message)
+    if (!activity) throw new Error('Atividade criada mas não retornada pelo servidor')
     return { created_activity_id: activity.id, title: activity.title }
   }
 
