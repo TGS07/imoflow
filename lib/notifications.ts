@@ -6,6 +6,7 @@ export type NotificationType =
   | 'task_due'
   | 'lead_stage_changed'
   | 'email_received'
+  | 'automation_rule_triggered'
 
 interface CreateNotificationParams {
   userId: string
