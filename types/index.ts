@@ -167,3 +167,4 @@ export type EmailSent = {
 }
 
 export type { ActivityType, Activity } from './activity'
+export type { AutomationTriggerType, AutomationActionType, AutomationRule, AutomationLog, AutomationEvent } from './automation'
