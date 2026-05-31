@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { createNotification } from '@/lib/notifications'
+import { triggerAutomations } from '@/lib/automations/engine'
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -71,6 +72,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       body: `A lead ${before.name} foi movida de "${oldStageName}" para "${newStageName}".`,
       link: `/leads/${id}`,
     })
+
+    // Disparar automações de stage_changed
+    triggerAutomations({
+      type: 'stage_changed',
+      leadId: id,
+      userId: user.id,
+      agencyId: before.agency_id,
+      meta: {
+        toStageId: leadData.stage_id,
+        toStageName: newStageName,
+        pipelineId: data.pipeline_id ?? undefined,
+      },
+    }).catch(console.error)
   }
 
   return NextResponse.json(data)

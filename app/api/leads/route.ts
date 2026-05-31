@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { createNotification } from '@/lib/notifications'
+import { triggerAutomations } from '@/lib/automations/engine'
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -89,6 +90,15 @@ export async function POST(request: Request) {
     body: `Foi-te atribuida uma nova lead.${data.phone ? ` Telefone: ${data.phone}` : ''}`,
     link: `/leads/${data.id}`,
   })
+
+  // Disparar automações de lead_created (sem await para não bloquear resposta)
+  triggerAutomations({
+    type: 'lead_created',
+    leadId: data.id,
+    userId: user.id,
+    agencyId: profile.agency_id,
+    meta: { pipelineId: data.pipeline_id ?? undefined },
+  }).catch(console.error)
 
   return NextResponse.json(data, { status: 201 })
 }
