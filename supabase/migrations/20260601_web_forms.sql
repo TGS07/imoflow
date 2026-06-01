@@ -15,8 +15,12 @@ ALTER TABLE public.web_forms ENABLE ROW LEVEL SECURITY;
 
 -- Utilizadores autenticados: CRUD da própria agência
 CREATE POLICY "web_forms: own agency" ON public.web_forms
-  FOR ALL TO authenticated USING (agency_id = public.get_my_agency_id());
+  FOR ALL TO authenticated
+  USING (agency_id = public.get_my_agency_id())
+  WITH CHECK (agency_id = public.get_my_agency_id());
 
--- Utilizadores anon: leitura de forms activos (para renderizar a página pública)
+-- Nota de segurança: a protecção contra enumeração é garantida pela
+-- opacidade do UUID do formulário (122 bits de entropia). A query
+-- pública filtra sempre por id específico — não existe listagem pública.
 CREATE POLICY "web_forms: public read active" ON public.web_forms
   FOR SELECT TO anon USING (is_active = true);
