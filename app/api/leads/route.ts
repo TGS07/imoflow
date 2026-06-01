@@ -10,7 +10,7 @@ export async function GET(request: Request) {
 
   const { data: profile, error: profileError } = await supabase
     .from('users')
-    .select('role')
+    .select('role, agency_id')
     .eq('id', user.id)
     .single()
   if (profileError || !profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
@@ -22,9 +22,10 @@ export async function GET(request: Request) {
   let query = supabase
     .from('leads')
     .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), people(id, name, email, phone), organizations(id, name), properties(id, reference, title, price, type)')
+    .eq('agency_id', profile.agency_id)
     .order('created_at', { ascending: false })
 
-  if (profile?.role === 'agent') query = query.eq('assigned_to', user.id)
+  if (profile.role === 'agent') query = query.eq('assigned_to', user.id)
   if (stageId) query = query.eq('stage_id', stageId)
   if (search) {
     const term = search.replace(/[%_\\]/g, '\\$&')

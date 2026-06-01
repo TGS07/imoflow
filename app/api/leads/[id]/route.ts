@@ -11,7 +11,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, agency_id')
     .eq('id', user.id)
     .single()
   if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -20,6 +20,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     .from('leads')
     .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), custom_field_values(id, field_id, value_text, value_number, value_date, value_json), people(id, name, email, phone), organizations(id, name), properties(id, reference, title, price, type, status, zone, typology, area_m2)')
     .eq('id', id)
+    .eq('agency_id', profile.agency_id)
   if (profile.role === 'agent') leadQuery = leadQuery.eq('assigned_to', user.id)
 
   const { data, error } = await leadQuery.single()
@@ -39,7 +40,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, agency_id')
     .eq('id', user.id)
     .single()
   if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -51,6 +52,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .from('leads')
     .select('stage_id, name, assigned_to, agency_id, pipeline_stages(name)')
     .eq('id', id)
+    .eq('agency_id', profile.agency_id)
   if (profile.role === 'agent') beforeQuery = beforeQuery.eq('assigned_to', user.id)
 
   const { data: before } = await beforeQuery.single()
@@ -60,6 +62,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .from('leads')
     .update(leadData)
     .eq('id', id)
+    .eq('agency_id', profile.agency_id)
   if (profile.role === 'agent') updateQuery = updateQuery.eq('assigned_to', user.id)
 
   const { data, error } = await updateQuery
@@ -118,7 +121,22 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { error } = await supabase.from('leads').delete().eq('id', id)
+  const { data: profile, error: profileError } = await supabase
+    .from('users')
+    .select('role, agency_id')
+    .eq('id', user.id)
+    .single()
+  if (profileError || !profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  let deleteQuery = supabase
+    .from('leads')
+    .delete()
+    .eq('id', id)
+    .eq('agency_id', profile.agency_id)
+
+  if (profile.role === 'agent') deleteQuery = deleteQuery.eq('assigned_to', user.id)
+
+  const { error } = await deleteQuery
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ success: true })
+  return new Response(null, { status: 204 })
 }
