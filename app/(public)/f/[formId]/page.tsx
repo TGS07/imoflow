@@ -9,12 +9,12 @@ export default async function FormPage({ params }: { params: Promise<{ formId: s
 
   const { data: form } = await supabase
     .from('web_forms')
-    .select('id, name, description, fields, stage_id, is_active')
+    .select('id, agency_id, name, description, fields, stage_id, is_active, created_at')
     .eq('id', formId)
     .eq('is_active', true)
     .single()
 
   if (!form) notFound()
 
-  return <FormClient form={form as unknown as WebForm} />
+  return <FormClient form={form as WebForm} />
 }

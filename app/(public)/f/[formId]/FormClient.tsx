@@ -99,10 +99,11 @@ export function FormClient({ form }: { form: WebForm }) {
       <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* name — sempre presente */}
         <div>
-          <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+          <label htmlFor="field-name" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
             Nome completo *
           </label>
           <input
+            id="field-name"
             type="text"
             value={values.name ?? ''}
             onChange={e => setValues(v => ({ ...v, name: e.target.value }))}
@@ -115,10 +116,11 @@ export function FormClient({ form }: { form: WebForm }) {
 
         {/* email — sempre presente */}
         <div>
-          <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+          <label htmlFor="field-email" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
             Email *
           </label>
           <input
+            id="field-email"
             type="email"
             value={values.email ?? ''}
             onChange={e => setValues(v => ({ ...v, email: e.target.value }))}
@@ -131,10 +133,11 @@ export function FormClient({ form }: { form: WebForm }) {
 
         {form.fields.includes('phone') && (
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+            <label htmlFor="field-phone" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
               Telefone
             </label>
             <input
+              id="field-phone"
               type="tel"
               value={values.phone ?? ''}
               onChange={e => setValues(v => ({ ...v, phone: e.target.value }))}
@@ -147,10 +150,11 @@ export function FormClient({ form }: { form: WebForm }) {
 
         {form.fields.includes('zone') && (
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+            <label htmlFor="field-zone" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
               Zona de interesse
             </label>
             <input
+              id="field-zone"
               type="text"
               value={values.zone ?? ''}
               onChange={e => setValues(v => ({ ...v, zone: e.target.value }))}
@@ -162,14 +166,14 @@ export function FormClient({ form }: { form: WebForm }) {
 
         {form.fields.includes('typology') && (
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+            <label htmlFor="field-typology" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
               Tipologia
             </label>
             <select
+              id="field-typology"
               value={values.typology ?? ''}
               onChange={e => setValues(v => ({ ...v, typology: e.target.value }))}
               style={inputStyle}
-              aria-label="Tipologia"
             >
               <option value="">Selecionar tipologia</option>
               {TYPOLOGY_OPTIONS.map(t => (
@@ -181,10 +185,11 @@ export function FormClient({ form }: { form: WebForm }) {
 
         {form.fields.includes('budget') && (
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+            <label htmlFor="field-budget" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
               Orçamento (€)
             </label>
             <input
+              id="field-budget"
               type="number"
               min="0"
               value={values.budget ?? ''}
@@ -198,10 +203,11 @@ export function FormClient({ form }: { form: WebForm }) {
 
         {form.fields.includes('message') && (
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
+            <label htmlFor="field-message" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
               Mensagem
             </label>
             <textarea
+              id="field-message"
               value={values.message ?? ''}
               onChange={e => setValues(v => ({ ...v, message: e.target.value }))}
               style={{ ...inputStyle, height: 100, resize: 'vertical' }}
