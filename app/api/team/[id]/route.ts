@@ -50,6 +50,7 @@ export async function PATCH(
     .from('users')
     .update({ role })
     .eq('id', id)
+    .eq('agency_id', profile.agency_id)
     .select('id, name, email, role, avatar_initials, created_at')
     .single()
 
@@ -92,10 +93,23 @@ export async function DELETE(
   const body = await request.json().catch(() => ({}))
   const reassignTo: string | null = body.reassign_to ?? null
 
+  if (reassignTo) {
+    const { data: reassignTarget } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', reassignTo)
+      .eq('agency_id', profile.agency_id)
+      .single()
+    if (!reassignTarget) {
+      return NextResponse.json({ error: 'Membro de reatribuição não encontrado' }, { status: 400 })
+    }
+  }
+
   const { count } = await supabase
     .from('leads')
     .select('id', { count: 'exact', head: true })
     .eq('assigned_to', id)
+    .eq('agency_id', profile.agency_id)
 
   if ((count ?? 0) > 0 && !reassignTo) {
     return NextResponse.json({ error: 'Este membro tem leads atribuídos. Indica um membro para reatribuir.' }, { status: 400 })
@@ -106,6 +120,7 @@ export async function DELETE(
       .from('leads')
       .update({ assigned_to: reassignTo })
       .eq('assigned_to', id)
+      .eq('agency_id', profile.agency_id)
     if (reassignError) return NextResponse.json({ error: reassignError.message }, { status: 500 })
   }
 
