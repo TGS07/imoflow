@@ -40,13 +40,18 @@ export default function ReportsPage() {
   const [period, setPeriod] = useState<ReportPeriod>('30d')
   const [data, setData] = useState<ReportsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     setLoading(true)
+    setError(null)
     fetch(`/api/reports?period=${period}`)
-      .then(r => r.json())
-      .then((d: ReportsData) => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
+      .then(r => {
+        if (!r.ok) throw new Error('Erro ao carregar relatórios')
+        return r.json()
+      })
+      .then((json: ReportsData) => { setData(json); setLoading(false) })
+      .catch((err: Error) => { setError(err.message); setLoading(false) })
   }, [period])
 
   const cardStyle: React.CSSProperties = {
@@ -67,6 +72,7 @@ export default function ReportsPage() {
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Métricas de performance do pipeline</p>
         </div>
         <select
+          aria-label="Selecionar período"
           value={period}
           onChange={e => setPeriod(e.target.value as ReportPeriod)}
           style={{
@@ -85,6 +91,9 @@ export default function ReportsPage() {
         </select>
       </div>
 
+      {error && (
+        <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 16 }}>{error}</p>
+      )}
       {loading ? (
         <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>A carregar...</p>
       ) : (
@@ -143,8 +152,8 @@ export default function ReportsPage() {
                     outerRadius={90}
                     paddingAngle={3}
                   >
-                    {(data?.by_source ?? []).map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    {(data?.by_source ?? []).map((entry, i) => (
+                      <Cell key={entry.source} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
