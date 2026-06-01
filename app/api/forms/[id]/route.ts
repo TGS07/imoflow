@@ -16,6 +16,7 @@ export async function GET(
     .eq('id', id)
     .single()
 
+  if (error?.code === 'PGRST116') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
@@ -36,6 +37,10 @@ export async function PATCH(
   if (Array.isArray(body.fields)) updates.fields = body.fields
   if ('stage_id' in body) updates.stage_id = body.stage_id
   if (typeof body.is_active === 'boolean') updates.is_active = body.is_active
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+  }
 
   const { data, error } = await supabase
     .from('web_forms')
