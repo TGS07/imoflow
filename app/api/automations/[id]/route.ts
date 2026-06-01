@@ -9,7 +9,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, agency_id')
     .eq('id', user.id)
     .single()
   if (!profile || profile.role !== 'admin') {
@@ -26,9 +26,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .from('automation_rules')
     .update({ is_active })
     .eq('id', id)
+    .eq('agency_id', profile.agency_id)
     .select()
     .single()
 
+  if (error?.code === 'PGRST116') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }

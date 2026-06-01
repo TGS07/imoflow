@@ -32,7 +32,7 @@ export async function PATCH(
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, agency_id')
     .eq('id', user.id)
     .single()
   if (!profile || profile.role !== 'admin') {
@@ -62,9 +62,11 @@ export async function PATCH(
     .from('web_forms')
     .update(updates)
     .eq('id', id)
+    .eq('agency_id', profile.agency_id)
     .select()
     .single()
 
+  if (error?.code === 'PGRST116') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
@@ -80,7 +82,7 @@ export async function DELETE(
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, agency_id')
     .eq('id', user.id)
     .single()
   if (!profile || profile.role !== 'admin') {
@@ -91,7 +93,9 @@ export async function DELETE(
     .from('web_forms')
     .delete()
     .eq('id', id)
+    .eq('agency_id', profile.agency_id)
 
+  if (error?.code === 'PGRST116') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return new Response(null, { status: 204 })
 }
