@@ -14,15 +14,19 @@ const navItems = [
   { href: '/settings/pipeline', icon: '⚙', label: 'Configurações', section: 'Sistema' },
   { href: '/settings/automations', icon: '⚡', label: 'Automações', section: 'Sistema' },
   { href: '/settings/forms', icon: '📋', label: 'Formulários', section: 'Sistema' },
+  { href: '/settings/team', icon: '👥', label: 'Equipa', section: 'Sistema' },
 ]
 
 type Props = {
   userName: string
   userInitials: string
+  userRole: 'admin' | 'agent'
 }
 
-export function Sidebar({ userName, userInitials }: Props) {
+export function Sidebar({ userName, userInitials, userRole }: Props) {
   const pathname = usePathname()
+
+  const visibleItems = navItems.filter(item => item.section !== 'Sistema' || userRole === 'admin')
 
   return (
     <aside style={{ width: 240, minHeight: '100vh', background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: '28px 0', flexShrink: 0 }}>
@@ -32,20 +36,24 @@ export function Sidebar({ userName, userInitials }: Props) {
       </div>
 
       <nav style={{ padding: '24px 0', flex: 1 }}>
-        {['Principal', 'Sistema'].map(section => (
-          <div key={section}>
-            <div style={{ fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--muted)', padding: '0 24px', marginBottom: 6, marginTop: 16 }}>{section}</div>
-            {navItems.filter(item => item.section === section).map(item => {
-              const active = pathname === item.href || pathname.startsWith(item.href + '/')
-              return (
-                <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', fontSize: 13, color: active ? 'var(--gold)' : 'var(--muted)', background: active ? 'var(--gold-glow)' : 'transparent', borderLeft: active ? '2px solid var(--gold)' : '2px solid transparent', textDecoration: 'none', transition: 'all 0.2s' }}>
-                  <span style={{ fontSize: 15, width: 18, textAlign: 'center' }}>{item.icon}</span>
-                  {item.label}
-                </Link>
-              )
-            })}
-          </div>
-        ))}
+        {['Principal', 'Sistema'].map(section => {
+          const sectionItems = visibleItems.filter(item => item.section === section)
+          if (sectionItems.length === 0) return null
+          return (
+            <div key={section}>
+              <div style={{ fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--muted)', padding: '0 24px', marginBottom: 6, marginTop: 16 }}>{section}</div>
+              {sectionItems.map(item => {
+                const active = pathname === item.href || pathname.startsWith(item.href + '/')
+                return (
+                  <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 24px', fontSize: 13, color: active ? 'var(--gold)' : 'var(--muted)', background: active ? 'var(--gold-glow)' : 'transparent', borderLeft: active ? '2px solid var(--gold)' : '2px solid transparent', textDecoration: 'none', transition: 'all 0.2s' }}>
+                    <span style={{ fontSize: 15, width: 18, textAlign: 'center' }}>{item.icon}</span>
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </div>
+          )
+        })}
       </nav>
 
       <div style={{ padding: '20px 24px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>

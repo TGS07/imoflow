@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from('users')
-    .select('name, avatar_initials')
+    .select('name, avatar_initials, role')
     .eq('id', user.id)
     .single()
 
@@ -19,6 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Sidebar
         userName={profile?.name ?? user.email ?? ''}
         userInitials={profile?.avatar_initials ?? 'XX'}
+        userRole={(profile?.role as 'admin' | 'agent') ?? 'agent'}
       />
       <main style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <header style={{
