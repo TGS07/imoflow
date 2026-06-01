@@ -8,6 +8,12 @@ export async function GET(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
   const { searchParams } = new URL(request.url)
   const stageId = searchParams.get('stage_id')
   const search = searchParams.get('search')
@@ -17,6 +23,7 @@ export async function GET(request: Request) {
     .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), people(id, name, email, phone), organizations(id, name), properties(id, reference, title, price, type)')
     .order('created_at', { ascending: false })
 
+  if (profile?.role === 'agent') query = query.eq('assigned_to', user.id)
   if (stageId) query = query.eq('stage_id', stageId)
   if (search) {
     const term = search.replace(/[%_\\]/g, '\\$&')

@@ -8,8 +8,21 @@ export default async function PipelinePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  let leadsQuery = supabase
+    .from('leads')
+    .select('*, pipeline_stages(id, name, color, position, probability, is_won, is_lost)')
+    .order('created_at', { ascending: false })
+
+  if (profile?.role === 'agent') leadsQuery = leadsQuery.eq('assigned_to', user.id)
+
   const [{ data: leads }, { data: stages }] = await Promise.all([
-    supabase.from('leads').select('*, pipeline_stages(id, name, color, position, probability, is_won, is_lost)').order('created_at', { ascending: false }),
+    leadsQuery,
     supabase.from('pipeline_stages').select('*').order('position', { ascending: true }),
   ])
 
