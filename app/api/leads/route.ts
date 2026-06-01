@@ -8,11 +8,12 @@ export async function GET(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('users')
     .select('role')
     .eq('id', user.id)
     .single()
+  if (profileError || !profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
   const { searchParams } = new URL(request.url)
   const stageId = searchParams.get('stage_id')

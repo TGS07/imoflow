@@ -9,11 +9,20 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabase
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  let leadQuery = supabase
     .from('leads')
     .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), custom_field_values(id, field_id, value_text, value_number, value_date, value_json), people(id, name, email, phone), organizations(id, name), properties(id, reference, title, price, type, status, zone, typology, area_m2)')
     .eq('id', id)
-    .single()
+  if (profile.role === 'agent') leadQuery = leadQuery.eq('assigned_to', user.id)
+
+  const { data, error } = await leadQuery.single()
 
   if (error) {
     const status = error.code === 'PGRST116' ? 404 : 500
@@ -28,19 +37,32 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
   const body = await request.json()
   const { custom_fields: customFieldValues, ...leadData } = body
 
-  const { data: before } = await supabase
+  let beforeQuery = supabase
     .from('leads')
     .select('stage_id, name, assigned_to, agency_id, pipeline_stages(name)')
     .eq('id', id)
-    .single()
+  if (profile.role === 'agent') beforeQuery = beforeQuery.eq('assigned_to', user.id)
 
-  const { data, error } = await supabase
+  const { data: before } = await beforeQuery.single()
+  if (!before) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  let updateQuery = supabase
     .from('leads')
     .update(leadData)
     .eq('id', id)
+  if (profile.role === 'agent') updateQuery = updateQuery.eq('assigned_to', user.id)
+
+  const { data, error } = await updateQuery
     .select('*, pipeline_stages(id, name, color, position, probability, is_won, is_lost)')
     .single()
 

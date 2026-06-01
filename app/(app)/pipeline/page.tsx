@@ -13,6 +13,7 @@ export default async function PipelinePage() {
     .select('role')
     .eq('id', user.id)
     .single()
+  if (!profile) redirect('/login')
 
   let leadsQuery = supabase
     .from('leads')
