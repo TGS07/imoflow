@@ -27,9 +27,17 @@ export async function POST(request: Request) {
     .single()
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
+  const VALID_FIELDS = new Set(['name', 'email', 'phone', 'message', 'zone', 'typology', 'budget'])
+
   const body = await request.json()
   if (!body.name?.trim()) {
     return NextResponse.json({ error: 'name is required' }, { status: 400 })
+  }
+
+  if (body.fields !== undefined) {
+    if (!Array.isArray(body.fields) || !body.fields.every((f: unknown) => typeof f === 'string' && VALID_FIELDS.has(f))) {
+      return NextResponse.json({ error: 'Invalid fields value' }, { status: 400 })
+    }
   }
 
   const { data, error } = await supabase

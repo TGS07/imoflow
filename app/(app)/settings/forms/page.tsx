@@ -9,16 +9,25 @@ export default function FormsPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/forms').then(r => r.json()).then(d => { setForms(d); setLoading(false) })
+    fetch('/api/forms')
+      .then(r => {
+        if (!r.ok) throw new Error('Erro ao carregar formulários')
+        return r.json()
+      })
+      .then(d => { setForms(d); setLoading(false) })
+      .catch(() => { setError('Erro ao carregar formulários.'); setLoading(false) })
   }, [])
 
   async function deleteForm(id: string) {
     if (!confirm('Eliminar este formulário? Esta ação não pode ser desfeita.')) return
     setDeleting(id)
-    await fetch(`/api/forms/${id}`, { method: 'DELETE' })
-    setForms(prev => prev.filter(f => f.id !== id))
+    const res = await fetch(`/api/forms/${id}`, { method: 'DELETE' })
+    if (res.ok || res.status === 404) {
+      setForms(prev => prev.filter(f => f.id !== id))
+    }
     setDeleting(null)
   }
 
@@ -50,6 +59,7 @@ export default function FormsPage() {
         </Link>
       </div>
 
+      {error && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 16 }}>{error}</p>}
       {loading ? (
         <p style={{ fontSize: 13, color: 'var(--muted)' }}>A carregar...</p>
       ) : forms.length === 0 ? (

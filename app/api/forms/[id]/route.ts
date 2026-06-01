@@ -30,11 +30,18 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const VALID_FIELDS = new Set(['name', 'email', 'phone', 'message', 'zone', 'typology', 'budget'])
+
   const body = await request.json()
   const updates: Record<string, unknown> = {}
   if (typeof body.name === 'string') updates.name = body.name.trim()
   if ('description' in body) updates.description = body.description?.trim() || null
-  if (Array.isArray(body.fields)) updates.fields = body.fields
+  if (body.fields !== undefined) {
+    if (!Array.isArray(body.fields) || !body.fields.every((f: unknown) => typeof f === 'string' && VALID_FIELDS.has(f))) {
+      return NextResponse.json({ error: 'Invalid fields value' }, { status: 400 })
+    }
+    updates.fields = body.fields
+  }
   if ('stage_id' in body) updates.stage_id = body.stage_id
   if (typeof body.is_active === 'boolean') updates.is_active = body.is_active
 

@@ -22,7 +22,10 @@ export async function POST(
 ) {
   const { formId } = await params
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+  if (!ip) {
+    return NextResponse.json({ error: 'Pedido inválido.' }, { status: 400 })
+  }
   if (!checkRateLimit(ip)) {
     return NextResponse.json({ error: 'Demasiadas submissões. Tente mais tarde.' }, { status: 429 })
   }
@@ -51,6 +54,18 @@ export async function POST(
   }
   if (!body.email || typeof body.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim())) {
     return NextResponse.json({ error: 'Email inválido.' }, { status: 400 })
+  }
+
+  // Limites de tamanho
+  const MAX_LENGTHS: Record<string, number> = {
+    name: 200, email: 200, phone: 50, zone: 200, typology: 20, message: 2000,
+  }
+
+  for (const [field, maxLen] of Object.entries(MAX_LENGTHS)) {
+    const val = body[field]
+    if (typeof val === 'string' && val.length > maxLen) {
+      return NextResponse.json({ error: `Campo "${field}" demasiado longo.` }, { status: 400 })
+    }
   }
 
   // Resolver stage_id: usar o do form ou o primeiro stage da agência
