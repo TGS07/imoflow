@@ -11,7 +11,7 @@ export async function GET() {
     .select('agency_id')
     .eq('id', user.id)
     .single()
-  if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
   const { data, error } = await supabase
     .from('email_templates')
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     .select('agency_id, role')
     .eq('id', user.id)
     .single()
-  if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   if (profile.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   let body: { name?: string; subject?: string; body?: string }
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   }
 
   if (!body.name?.trim() || !body.subject?.trim() || !body.body?.trim()) {
-    return NextResponse.json({ error: 'name, subject e body são obrigatórios' }, { status: 400 })
+    return NextResponse.json({ error: 'name, subject, and body are required' }, { status: 400 })
   }
 
   const { data, error } = await supabase

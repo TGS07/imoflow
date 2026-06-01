@@ -36,6 +36,10 @@ export async function PATCH(
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
   }
 
+  if (Object.values(updates).some(v => v === '')) {
+    return NextResponse.json({ error: 'Fields cannot be empty' }, { status: 400 })
+  }
+
   const { data, error } = await supabase
     .from('email_templates')
     .update(updates)
