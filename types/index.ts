@@ -169,3 +169,5 @@ export type EmailSent = {
 export type { ActivityType, Activity } from './activity'
 export type { AutomationTriggerType, AutomationActionType, AutomationRule, AutomationLog, AutomationEvent } from './automation'
 export type { ReportPeriod, ReportKpis, ReportFunnelEntry, ReportSourceEntry, ReportTimeEntry, ReportAgentEntry, ReportsData } from './reports'
+export type { WebFormField, WebForm } from './web-form'
+export { WEB_FORM_FIELD_LABELS, OPTIONAL_FORM_FIELDS } from './web-form'
