@@ -15,7 +15,8 @@ export async function PATCH(
     .select('agency_id, role')
     .eq('id', user.id)
     .single()
-  if (!profile || profile.role !== 'admin') {
+  if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (profile.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -62,7 +63,8 @@ export async function DELETE(
     .select('agency_id, role')
     .eq('id', user.id)
     .single()
-  if (!profile || profile.role !== 'admin') {
+  if (!profile) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (profile.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
