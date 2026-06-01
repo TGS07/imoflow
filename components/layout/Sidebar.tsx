@@ -10,6 +10,7 @@ const navItems = [
   { href: '/organizations', icon: '🏢', label: 'Organizações', section: 'Principal' },
   { href: '/properties', icon: '🏠', label: 'Imóveis', section: 'Principal' },
   { href: '/activities', icon: '📅', label: 'Atividades', section: 'Principal' },
+  { href: '/reports', icon: '📊', label: 'Relatórios', section: 'Principal' },
   { href: '/settings/pipeline', icon: '⚙', label: 'Configurações', section: 'Sistema' },
   { href: '/settings/automations', icon: '⚡', label: 'Automações', section: 'Sistema' },
 ]
