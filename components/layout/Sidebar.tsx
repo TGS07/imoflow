@@ -13,6 +13,7 @@ const navItems = [
   { href: '/reports', icon: '📊', label: 'Relatórios', section: 'Principal' },
   { href: '/settings/pipeline', icon: '⚙', label: 'Configurações', section: 'Sistema' },
   { href: '/settings/automations', icon: '⚡', label: 'Automações', section: 'Sistema' },
+  { href: '/settings/forms', icon: '📋', label: 'Formulários', section: 'Sistema' },
 ]
 
 type Props = {
