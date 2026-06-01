@@ -22,10 +22,11 @@ export async function POST(request: Request) {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('agency_id')
+    .select('agency_id, role')
     .eq('id', user.id)
     .single()
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+  if (profile.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const VALID_FIELDS = new Set(['name', 'email', 'phone', 'message', 'zone', 'typology', 'budget'])
 
