@@ -1,5 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+type EmailTemplate = {
+  id: string
+  name: string
+  subject: string
+  body: string
+}
 
 type Props = {
   leadId: string
@@ -14,6 +21,25 @@ export function SendEmailModal({ leadId, leadEmail, onClose, onSent }: Props) {
   const [body, setBody] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState('')
+
+  useEffect(() => {
+    fetch('/api/email-templates')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: EmailTemplate[]) => setTemplates(data))
+      .catch(() => {})
+  }, [])
+
+  function handleTemplateSelect(templateId: string) {
+    setSelectedTemplate(templateId)
+    if (!templateId) return
+    const tpl = templates.find(t => t.id === templateId)
+    if (tpl) {
+      setSubject(tpl.subject)
+      setBody(tpl.body)
+    }
+  }
 
   const inputStyle = { width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
   const labelStyle = { fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--muted)', display: 'block', marginBottom: 5 }
@@ -45,6 +71,21 @@ export function SendEmailModal({ leadId, leadEmail, onClose, onSent }: Props) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
         </div>
         <form onSubmit={handleSend} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {templates.length > 0 && (
+            <div>
+              <label style={labelStyle}>Usar template</label>
+              <select
+                value={selectedTemplate}
+                onChange={e => handleTemplateSelect(e.target.value)}
+                style={{ ...inputStyle, cursor: 'pointer' }}
+              >
+                <option value="">— Nenhum —</option>
+                {templates.map(tpl => (
+                  <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div><label style={labelStyle}>Para</label><input type="email" style={inputStyle} value={to} onChange={e => setTo(e.target.value)} required /></div>
           <div><label style={labelStyle}>Assunto</label><input style={inputStyle} value={subject} onChange={e => setSubject(e.target.value)} required /></div>
           <div>
