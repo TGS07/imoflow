@@ -43,15 +43,21 @@ export default function ReportsPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const controller = new AbortController()
     setLoading(true)
     setError(null)
-    fetch(`/api/reports?period=${period}`)
+    fetch(`/api/reports?period=${period}`, { signal: controller.signal })
       .then(r => {
         if (!r.ok) throw new Error('Erro ao carregar relatórios')
         return r.json()
       })
       .then((json: ReportsData) => { setData(json); setLoading(false) })
-      .catch((err: Error) => { setError(err.message); setLoading(false) })
+      .catch((err: Error) => {
+        if (err.name === 'AbortError') return  // ignorar cancellation
+        setError(err.message)
+        setLoading(false)
+      })
+    return () => controller.abort()
   }, [period])
 
   const cardStyle: React.CSSProperties = {
@@ -110,7 +116,7 @@ export default function ReportsPage() {
             </div>
             <div style={cardStyle}>
               <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Valor em Pipeline</p>
-              <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)' }}>{formatCurrency(kpis?.pipeline_value ?? 0)}</p>
+              <p title="Inclui leads ativas e ganhas, exclui perdidas" style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)' }}>{formatCurrency(kpis?.pipeline_value ?? 0)}</p>
             </div>
             <div style={cardStyle}>
               <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 }}>Leads Ganhas</p>
