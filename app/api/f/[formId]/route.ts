@@ -63,10 +63,14 @@ export async function POST(
       .order('position', { ascending: true })
       .limit(1)
       .single()
-    stageId = firstStage?.id ?? null
+    if (!firstStage) {
+      console.error('[web-form] agency has no pipeline stages', { agencyId: form.agency_id })
+      return NextResponse.json({ error: 'Formulário temporariamente indisponível.' }, { status: 500 })
+    }
+    stageId = firstStage.id
   }
 
-  const fields = form.fields as string[]
+  const fields: string[] = Array.isArray(form.fields) ? (form.fields as string[]) : []
 
   const leadData: Record<string, unknown> = {
     agency_id: form.agency_id,
@@ -79,7 +83,13 @@ export async function POST(
   if (fields.includes('phone') && body.phone) leadData.phone = String(body.phone).trim()
   if (fields.includes('zone') && body.zone) leadData.zone = String(body.zone).trim()
   if (fields.includes('typology') && body.typology) leadData.typology = String(body.typology)
-  if (fields.includes('budget') && body.budget) leadData.budget = Number(body.budget)
+  if (fields.includes('budget') && body.budget) {
+    const budgetNum = Number(body.budget)
+    if (isNaN(budgetNum)) {
+      return NextResponse.json({ error: 'Orçamento deve ser um número.' }, { status: 400 })
+    }
+    leadData.budget = budgetNum
+  }
   if (fields.includes('message') && body.message) leadData.notes = String(body.message).trim()
 
   const { error: insertError } = await supabase.from('leads').insert(leadData)
