@@ -29,16 +29,21 @@ export default function NewMemberPage() {
     }
     setSaving(true)
     setError(null)
-    const res = await fetch('/api/team', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), email: email.trim(), password, role }),
-    })
-    if (res.ok) {
-      router.push('/settings/team')
-    } else {
-      const data = await res.json()
-      setError(data.error ?? 'Erro ao criar membro.')
+    try {
+      const res = await fetch('/api/team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), password, role }),
+      })
+      if (res.ok) {
+        router.push('/settings/team')
+      } else {
+        const data = await res.json()
+        setError(data.error ?? 'Erro ao criar membro.')
+      }
+    } catch {
+      setError('Erro de rede. Verifica a tua ligação.')
+    } finally {
       setSaving(false)
     }
   }

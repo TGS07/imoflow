@@ -46,6 +46,8 @@ export default function TeamPage() {
     })
     if (res.ok) {
       setMembers(prev => prev.map(m => m.id === id ? { ...m, role } : m))
+    } else {
+      setError('Erro ao actualizar role. Tenta novamente.')
     }
     setUpdatingRole(null)
   }
@@ -58,10 +60,6 @@ export default function TeamPage() {
 
   async function confirmRemove() {
     if (!removeTarget) return
-    if (removeTarget.lead_count > 0 && !reassignTo) {
-      setRemoveError('Selecciona um membro para reatribuir os leads.')
-      return
-    }
     setRemoving(true)
     setRemoveError(null)
     const res = await fetch(`/api/team/${removeTarget.id}`, {
@@ -152,31 +150,33 @@ export default function TeamPage() {
 
       {/* Remove modal */}
       {removeTarget && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}
+          onKeyDown={e => { if (e.key === 'Escape') setRemoveTarget(null) }}
+          tabIndex={-1}
+        >
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '28px 32px', maxWidth: 420, width: '100%' }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Remover membro</h2>
             <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20 }}>
               Tens a certeza que queres remover <strong style={{ color: 'var(--text)' }}>{removeTarget.name}</strong>? Esta acção não pode ser desfeita.
             </p>
 
-            {removeTarget.lead_count > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <label htmlFor="reassign-select" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>
-                  Reatribuir {removeTarget.lead_count} lead{removeTarget.lead_count !== 1 ? 's' : ''} para:
-                </label>
-                <select
-                  id="reassign-select"
-                  value={reassignTo}
-                  onChange={e => setReassignTo(e.target.value)}
-                  style={{ ...inputStyle, width: '100%' }}
-                >
-                  <option value="">— Selecciona um membro —</option>
-                  {otherMembers.map(m => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div style={{ marginBottom: 20 }}>
+              <label htmlFor="reassign-select" style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>
+                Reatribuir leads para {removeTarget.lead_count > 0 ? `(${removeTarget.lead_count} leads)` : '(opcional)'}:
+              </label>
+              <select
+                id="reassign-select"
+                value={reassignTo}
+                onChange={e => setReassignTo(e.target.value)}
+                style={{ ...inputStyle, width: '100%' }}
+              >
+                <option value="">— Sem reatribuição —</option>
+                {otherMembers.map(m => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+            </div>
 
             {removeError && <p style={{ color: '#EF4444', fontSize: 12, marginBottom: 12 }}>{removeError}</p>}
 
