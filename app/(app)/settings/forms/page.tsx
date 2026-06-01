@@ -1,12 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import type { WebForm } from '@/types'
-
-const FIELD_LABELS: Record<string, string> = {
-  name: 'Nome', email: 'Email', phone: 'Telefone',
-  message: 'Mensagem', zone: 'Zona', typology: 'Tipologia', budget: 'Orçamento',
-}
+import type { WebForm, WebFormField } from '@/types'
+import { WEB_FORM_FIELD_LABELS } from '@/types/web-form'
 
 export default function FormsPage() {
   const [forms, setForms] = useState<WebForm[]>([])
@@ -68,7 +64,7 @@ export default function FormsPage() {
                   <span style={badgeStyle(form.is_active)}>{form.is_active ? 'Activo' : 'Inactivo'}</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                  Campos: {form.fields.map(f => FIELD_LABELS[f] ?? f).join(', ')}
+                  Campos: {form.fields.map(f => WEB_FORM_FIELD_LABELS[f as WebFormField] ?? f).join(', ')}
                 </div>
                 {form.pipeline_stages && (
                   <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
