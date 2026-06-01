@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import type { ReportsData, ReportPeriod } from '@/types'
+import type { ReportsData, ReportPeriod, LeadSource } from '@/types'
 
 function getCutoff(period: ReportPeriod): string {
   const now = new Date()
@@ -20,7 +20,6 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
 
-  // Fix 1: Validate period param
   const VALID_PERIODS: ReportPeriod[] = ['30d', '90d', '6m', '1y']
   const rawPeriod = searchParams.get('period') ?? '30d'
   if (!VALID_PERIODS.includes(rawPeriod as ReportPeriod)) {
@@ -30,7 +29,7 @@ export async function GET(request: Request) {
 
   const cutoff = getCutoff(period)
 
-  // Fix 3: Wrap in try/catch
+  // Isolamento de agência garantido via RLS (get_my_agency_id()) nas policies do Supabase
   try {
     const [
       leadsResult,
@@ -39,13 +38,12 @@ export async function GET(request: Request) {
       timeResult,
       agentResult,
     ] = await Promise.all([
-      // Fix 4: Add stage_id to leads query so funnel can be computed in memory
       supabase
         .from('leads')
         .select('id, stage_id, deal_value, pipeline_stages(is_won, is_lost)')
         .gte('created_at', cutoff),
 
-      // Fix 4: Fetch only stages (no leads sub-relation) — count in memory using period-filtered leads
+      // Fetch stages separately; lead counts are computed in memory from period-filtered leads
       supabase
         .from('pipeline_stages')
         .select('id, name, position')
@@ -69,7 +67,6 @@ export async function GET(request: Request) {
         .not('assigned_to', 'is', null),
     ])
 
-    // Fix 3: Check errors from all queries
     if (leadsResult.error) throw leadsResult.error
     if (funnelResult.error) throw funnelResult.error
     if (sourceResult.error) throw sourceResult.error
@@ -94,11 +91,11 @@ export async function GET(request: Request) {
       return sum + (Number(l.deal_value) || 0)
     }, 0)
 
-    // Fix 2: avg_close_days reserved for future implementation
+    // avg_close_days reserved for future implementation
     // (requires won_at field on leads table, not yet in schema)
     const avgCloseDays: number | null = null
 
-    // Fix 4: Compute funnel in memory using period-filtered leads
+    // Compute funnel in memory using period-filtered leads
     const stageCountMap = new Map<string, number>()
     for (const lead of leads) {
       const stageId = (lead as unknown as { stage_id: string }).stage_id
@@ -113,16 +110,19 @@ export async function GET(request: Request) {
     }))
 
     // Por fonte
-    const sourceCounts = new Map<string, number>()
+    const VALID_SOURCES = new Set<string>(['site', 'instagram', 'facebook', 'referencia', 'outro'])
+    const sourceCounts = new Map<LeadSource, number>()
     for (const lead of (sourceResult.data ?? [])) {
-      const src = (lead.source as string) ?? 'outro'
+      const src: LeadSource = VALID_SOURCES.has(lead.source as string)
+        ? lead.source as LeadSource
+        : 'outro' as LeadSource
       sourceCounts.set(src, (sourceCounts.get(src) ?? 0) + 1)
     }
-    const by_source = [...sourceCounts.entries()]
+    const by_source: ReportsData['by_source'] = [...sourceCounts.entries()]
       .map(([source, count]) => ({ source, count }))
       .sort((a, b) => b.count - a.count)
 
-    // Ao longo do tempo por semana — Fix 5: use UTC methods
+    // Ao longo do tempo por semana (agrupado por início de semana em UTC)
     const weekCounts = new Map<string, number>()
     for (const lead of (timeResult.data ?? [])) {
       const d = new Date(lead.created_at)
@@ -138,6 +138,8 @@ export async function GET(request: Request) {
       .map(([week_start, count]) => ({ week_start, count }))
 
     // Por agente
+    // won_count: leads criados no período cujo stage atual é is_won.
+    // Nota: não equivale a "fechados no período" pois não existe campo won_at no schema.
     const agentMap = new Map<string, { name: string; count: number }>()
     for (const lead of (agentResult.data ?? [])) {
       const ps = lead.pipeline_stages as unknown as { is_won: boolean } | null
@@ -164,7 +166,7 @@ export async function GET(request: Request) {
         avg_close_days: avgCloseDays,
       },
       funnel,
-      by_source: by_source as unknown as ReportsData['by_source'],
+      by_source,
       over_time,
       by_agent,
     }
