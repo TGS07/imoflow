@@ -72,13 +72,14 @@ export async function DELETE(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { error } = await supabase
+  const { data: deleted, error } = await supabase
     .from('email_templates')
     .delete()
     .eq('id', id)
     .eq('agency_id', profile.agency_id)
+    .select('id')
 
-  if (error?.code === 'PGRST116') return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!deleted || deleted.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return new Response(null, { status: 204 })
 }
