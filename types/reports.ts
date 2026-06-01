@@ -1,6 +1,8 @@
+import type { LeadSource } from './index'
+
 export type ReportPeriod = '30d' | '90d' | '6m' | '1y'
 
-export type ReportsKpis = {
+export type ReportKpis = {
   total_leads: number
   won_leads: number
   conversion_rate: number  // percentagem 0-100, arredondada a 1 decimal
@@ -8,33 +10,33 @@ export type ReportsKpis = {
   avg_close_days: number | null
 }
 
-export type FunnelItem = {
+export type ReportFunnelEntry = {
   stage_id: string
   name: string
   position: number
   count: number
 }
 
-export type SourceItem = {
-  source: string
+export type ReportSourceEntry = {
+  source: LeadSource
   count: number
 }
 
-export type TimeItem = {
-  week: string  // ISO date string da segunda-feira da semana
+export type ReportTimeEntry = {
+  week_start: string  // ISO date string da segunda-feira da semana
   count: number
 }
 
-export type AgentItem = {
+export type ReportAgentEntry = {
   user_id: string
   name: string
   won_count: number
 }
 
 export type ReportsData = {
-  kpis: ReportsKpis
-  funnel: FunnelItem[]
-  by_source: SourceItem[]
-  over_time: TimeItem[]
-  by_agent: AgentItem[]
+  kpis: ReportKpis
+  funnel: ReportFunnelEntry[]
+  by_source: ReportSourceEntry[]
+  over_time: ReportTimeEntry[]
+  by_agent: ReportAgentEntry[]
 }
