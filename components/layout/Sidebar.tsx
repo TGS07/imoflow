@@ -14,6 +14,7 @@ const navItems = [
   { href: '/settings/pipeline', icon: '⚙', label: 'Configurações', section: 'Sistema' },
   { href: '/settings/automations', icon: '⚡', label: 'Automações', section: 'Sistema' },
   { href: '/settings/forms', icon: '📋', label: 'Formulários', section: 'Sistema' },
+  { href: '/settings/templates', icon: '✉', label: 'Templates Email', section: 'Sistema' },
   { href: '/settings/team', icon: '👥', label: 'Equipa', section: 'Sistema' },
 ]
 
