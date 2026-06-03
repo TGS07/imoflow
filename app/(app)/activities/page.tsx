@@ -113,8 +113,8 @@ export default function ActivitiesPage() {
           type: form.type,
           title: form.title,
           description: form.description || null,
-          due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
-          end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
+          due_date: form.due_date || null,
+          end_date: form.end_date || null,
           lead_id: form.lead_id || null,
         })
       })
@@ -192,10 +192,12 @@ export default function ActivitiesPage() {
   }
 
   function getActivitiesForDay(date: Date): Activity[] {
-    const dayStr = date.toISOString().split('T')[0]
+    const dayStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
     return activities.filter(a => {
       if (!a.due_date) return false
-      return a.due_date.split('T')[0] === dayStr
+      const d = new Date(a.due_date)
+      const aStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      return aStr === dayStr
     })
   }
 

@@ -73,7 +73,7 @@ export default function LeadPage() {
         type: newActivity.type,
         title: newActivity.title,
         description: newActivity.description || null,
-        due_date: newActivity.due_date ? new Date(newActivity.due_date).toISOString() : null,
+        due_date: newActivity.due_date || null,
       })
     })
     setNewActivity({ type: 'nota', title: '', description: '', due_date: '' })
