@@ -46,3 +46,8 @@ CREATE POLICY "agencies: admin update own" ON public.agencies
   FOR UPDATE TO authenticated
   USING (id = public.get_my_agency_id())
   WITH CHECK (id = public.get_my_agency_id());
+
+-- Atividades passam a suportar o tipo 'whatsapp'
+ALTER TABLE public.activities DROP CONSTRAINT activities_type_check;
+ALTER TABLE public.activities ADD CONSTRAINT activities_type_check
+  CHECK (type IN ('chamada','visita','email','reuniao','tarefa','nota','whatsapp'));

@@ -10,6 +10,7 @@ const ACTIVITY_COLORS: Record<ActivityType, string> = {
   reuniao: '#10B981',
   tarefa: '#EF4444',
   nota: '#6B7280',
+  whatsapp: '#25D366',
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, string> = {
@@ -19,6 +20,7 @@ const ACTIVITY_ICONS: Record<ActivityType, string> = {
   reuniao: '🤝',
   tarefa: '✓',
   nota: '📝',
+  whatsapp: '💬',
 }
 
 const ACTIVITY_LABELS: Record<ActivityType, string> = {
@@ -28,6 +30,7 @@ const ACTIVITY_LABELS: Record<ActivityType, string> = {
   reuniao: 'Reunião',
   tarefa: 'Tarefa',
   nota: 'Nota',
+  whatsapp: 'WhatsApp',
 }
 
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']

@@ -1,4 +1,4 @@
-export type ActivityType = 'chamada' | 'visita' | 'email' | 'reuniao' | 'tarefa' | 'nota'
+export type ActivityType = 'chamada' | 'visita' | 'email' | 'reuniao' | 'tarefa' | 'nota' | 'whatsapp'
 
 export type Activity = {
   id: string
