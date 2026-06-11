@@ -44,14 +44,21 @@ export async function triggerAutomations(event: AutomationEvent, client?: Supaba
 
   // 4. Executar cada regra
   for (const rule of matchingRules) {
-    // Deduplicação: não executar a mesma regra para o mesmo lead mais de uma vez por hora
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    // Deduplicação: regras normais não repetem na mesma hora; regras de
+    // inatividade não repetem dentro do próprio período de inatividade
+    // (senão o cron diário enviava follow-ups todos os dias à mesma lead).
+    let dedupWindowMs = 60 * 60 * 1000
+    if (rule.trigger_type === 'lead_inactive') {
+      const days = Number((rule.trigger_config as Record<string, unknown>).inactive_days ?? 1)
+      dedupWindowMs = Math.max(days, 1) * 24 * 60 * 60 * 1000
+    }
+    const dedupCutoff = new Date(Date.now() - dedupWindowMs).toISOString()
     const { data: recentLog } = await supabase
       .from('automation_logs')
       .select('id')
       .eq('rule_id', rule.id)
       .eq('lead_id', event.leadId)
-      .gte('triggered_at', oneHourAgo)
+      .gte('triggered_at', dedupCutoff)
       .limit(1)
       .maybeSingle()
 
