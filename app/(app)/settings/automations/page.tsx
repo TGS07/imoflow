@@ -38,7 +38,7 @@ export default function AutomationsPage() {
       .finally(() => setLoading(false))
     fetch('/api/agency')
       .then(r => r.ok ? r.json() : {})
-      .then(d => setWhatsappConfigured(Boolean(d.whatsapp_configured)))
+      .then((d: { whatsapp_configured?: boolean }) => setWhatsappConfigured(Boolean(d.whatsapp_configured)))
       .catch(() => {})
   }, [])
 
