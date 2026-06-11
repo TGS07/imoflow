@@ -4,6 +4,8 @@ export type Agency = {
   email: string
   logo_url: string | null
   plan: 'free' | 'pro'
+  email_from_name: string | null
+  email_reply_to: string | null
   created_at: string
 }
 
@@ -138,7 +140,7 @@ export type Contact = {
   id: string
   lead_id: string
   user_id: string | null
-  type: 'chamada' | 'visita' | 'email' | 'nota'
+  type: 'chamada' | 'visita' | 'email' | 'whatsapp' | 'nota'
   title: string
   description: string | null
   note: string | null
@@ -170,4 +172,5 @@ export type { ActivityType, Activity } from './activity'
 export type { AutomationTriggerType, AutomationActionType, AutomationRule, AutomationLog, AutomationEvent } from './automation'
 export type { ReportPeriod, ReportKpis, ReportFunnelEntry, ReportSourceEntry, ReportTimeEntry, ReportAgentEntry, ReportsData } from './reports'
 export type { WebFormField, WebForm } from './web-form'
+export type { WhatsAppTemplate, WhatsAppMessage } from './whatsapp'
 export { WEB_FORM_FIELD_LABELS, OPTIONAL_FORM_FIELDS } from './web-form'
