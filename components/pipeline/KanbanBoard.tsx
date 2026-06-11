@@ -16,7 +16,8 @@ function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <div
         onClick={() => router.push(`/leads/${lead.id}`)}
-        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px', cursor: 'grab', marginBottom: 8 }}
+        className="card card-hover"
+        style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 14px', cursor: 'grab', marginBottom: 8, boxShadow: isDragging ? 'var(--shadow-md)' : undefined }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
           <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#0D0D0F', flexShrink: 0 }}>
@@ -114,7 +115,7 @@ export function KanbanBoard({ initialLeads, stages }: Props) {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '4px 0', minHeight: 'calc(100vh - 140px)' }}>
+      <div className="stagger" style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '4px 0', minHeight: 'calc(100vh - 140px)' }}>
         {visibleStages.map(stage => {
           const stageLeads = getStageLeads(stage.id)
           const columnTotal = getColumnTotal(stage.id)
