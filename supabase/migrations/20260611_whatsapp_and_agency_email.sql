@@ -1,0 +1,61 @@
+-- Remetente de email por agência
+ALTER TABLE public.agencies
+  ADD COLUMN email_from_name TEXT,
+  ADD COLUMN email_reply_to TEXT;
+
+-- Templates WhatsApp (espelha email_templates, sem subject)
+CREATE TABLE public.whatsapp_templates (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id  UUID        NOT NULL REFERENCES public.agencies(id) ON DELETE CASCADE,
+  name       TEXT        NOT NULL,
+  body       TEXT        NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX whatsapp_templates_agency_idx ON public.whatsapp_templates(agency_id);
+
+ALTER TABLE public.whatsapp_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "whatsapp_templates: own agency" ON public.whatsapp_templates
+  FOR ALL TO authenticated
+  USING (agency_id = public.get_my_agency_id())
+  WITH CHECK (agency_id = public.get_my_agency_id());
+
+-- Mensagens WhatsApp (Business API; inbound + outbound)
+CREATE TABLE public.whatsapp_messages (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id     UUID        REFERENCES public.agencies(id) ON DELETE CASCADE,
+  lead_id       UUID        REFERENCES public.leads(id) ON DELETE CASCADE,
+  direction     TEXT        NOT NULL CHECK (direction IN ('inbound','outbound')),
+  phone         TEXT        NOT NULL,
+  body          TEXT        NOT NULL,
+  wa_message_id TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX whatsapp_messages_lead_idx ON public.whatsapp_messages(lead_id);
+
+ALTER TABLE public.whatsapp_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "whatsapp_messages: own agency" ON public.whatsapp_messages
+  FOR ALL TO authenticated
+  USING (agency_id = public.get_my_agency_id());
+
+-- Admins podem atualizar a própria agência (remetente de email)
+CREATE POLICY "agencies: admin update own" ON public.agencies
+  FOR UPDATE TO authenticated
+  USING (id = public.get_my_agency_id())
+  WITH CHECK (id = public.get_my_agency_id());
+
+-- Atividades passam a suportar o tipo 'whatsapp'
+ALTER TABLE public.activities DROP CONSTRAINT activities_type_check;
+ALTER TABLE public.activities ADD CONSTRAINT activities_type_check
+  CHECK (type IN ('chamada','visita','email','reuniao','tarefa','nota','whatsapp'));
+
+-- Regras de automação passam a suportar os novos triggers/ações
+ALTER TABLE public.automation_rules DROP CONSTRAINT automation_rules_trigger_type_check;
+ALTER TABLE public.automation_rules ADD CONSTRAINT automation_rules_trigger_type_check
+  CHECK (trigger_type IN ('stage_changed', 'lead_created', 'activity_completed', 'lead_inactive', 'whatsapp_message_received'));
+ALTER TABLE public.automation_rules DROP CONSTRAINT automation_rules_action_type_check;
+ALTER TABLE public.automation_rules ADD CONSTRAINT automation_rules_action_type_check
+  CHECK (action_type IN ('create_activity', 'send_notification', 'move_stage', 'send_email', 'send_whatsapp'));

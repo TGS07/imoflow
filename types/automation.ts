@@ -3,11 +3,14 @@ export type AutomationTriggerType =
   | 'lead_created'
   | 'activity_completed'
   | 'lead_inactive'
+  | 'whatsapp_message_received'
 
 export type AutomationActionType =
   | 'create_activity'
   | 'send_notification'
   | 'move_stage'
+  | 'send_email'
+  | 'send_whatsapp'
 
 export type AutomationRule = {
   id: string
@@ -45,5 +48,6 @@ export type AutomationEvent = {
     pipelineId?: string
     activityId?: string
     inactiveDays?: number
+    messageBody?: string
   }
 }

@@ -4,6 +4,8 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Lead, PipelineStage, Activity, ActivityType } from '@/types'
 import { SendEmailModal } from '@/components/leads/SendEmailModal'
+import { WhatsAppModal } from '@/components/leads/WhatsAppModal'
+import { Icon } from '@/components/ui/Icon'
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
   chamada: '#3B82F6',
@@ -12,6 +14,7 @@ const ACTIVITY_COLORS: Record<ActivityType, string> = {
   reuniao: '#10B981',
   tarefa: '#EF4444',
   nota: '#6B7280',
+  whatsapp: '#25D366',
 }
 
 const ACTIVITY_ICONS: Record<ActivityType, string> = {
@@ -21,6 +24,7 @@ const ACTIVITY_ICONS: Record<ActivityType, string> = {
   reuniao: '🤝',
   tarefa: '✓',
   nota: '📝',
+  whatsapp: '💬',
 }
 
 const ACTIVITY_LABELS: Record<ActivityType, string> = {
@@ -30,6 +34,7 @@ const ACTIVITY_LABELS: Record<ActivityType, string> = {
   reuniao: 'Reunião',
   tarefa: 'Tarefa',
   nota: 'Nota',
+  whatsapp: 'WhatsApp',
 }
 
 export default function LeadPage() {
@@ -39,6 +44,7 @@ export default function LeadPage() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [showEmail, setShowEmail] = useState(false)
+  const [showWhatsApp, setShowWhatsApp] = useState(false)
   const [activityFilter, setActivityFilter] = useState<ActivityType | ''>('')
   const [newActivity, setNewActivity] = useState({ type: 'nota' as ActivityType, title: '', description: '', due_date: '' })
 
@@ -110,6 +116,17 @@ export default function LeadPage() {
   return (
     <>
       {showEmail && <SendEmailModal leadId={id} leadEmail={lead.email} onClose={() => setShowEmail(false)} onSent={fetchAll} />}
+      {showWhatsApp && lead.phone && (
+        <WhatsAppModal
+          leadId={id}
+          leadName={lead.name}
+          leadPhone={lead.phone}
+          leadEmail={lead.email}
+          agentName={lead.users?.name}
+          onClose={() => setShowWhatsApp(false)}
+          onSent={fetchAll}
+        />
+      )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--muted)' }}>
@@ -118,8 +135,17 @@ export default function LeadPage() {
           <span style={{ color: 'var(--text)', fontWeight: 500 }}>{lead.name}</span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => setShowEmail(true)} style={{ ...inputStyle, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>✉ Enviar Email</button>
-          <button onClick={archiveLead} style={{ ...inputStyle, background: 'rgba(224,92,92,0.1)', color: 'var(--red)', borderColor: 'rgba(224,92,92,0.25)', cursor: 'pointer' }}>✕ Arquivar</button>
+          {lead.phone && (
+            <button onClick={() => setShowWhatsApp(true)} className="btn btn-whatsapp" style={{ padding: '8px 14px', fontSize: 12 }}>
+              <Icon name="whatsapp" size={14} /> WhatsApp
+            </button>
+          )}
+          <button onClick={() => setShowEmail(true)} className="btn btn-ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
+            <Icon name="mail" size={14} /> Enviar Email
+          </button>
+          <button onClick={archiveLead} className="btn btn-danger" style={{ padding: '8px 14px', fontSize: 12 }}>
+            <Icon name="close" size={13} /> Arquivar
+          </button>
         </div>
       </div>
 

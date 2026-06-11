@@ -55,22 +55,24 @@ export default function LeadsPage() {
           <h1 className="font-display" style={{ fontSize: 20 }}>Leads</h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{leads.length} leads</p>
         </div>
-        <button onClick={() => setShowModal(true)} style={{ background: 'var(--gold)', color: '#0D0D0F', border: 'none', borderRadius: 8, padding: '0 16px', height: 36, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+        <button onClick={() => setShowModal(true)} className="btn btn-primary">
           + Novo Lead
         </button>
       </div>
 
-      <div style={{ padding: '20px 32px', display: 'flex', gap: 10 }}>
+      <div className="page-enter" style={{ padding: '20px 32px', display: 'flex', gap: 10 }}>
         <input
           placeholder="Pesquisar por nome, email ou telefone..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ flex: 1, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }}
+          className="input"
+          style={{ flex: 1, background: 'var(--card)' }}
         />
         <select
           value={stageFilter}
           onChange={e => setStageFilter(e.target.value)}
-          style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }}
+          className="input"
+          style={{ width: 'auto', background: 'var(--card)' }}
         >
           <option value="">Todas as fases</option>
           {stages.filter(s => !s.is_lost).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -78,7 +80,7 @@ export default function LeadsPage() {
       </div>
 
       <div style={{ padding: '0 32px 32px' }}>
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        <div className="card" style={{ overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
@@ -88,16 +90,20 @@ export default function LeadsPage() {
               </tr>
             </thead>
             <tbody>
-              {loading && (
-                <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>A carregar...</td></tr>
-              )}
+              {loading && [0, 1, 2, 3].map(i => (
+                <tr key={i}>
+                  <td colSpan={7} style={{ padding: '8px 20px' }}>
+                    <div className="skeleton" style={{ height: 34 }} />
+                  </td>
+                </tr>
+              ))}
               {!loading && leads.length === 0 && (
                 <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Nenhum lead encontrado.</td></tr>
               )}
               {leads.map(lead => {
                 const stageInfo = getStageInfo(lead)
                 return (
-                  <tr key={lead.id} onClick={() => router.push(`/leads/${lead.id}`)} style={{ cursor: 'pointer' }}>
+                  <tr key={lead.id} onClick={() => router.push(`/leads/${lead.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
                     <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{lead.name}</td>
                     <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{lead.phone ?? lead.email ?? '—'}</td>
                     <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{[lead.typology, lead.zone].filter(Boolean).join(' · ') || '—'}</td>

@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { resend } from '@/lib/resend'
 
@@ -17,9 +18,9 @@ interface CreateNotificationParams {
   link?: string
 }
 
-export async function createNotification(params: CreateNotificationParams): Promise<void> {
+export async function createNotification(params: CreateNotificationParams, client?: SupabaseClient): Promise<void> {
   const { userId, agencyId, type, title, body, link } = params
-  const supabase = await createClient()
+  const supabase = client ?? await createClient()
 
   // 1. Inserir notificação
   const { error: insertError } = await supabase

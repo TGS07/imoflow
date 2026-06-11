@@ -79,22 +79,22 @@ export default async function DashboardPage() {
           <h1 className="font-display" style={{ fontSize: 20, fontWeight: 500 }}>{greeting}, {firstName}</h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{activeLeads} leads ativos</p>
         </div>
-        <Link href="/leads" style={{ background: 'var(--gold)', color: '#0D0D0F', border: 'none', borderRadius: 8, padding: '0 16px', height: 36, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <Link href="/leads" className="btn btn-primary" style={{ textDecoration: 'none' }}>
           + Novo Lead
         </Link>
       </div>
 
-      <div style={{ padding: '28px 32px', flex: 1 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
-          <StatCard label="Leads Ativos" value={activeLeads} icon="◎" />
-          <StatCard label="Pipeline Total" value={formatValue(pipelineTotal)} icon="€" />
-          <StatCard label="Pipeline Ponderado" value={formatValue(pipelineWeighted)} icon="◈" />
-          <StatCard label="Fechados (mes)" value={closedThisMonth} icon="✓" />
-          <StatCard label="Atividades Pendentes" value={pendingCount ?? 0} icon="📅" />
+      <div className="page-enter" style={{ padding: '28px 32px', flex: 1 }}>
+        <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
+          <StatCard label="Leads Ativos" value={activeLeads} icon="leads" />
+          <StatCard label="Pipeline Total" value={formatValue(pipelineTotal)} icon="chart" />
+          <StatCard label="Pipeline Ponderado" value={formatValue(pipelineWeighted)} icon="pipeline" />
+          <StatCard label="Fechados (mes)" value={closedThisMonth} icon="check" />
+          <StatCard label="Atividades Pendentes" value={pendingCount ?? 0} icon="calendar" />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 22 }}>
+          <div className="card" style={{ padding: 22 }}>
             <div className="font-display" style={{ fontSize: 15, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               Pipeline de Vendas
               <Link href="/pipeline" style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: 'var(--gold)', fontWeight: 500, textDecoration: 'none' }}>Ver tudo →</Link>
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
                 const color = leadStage?.color ?? '#666'
                 const label = leadStage?.name ?? '—'
                 return (
-                  <Link key={lead.id} href={`/leads/${lead.id}`} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, textDecoration: 'none' }}>
+                  <Link key={lead.id} href={`/leads/${lead.id}`} className="table-row" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, textDecoration: 'none' }}>
                     <div style={{ width: 30, height: 30, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#0D0D0F' }}>
                       {lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
                     </div>
@@ -143,7 +143,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 22 }}>
+          <div className="card" style={{ padding: 22 }}>
             <div className="font-display" style={{ fontSize: 15, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               Atividades de Hoje
               <Link href="/activities" style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: 'var(--gold)', fontWeight: 500, textDecoration: 'none' }}>Ver tudo →</Link>

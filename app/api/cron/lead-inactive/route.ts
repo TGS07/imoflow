@@ -1,16 +1,26 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { NextResponse } from 'next/server'
 import { triggerAutomations } from '@/lib/automations/engine'
 
-// Este endpoint é chamado diariamente (ex: via Vercel Cron, GitHub Actions, etc.)
-// Proteger com secret header para evitar chamadas não autorizadas
+// Este endpoint é chamado diariamente via Vercel Cron (GET, ver vercel.json).
+// Proteger com secret header para evitar chamadas não autorizadas.
+// Usa o service client: em contexto de cron não há sessão, e com o client
+// normal o RLS bloqueava todas as queries silenciosamente.
+export async function GET(request: Request) {
+  return handleCron(request)
+}
+
 export async function POST(request: Request) {
+  return handleCron(request)
+}
+
+async function handleCron(request: Request) {
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   // Buscar regras de inatividade activas para saber os thresholds
   const { data: inactivityRules } = await supabase
@@ -80,7 +90,7 @@ export async function POST(request: Request) {
         userId: lead.assigned_to,
         agencyId: lead.agency_id,
         meta: { inactiveDays: days },
-      })
+      }, supabase)
 
       processed++
     }
