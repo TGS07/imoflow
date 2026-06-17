@@ -7,6 +7,19 @@ import { SendEmailModal } from '@/components/leads/SendEmailModal'
 import { WhatsAppModal } from '@/components/leads/WhatsAppModal'
 import { Icon } from '@/components/ui/Icon'
 
+const EXTRAS_SUGERIDOS = ['vista mar', 'garagem', 'piscina', 'jardim', 'varanda', 'elevador', 'ar condicionado', 'lareira']
+const TIPOLOGIAS = ['T0', 'T1', 'T2', 'T3', 'T4', 'T5+']
+
+interface LeadPreference {
+  id?: string
+  lead_id?: string
+  zonas: string[]
+  tipologia_min: string | null
+  preco_max: number | null
+  extras: string[]
+  is_active: boolean
+}
+
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
   chamada: '#3B82F6',
   visita: '#F59E0B',
@@ -47,6 +60,35 @@ export default function LeadPage() {
   const [showWhatsApp, setShowWhatsApp] = useState(false)
   const [activityFilter, setActivityFilter] = useState<ActivityType | ''>('')
   const [newActivity, setNewActivity] = useState({ type: 'nota' as ActivityType, title: '', description: '', due_date: '' })
+  const [pref, setPref] = useState<LeadPreference>({ zonas: [], tipologia_min: null, preco_max: null, extras: [], is_active: true })
+  const [prefLoaded, setPrefLoaded] = useState(false)
+  const [prefSaving, setPrefSaving] = useState(false)
+  const [zonaInput, setZonaInput] = useState('')
+
+  useEffect(() => {
+    fetch(`/api/lead-preferences/${id}`).then(r => r.json()).then(d => {
+      if (d) setPref({ zonas: d.zonas ?? [], tipologia_min: d.tipologia_min ?? null, preco_max: d.preco_max ?? null, extras: d.extras ?? [], is_active: d.is_active ?? true })
+      setPrefLoaded(true)
+    })
+  }, [id])
+
+  async function savePref() {
+    setPrefSaving(true)
+    await fetch(`/api/lead-preferences/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pref) })
+    setPrefSaving(false)
+  }
+
+  function addZona() {
+    const z = zonaInput.trim()
+    if (z && !pref.zonas.includes(z)) setPref(p => ({ ...p, zonas: [...p.zonas, z] }))
+    setZonaInput('')
+  }
+
+  function removeZona(z: string) { setPref(p => ({ ...p, zonas: p.zonas.filter(x => x !== z) })) }
+
+  function toggleExtra(e: string) {
+    setPref(p => ({ ...p, extras: p.extras.includes(e) ? p.extras.filter(x => x !== e) : [...p.extras, e] }))
+  }
 
   const fetchAll = useCallback(async () => {
     const params = new URLSearchParams({ lead_id: id })
@@ -346,6 +388,100 @@ export default function LeadPage() {
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px', marginTop: 20 }}>
             <div className="font-display" style={{ fontSize: 14, marginBottom: 10 }}>Notas</div>
             <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>{lead.notes}</p>
+          </div>
+        )}
+
+        {/* Preferências Idealista */}
+        {prefLoaded && (
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginTop: 20 }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className="font-display" style={{ fontSize: 14 }}>🏠 Preferências Idealista</div>
+                <div
+                  onClick={() => setPref(p => ({ ...p, is_active: !p.is_active }))}
+                  style={{ width: 32, height: 18, borderRadius: 9, background: pref.is_active ? 'var(--gold)' : 'var(--border)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
+                >
+                  <div style={{ position: 'absolute', top: 2, left: pref.is_active ? 16 : 2, width: 14, height: 14, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                </div>
+                <span style={{ fontSize: 10, color: pref.is_active ? 'var(--gold)' : 'var(--muted)' }}>{pref.is_active ? 'Ativo' : 'Inativo'}</span>
+              </div>
+              <button
+                onClick={savePref}
+                disabled={prefSaving}
+                style={{ fontSize: 11, padding: '6px 14px', borderRadius: 6, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', opacity: prefSaving ? 0.6 : 1 }}
+              >
+                {prefSaving ? 'A guardar...' : 'Guardar'}
+              </button>
+            </div>
+
+            <div style={{ padding: '18px 18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {/* Zonas */}
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Zonas</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                  {pref.zonas.map(z => (
+                    <span key={z} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 5, background: 'rgba(212,175,55,0.12)', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      {z}
+                      <span onClick={() => removeZona(z)} style={{ cursor: 'pointer', opacity: 0.6, fontSize: 12, lineHeight: 1 }}>×</span>
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    value={zonaInput}
+                    onChange={e => setZonaInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addZona() } }}
+                    placeholder="Ex: Cascais, Parede..."
+                    style={{ ...inputStyle, flex: 1, fontSize: 12 }}
+                  />
+                  <button onClick={addZona} style={{ ...inputStyle, background: 'var(--surface)', border: '1px solid var(--border)', cursor: 'pointer', padding: '8px 12px', fontSize: 12 }}>+ Zona</button>
+                </div>
+              </div>
+
+              {/* Tipologia + Preço */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Tipologia mínima</div>
+                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                    {TIPOLOGIAS.map(t => (
+                      <button
+                        key={t}
+                        onClick={() => setPref(p => ({ ...p, tipologia_min: p.tipologia_min === t ? null : t }))}
+                        style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.tipologia_min === t ? 'var(--gold)' : 'var(--border)'}`, background: pref.tipologia_min === t ? 'rgba(212,175,55,0.12)' : 'transparent', color: pref.tipologia_min === t ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: pref.tipologia_min === t ? 600 : 400 }}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Preço máximo (€)</div>
+                  <input
+                    type="number"
+                    value={pref.preco_max ?? ''}
+                    onChange={e => setPref(p => ({ ...p, preco_max: e.target.value ? Number(e.target.value) : null }))}
+                    placeholder="Ex: 400000"
+                    style={{ ...inputStyle, width: '100%' }}
+                  />
+                </div>
+              </div>
+
+              {/* Extras */}
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Extras</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {EXTRAS_SUGERIDOS.map(e => (
+                    <button
+                      key={e}
+                      onClick={() => toggleExtra(e)}
+                      style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.extras.includes(e) ? 'var(--gold)' : 'var(--border)'}`, background: pref.extras.includes(e) ? 'rgba(212,175,55,0.12)' : 'transparent', color: pref.extras.includes(e) ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
