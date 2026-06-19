@@ -66,10 +66,13 @@ export default function LeadPage() {
   const [zonaInput, setZonaInput] = useState('')
 
   useEffect(() => {
-    fetch(`/api/lead-preferences/${id}`).then(r => r.json()).then(d => {
-      if (d) setPref({ zonas: d.zonas ?? [], tipologia_min: d.tipologia_min ?? null, preco_max: d.preco_max ?? null, extras: d.extras ?? [], is_active: d.is_active ?? true })
-      setPrefLoaded(true)
-    })
+    fetch(`/api/lead-preferences/${id}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d && !d.error) setPref({ zonas: d.zonas ?? [], tipologia_min: d.tipologia_min ?? null, preco_max: d.preco_max ?? null, extras: d.extras ?? [], is_active: d.is_active ?? true })
+      })
+      .catch(() => {})
+      .finally(() => setPrefLoaded(true))
   }, [id])
 
   async function savePref() {
