@@ -115,7 +115,7 @@ export function KanbanBoard({ initialLeads, stages }: Props) {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="stagger" style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '4px 0', minHeight: 'calc(100vh - 140px)' }}>
+      <div className="stagger kanban-board" style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '4px 0', minHeight: 'calc(100vh - 140px)' }}>
         {visibleStages.map(stage => {
           const stageLeads = getStageLeads(stage.id)
           const columnTotal = getColumnTotal(stage.id)

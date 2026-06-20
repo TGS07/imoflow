@@ -84,9 +84,13 @@ export default function LeadsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['Nome', 'Contacto', 'Interesse', 'Valor', 'Origem', 'Score', 'Fase'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>{h}</th>
-                ))}
+                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Nome</th>
+                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Contacto</th>
+                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Interesse</th>
+                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Valor</th>
+                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Origem</th>
+                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Score</th>
+                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Fase</th>
               </tr>
             </thead>
             <tbody>
@@ -106,14 +110,14 @@ export default function LeadsPage() {
                   <tr key={lead.id} onClick={() => router.push(`/leads/${lead.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
                     <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{lead.name}</td>
                     <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{lead.phone ?? lead.email ?? '—'}</td>
-                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{[lead.typology, lead.zone].filter(Boolean).join(' · ') || '—'}</td>
-                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                    <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{[lead.typology, lead.zone].filter(Boolean).join(' · ') || '—'}</td>
+                    <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
                       {lead.deal_value ? `${(lead.deal_value / 1000).toFixed(0)}K€` : lead.budget ? `${(lead.budget / 1000).toFixed(0)}K€` : '—'}
                     </td>
-                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
+                    <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
                       <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)' }}>{lead.source}</span>
                     </td>
-                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
+                    <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
                       <div style={{ width: 60, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
                         <div style={{ height: '100%', borderRadius: 2, background: lead.score > 70 ? 'var(--green)' : lead.score > 40 ? 'var(--gold)' : 'var(--red)', width: `${lead.score}%` }} />
                       </div>
