@@ -74,7 +74,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
           <h1 className="font-display" style={{ fontSize: 20, fontWeight: 500 }}>{greeting}, {firstName}</h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{activeLeads} leads ativos</p>
@@ -84,8 +84,8 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <div className="page-enter" style={{ padding: '28px 32px', flex: 1 }}>
-        <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
+      <div className="page-enter page-pad" style={{ padding: '28px 32px', flex: 1 }}>
+        <div className="stagger stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
           <StatCard label="Leads Ativos" value={activeLeads} icon="leads" />
           <StatCard label="Pipeline Total" value={formatValue(pipelineTotal)} icon="chart" />
           <StatCard label="Pipeline Ponderado" value={formatValue(pipelineWeighted)} icon="pipeline" />
@@ -93,7 +93,7 @@ export default async function DashboardPage() {
           <StatCard label="Atividades Pendentes" value={pendingCount ?? 0} icon="calendar" />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
+        <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
           <div className="card" style={{ padding: 22 }}>
             <div className="font-display" style={{ fontSize: 15, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               Pipeline de Vendas

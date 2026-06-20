@@ -24,20 +24,37 @@ type Props = {
   userName: string
   userInitials: string
   userRole: 'admin' | 'agent'
+  isOpen?: boolean
+  onClose?: () => void
 }
 
-export function Sidebar({ userName, userInitials, userRole }: Props) {
+export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: Props) {
   const pathname = usePathname()
 
   const visibleItems = navItems.filter(item => item.section !== 'Sistema' || userRole === 'admin')
 
   return (
-    <aside style={{ width: 240, minHeight: '100vh', background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: '28px 0', flexShrink: 0 }}>
-      <div style={{ padding: '0 24px 28px', borderBottom: '1px solid var(--border)' }}>
-        <div className="font-display" style={{ fontSize: 22, background: 'linear-gradient(120deg, var(--gold-bright), var(--gold-dim))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-          ImoFlow
+    <aside className={`sidebar-desktop${isOpen ? ' open' : ''}`} style={{ width: 240, minHeight: '100vh', background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: '28px 0', flexShrink: 0 }}>
+      <div style={{ padding: '0 24px 28px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div>
+          <div className="font-display" style={{ fontSize: 22, background: 'linear-gradient(120deg, var(--gold-bright), var(--gold-dim))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            ImoFlow
+          </div>
+          <div style={{ fontSize: 10, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase', marginTop: 2 }}>CRM Imobiliário</div>
         </div>
-        <div style={{ fontSize: 10, letterSpacing: '0.2em', color: 'var(--muted)', textTransform: 'uppercase', marginTop: 2 }}>CRM Imobiliário</div>
+        {onClose && (
+          <button
+            className="mobile-menu-btn"
+            onClick={onClose}
+            aria-label="Fechar menu"
+            style={{ marginTop: 2 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <line x1="2" y1="2" x2="14" y2="14" />
+              <line x1="14" y1="2" x2="2" y2="14" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <nav style={{ padding: '20px 0', flex: 1, overflowY: 'auto' }}>
@@ -53,6 +70,7 @@ export function Sidebar({ userName, userInitials, userRole }: Props) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onClose}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

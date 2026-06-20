@@ -279,3 +279,92 @@ textarea.input { resize: vertical; line-height: 1.6; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Mobile / Responsive ---------- */
+
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99;
+  animation: fadeIn 0.2s ease both;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .sidebar-overlay.open {
+    display: block;
+  }
+
+  .sidebar-desktop {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100% !important;
+    min-height: 100% !important;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.3s var(--ease) !important;
+    width: 260px !important;
+  }
+
+  .sidebar-desktop.open {
+    transform: translateX(0);
+  }
+
+  .app-main {
+    width: 100% !important;
+  }
+
+  .modal {
+    padding: 20px;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  /* Dashboard layouts */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .dashboard-cols {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Page padding */
+  .page-pad {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Hide secondary columns on small lists */
+  .hide-mobile {
+    display: none !important;
+  }
+}
