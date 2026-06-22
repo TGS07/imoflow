@@ -146,20 +146,26 @@ export default function LeadPage() {
     router.push('/leads')
   }
 
-  if (!lead) return <div style={{ padding: 40, color: 'var(--muted)', fontSize: 13 }}>A carregar...</div>
+  if (!lead) return (
+    <div style={{ padding: 40 }}>
+      <div className="skeleton" style={{ height: 24, width: 200, marginBottom: 16 }} />
+      <div className="skeleton" style={{ height: 120, marginBottom: 16 }} />
+      <div className="skeleton" style={{ height: 300 }} />
+    </div>
+  )
 
   const currentStage = lead.pipeline_stages ?? stages.find(s => s.id === lead.stage_id)
   const stageColor = currentStage?.color ?? '#666'
   const stageName = currentStage?.name ?? '—'
   const visibleStages = stages.filter(s => !s.is_lost)
   const initials = lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')
-  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
+  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Inter, sans-serif' }
 
   const pendingActivities = activities.filter(a => !a.completed)
   const completedActivities = activities.filter(a => a.completed)
 
   return (
-    <>
+    <div className="page-enter">
       {showEmail && <SendEmailModal leadId={id} leadEmail={lead.email} onClose={() => setShowEmail(false)} onSent={fetchAll} />}
       {showWhatsApp && lead.phone && (
         <WhatsAppModal
@@ -173,112 +179,115 @@ export default function LeadPage() {
         />
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+      {/* Breadcrumb header */}
+      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--muted)' }}>
           <Link href="/leads" style={{ color: 'var(--muted)', textDecoration: 'none' }}>Leads</Link>
-          <span style={{ color: 'var(--border)' }}>›</span>
+          <span style={{ color: 'var(--border-strong)' }}>›</span>
           <span style={{ color: 'var(--text)', fontWeight: 500 }}>{lead.name}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="header-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {lead.phone && (
-            <button onClick={() => setShowWhatsApp(true)} className="btn btn-whatsapp" style={{ padding: '8px 14px', fontSize: 12 }}>
-              <Icon name="whatsapp" size={14} /> WhatsApp
+            <button onClick={() => setShowWhatsApp(true)} className="btn btn-whatsapp btn-sm">
+              <Icon name="whatsapp" size={13} /> WhatsApp
             </button>
           )}
-          <button onClick={() => setShowEmail(true)} className="btn btn-ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
-            <Icon name="mail" size={14} /> Enviar Email
+          <button onClick={() => setShowEmail(true)} className="btn btn-ghost btn-sm">
+            <Icon name="mail" size={13} /> Email
           </button>
-          <button onClick={archiveLead} className="btn btn-danger" style={{ padding: '8px 14px', fontSize: 12 }}>
-            <Icon name="close" size={13} /> Arquivar
+          <button onClick={archiveLead} className="btn btn-danger btn-sm">
+            <Icon name="close" size={12} /> Arquivar
           </button>
         </div>
       </div>
 
-      <div style={{ padding: '24px 32px' }}>
+      <div className="page-pad" style={{ padding: '24px 32px' }}>
         {/* Hero Card */}
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, marginBottom: 20, display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 20, alignItems: 'start' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg, ${stageColor}, ${stageColor}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Playfair Display, serif', fontSize: 22, color: '#fff' }}>
+        <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <div style={{ display: 'flex', gap: 20, alignItems: 'start', marginBottom: 0, flexWrap: 'wrap' }}>
+          <div style={{ width: 60, height: 60, borderRadius: '50%', background: `linear-gradient(135deg, ${stageColor}, ${stageColor}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#fff', flexShrink: 0 }}>
             {initials}
           </div>
           <div>
             <h2 className="font-display" style={{ fontSize: 22, marginBottom: 8 }}>{lead.name}</h2>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-              <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: `${stageColor}22`, color: stageColor }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+              <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: `${stageColor}22`, color: stageColor, border: `1px solid ${stageColor}40` }}>
                 {stageName}
               </span>
-              <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)' }}>
+              <span style={{ fontSize: 10, fontWeight: 500, padding: '3px 10px', borderRadius: 5, background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
                 {lead.source}
               </span>
               {lead.deal_value && (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(16,185,129,0.1)', color: '#10B981', border: '1px solid rgba(16,185,129,0.2)' }}>
                   {(lead.deal_value / 1000).toFixed(0)}K€
                 </span>
               )}
               {lead.expected_close_date && (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)' }}>
+                <span style={{ fontSize: 10, fontWeight: 500, padding: '3px 10px', borderRadius: 5, background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
                   Fecho: {new Date(lead.expected_close_date).toLocaleDateString('pt-PT')}
                 </span>
               )}
               {lead.people && (
                 <Link href={`/people/${lead.people.id}`} style={{ textDecoration: 'none' }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(212,175,55,0.1)', color: 'var(--gold)', cursor: 'pointer' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(176,125,46,0.08)', color: 'var(--gold)', border: '1px solid rgba(176,125,46,0.2)', cursor: 'pointer' }}>
                     👤 {lead.people.name}
                   </span>
                 </Link>
               )}
               {lead.organizations && (
                 <Link href={`/organizations/${lead.organizations.id}`} style={{ textDecoration: 'none' }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(139,92,246,0.1)', color: '#8B5CF6', cursor: 'pointer' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(139,92,246,0.08)', color: '#8B5CF6', border: '1px solid rgba(139,92,246,0.2)', cursor: 'pointer' }}>
                     🏢 {lead.organizations.name}
                   </span>
                 </Link>
               )}
               {lead.properties && (
                 <Link href={`/properties/${lead.properties.id}`} style={{ textDecoration: 'none' }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '4px 10px', borderRadius: 5, background: 'rgba(16,185,129,0.1)', color: '#10B981', cursor: 'pointer' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(16,185,129,0.08)', color: '#10B981', border: '1px solid rgba(16,185,129,0.2)', cursor: 'pointer' }}>
                     🏠 {lead.properties.reference ? `${lead.properties.reference} — ` : ''}{lead.properties.title}
                   </span>
                 </Link>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {visibleStages.map(s => (
-                <button key={s.id} onClick={() => updateStage(s.id)} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 4, border: `1px solid ${lead.stage_id === s.id ? s.color : 'var(--border)'}`, background: lead.stage_id === s.id ? `${s.color}22` : 'transparent', color: lead.stage_id === s.id ? s.color : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
+                <button key={s.id} onClick={() => updateStage(s.id)} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 4, border: `1px solid ${lead.stage_id === s.id ? s.color : 'var(--border)'}`, background: lead.stage_id === s.id ? `${s.color}22` : 'transparent', color: lead.stage_id === s.id ? s.color : 'var(--muted)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600, transition: 'all 0.15s ease' }}>
                   {s.name}
                 </button>
               ))}
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
+          <div style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
             <div style={{ fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>Score</div>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', border: '2px solid var(--gold)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginLeft: 'auto' }}>
-              <div className="font-display" style={{ fontSize: 20, color: 'var(--gold)', lineHeight: 1 }}>{lead.score}</div>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', border: '2px solid var(--gold)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="font-display" style={{ fontSize: 18, color: 'var(--gold)', lineHeight: 1 }}>{lead.score}</div>
               <div style={{ fontSize: 9, color: 'var(--muted)' }}>/100</div>
             </div>
           </div>
         </div>
+        </div>
 
         {/* Info Pills */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div className="stagger" style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           {[
             { icon: '📞', label: 'Telefone', value: lead.phone },
             { icon: '✉', label: 'Email', value: lead.email },
             { icon: '📍', label: 'Zona', value: lead.zone },
             { icon: '🏠', label: 'Tipologia', value: lead.typology },
-            { icon: '€', label: 'Orcamento', value: lead.budget ? `${(lead.budget/1000).toFixed(0)}K€` : null },
+            { icon: '€', label: 'Orçamento', value: lead.budget ? `${(lead.budget/1000).toFixed(0)}K€` : null },
           ].filter(p => p.value).map(p => (
-            <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px' }}>
+            <div key={p.label} className="card" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px' }}>
               <span style={{ fontSize: 14 }}>{p.icon}</span>
               <div>
-                <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.label}</div>
-                <div style={{ fontSize: 12, fontWeight: 500 }}>{p.value}</div>
+                <div style={{ fontSize: 9, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{p.label}</div>
+                <div style={{ fontSize: 12, fontWeight: 600 }}>{p.value}</div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Unified Activities Section */}
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        {/* Activities Section */}
+        <div className="card" style={{ overflow: 'hidden' }}>
           <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="font-display" style={{ fontSize: 14 }}>Atividades</div>
             <Link href="/activities" style={{ fontSize: 11, color: 'var(--gold)', textDecoration: 'none', fontWeight: 500 }}>Ver calendário →</Link>
@@ -286,14 +295,14 @@ export default function LeadPage() {
 
           {/* Type Filter Tabs */}
           <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
-            <button onClick={() => setActivityFilter('')} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === '' ? 600 : 400, color: activityFilter === '' ? 'var(--gold)' : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === '' ? '2px solid var(--gold)' : '2px solid transparent', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+            <button onClick={() => setActivityFilter('')} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === '' ? 600 : 400, color: activityFilter === '' ? 'var(--gold)' : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === '' ? '2px solid var(--gold)' : '2px solid transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap' }}>
               Todas ({activities.length})
             </button>
             {(Object.entries(ACTIVITY_LABELS) as [ActivityType, string][]).map(([type, label]) => {
               const count = activities.filter(a => a.type === type).length
               if (count === 0 && activityFilter !== type) return null
               return (
-                <button key={type} onClick={() => setActivityFilter(activityFilter === type ? '' : type)} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === type ? 600 : 400, color: activityFilter === type ? ACTIVITY_COLORS[type] : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === type ? `2px solid ${ACTIVITY_COLORS[type]}` : '2px solid transparent', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                <button key={type} onClick={() => setActivityFilter(activityFilter === type ? '' : type)} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === type ? 600 : 400, color: activityFilter === type ? ACTIVITY_COLORS[type] : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === type ? `2px solid ${ACTIVITY_COLORS[type]}` : '2px solid transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap' }}>
                   {ACTIVITY_ICONS[type]} {label} ({count})
                 </button>
               )
@@ -305,13 +314,11 @@ export default function LeadPage() {
             <form onSubmit={addActivity} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <select value={newActivity.type} onChange={e => setNewActivity(p => ({ ...p, type: e.target.value as ActivityType }))} style={{ ...inputStyle, width: 'auto' }}>
-                  {Object.entries(ACTIVITY_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
+                  {Object.entries(ACTIVITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
-                <input style={{ ...inputStyle, flex: 1, minWidth: 160 }} placeholder="Título da atividade..." value={newActivity.title} onChange={e => setNewActivity(p => ({ ...p, title: e.target.value }))} required />
-                <input type="datetime-local" style={{ ...inputStyle, width: 'auto' }} value={newActivity.due_date} onChange={e => setNewActivity(p => ({ ...p, due_date: e.target.value }))} />
-                <button type="submit" style={{ ...inputStyle, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Adicionar</button>
+                <input style={{ ...inputStyle, flex: 1, minWidth: 140 }} placeholder="Título da atividade..." value={newActivity.title} onChange={e => setNewActivity(p => ({ ...p, title: e.target.value }))} required />
+                <input type="datetime-local" className="hide-mobile" style={{ ...inputStyle, width: 'auto' }} value={newActivity.due_date} onChange={e => setNewActivity(p => ({ ...p, due_date: e.target.value }))} />
+                <button type="submit" style={{ ...inputStyle, background: 'var(--gold)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Adicionar</button>
               </div>
               <textarea
                 style={{ ...inputStyle, width: '100%', resize: 'vertical', minHeight: 50, lineHeight: 1.5 }}
@@ -324,17 +331,16 @@ export default function LeadPage() {
 
           {/* Activities List */}
           <div style={{ padding: '14px 18px' }}>
-            {/* Pending */}
             {pendingActivities.length > 0 && (
               <div style={{ marginBottom: completedActivities.length > 0 ? 16 : 0 }}>
                 {pendingActivities.map((a, i) => (
                   <div key={a.id} style={{ display: 'flex', gap: 12, paddingBottom: 14 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <div onClick={() => toggleActivity(a)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--border)', cursor: 'pointer', flexShrink: 0, marginTop: 2 }} />
+                      <div onClick={() => toggleActivity(a)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--border-strong)', cursor: 'pointer', flexShrink: 0, marginTop: 2 }} />
                       {i < pendingActivities.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 4 }} />}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: `${ACTIVITY_COLORS[a.type]}22`, color: ACTIVITY_COLORS[a.type], fontWeight: 500 }}>
                           {ACTIVITY_ICONS[a.type]} {ACTIVITY_LABELS[a.type]}
                         </span>
@@ -351,7 +357,6 @@ export default function LeadPage() {
               </div>
             )}
 
-            {/* Completed */}
             {completedActivities.length > 0 && (
               <div>
                 {pendingActivities.length > 0 && (
@@ -360,11 +365,11 @@ export default function LeadPage() {
                 {completedActivities.map((a, i) => (
                   <div key={a.id} style={{ display: 'flex', gap: 12, paddingBottom: 14, opacity: 0.5 }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <div onClick={() => toggleActivity(a)} style={{ width: 16, height: 16, borderRadius: 4, background: 'var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: 2, color: '#0D0D0F', fontSize: 10 }}>✓</div>
+                      <div onClick={() => toggleActivity(a)} style={{ width: 16, height: 16, borderRadius: 4, background: 'var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: 2, color: '#fff', fontSize: 10 }}>✓</div>
                       {i < completedActivities.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 4 }} />}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: `${ACTIVITY_COLORS[a.type]}22`, color: ACTIVITY_COLORS[a.type], fontWeight: 500 }}>
                           {ACTIVITY_ICONS[a.type]} {ACTIVITY_LABELS[a.type]}
                         </span>
@@ -388,44 +393,40 @@ export default function LeadPage() {
 
         {/* Notes */}
         {lead.notes && (
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px', marginTop: 20 }}>
+          <div className="card" style={{ padding: '14px 18px', marginTop: 20 }}>
             <div className="font-display" style={{ fontSize: 14, marginBottom: 10 }}>Notas</div>
-            <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>{lead.notes}</p>
+            <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.7 }}>{lead.notes}</p>
           </div>
         )}
 
         {/* Preferências Idealista */}
         {prefLoaded && (
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginTop: 20 }}>
-            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="card" style={{ overflow: 'hidden', marginTop: 20 }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div className="font-display" style={{ fontSize: 14 }}>🏠 Preferências Idealista</div>
                 <div
                   onClick={() => setPref(p => ({ ...p, is_active: !p.is_active }))}
-                  style={{ width: 32, height: 18, borderRadius: 9, background: pref.is_active ? 'var(--gold)' : 'var(--border)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
+                  style={{ width: 32, height: 18, borderRadius: 9, background: pref.is_active ? 'var(--gold)' : 'var(--border)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
                 >
-                  <div style={{ position: 'absolute', top: 2, left: pref.is_active ? 16 : 2, width: 14, height: 14, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                  <div style={{ position: 'absolute', top: 2, left: pref.is_active ? 16 : 2, width: 14, height: 14, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
                 </div>
-                <span style={{ fontSize: 10, color: pref.is_active ? 'var(--gold)' : 'var(--muted)' }}>{pref.is_active ? 'Ativo' : 'Inativo'}</span>
+                <span style={{ fontSize: 10, color: pref.is_active ? 'var(--gold)' : 'var(--muted)', fontWeight: 500 }}>{pref.is_active ? 'Ativo' : 'Inativo'}</span>
               </div>
-              <button
-                onClick={savePref}
-                disabled={prefSaving}
-                style={{ fontSize: 11, padding: '6px 14px', borderRadius: 6, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', opacity: prefSaving ? 0.6 : 1 }}
-              >
+              <button onClick={savePref} disabled={prefSaving} className="btn btn-primary btn-sm" style={{ opacity: prefSaving ? 0.6 : 1 }}>
                 {prefSaving ? 'A guardar...' : 'Guardar'}
               </button>
             </div>
 
-            <div style={{ padding: '18px 18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <div style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
               {/* Zonas */}
               <div>
-                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Zonas</div>
+                <div className="label" style={{ textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Zonas</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                   {pref.zonas.map(z => (
-                    <span key={z} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 5, background: 'rgba(212,175,55,0.12)', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span key={z} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 5, background: 'rgba(176,125,46,0.10)', color: 'var(--gold)', border: '1px solid rgba(176,125,46,0.2)', display: 'flex', alignItems: 'center', gap: 5 }}>
                       {z}
-                      <span onClick={() => removeZona(z)} style={{ cursor: 'pointer', opacity: 0.6, fontSize: 12, lineHeight: 1 }}>×</span>
+                      <span onClick={() => removeZona(z)} style={{ cursor: 'pointer', opacity: 0.6, fontSize: 13, lineHeight: 1 }}>×</span>
                     </span>
                   ))}
                 </div>
@@ -435,22 +436,22 @@ export default function LeadPage() {
                     onChange={e => setZonaInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addZona() } }}
                     placeholder="Ex: Cascais, Parede..."
-                    style={{ ...inputStyle, flex: 1, fontSize: 12 }}
+                    style={{ ...inputStyle, flex: 1 }}
                   />
-                  <button onClick={addZona} style={{ ...inputStyle, background: 'var(--surface)', border: '1px solid var(--border)', cursor: 'pointer', padding: '8px 12px', fontSize: 12 }}>+ Zona</button>
+                  <button onClick={addZona} className="btn btn-ghost btn-sm">+ Zona</button>
                 </div>
               </div>
 
               {/* Tipologia + Preço */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Tipologia mínima</div>
+                  <div className="label" style={{ textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Tipologia mínima</div>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                     {TIPOLOGIAS.map(t => (
                       <button
                         key={t}
                         onClick={() => setPref(p => ({ ...p, tipologia_min: p.tipologia_min === t ? null : t }))}
-                        style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.tipologia_min === t ? 'var(--gold)' : 'var(--border)'}`, background: pref.tipologia_min === t ? 'rgba(212,175,55,0.12)' : 'transparent', color: pref.tipologia_min === t ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: pref.tipologia_min === t ? 600 : 400 }}
+                        style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.tipologia_min === t ? 'var(--gold)' : 'var(--border)'}`, background: pref.tipologia_min === t ? 'rgba(176,125,46,0.10)' : 'transparent', color: pref.tipologia_min === t ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: pref.tipologia_min === t ? 600 : 400, transition: 'all 0.15s ease' }}
                       >
                         {t}
                       </button>
@@ -458,7 +459,7 @@ export default function LeadPage() {
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Preço máximo (€)</div>
+                  <div className="label" style={{ textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Preço máximo (€)</div>
                   <input
                     type="number"
                     value={pref.preco_max ?? ''}
@@ -471,13 +472,13 @@ export default function LeadPage() {
 
               {/* Extras */}
               <div>
-                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Extras</div>
+                <div className="label" style={{ textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Extras</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {EXTRAS_SUGERIDOS.map(e => (
                     <button
                       key={e}
                       onClick={() => toggleExtra(e)}
-                      style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.extras.includes(e) ? 'var(--gold)' : 'var(--border)'}`, background: pref.extras.includes(e) ? 'rgba(212,175,55,0.12)' : 'transparent', color: pref.extras.includes(e) ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}
+                      style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.extras.includes(e) ? 'var(--gold)' : 'var(--border)'}`, background: pref.extras.includes(e) ? 'rgba(176,125,46,0.10)' : 'transparent', color: pref.extras.includes(e) ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'all 0.15s ease' }}
                     >
                       {e}
                     </button>
@@ -488,6 +489,6 @@ export default function LeadPage() {
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }

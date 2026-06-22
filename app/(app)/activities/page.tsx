@@ -50,9 +50,6 @@ export default function ActivitiesPage() {
   const [creating, setCreating] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
 
-  const inputStyle = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
-
-  // Fetch activities for the visible date range
   const fetchActivities = useCallback(async () => {
     let dateFrom: string
     let dateTo: string
@@ -62,7 +59,6 @@ export default function ActivitiesPage() {
       const month = currentDate.getMonth()
       const firstDay = new Date(year, month, 1)
       const lastDay = new Date(year, month + 1, 0)
-      // Extend to cover the full calendar grid (prev/next month days)
       const startOffset = (firstDay.getDay() + 6) % 7
       const start = new Date(firstDay)
       start.setDate(start.getDate() - startOffset)
@@ -94,7 +90,6 @@ export default function ActivitiesPage() {
     finally { setLoading(false) }
   }, [currentDate, view, filterType])
 
-  // Fetch pending activities (no date filter, just uncompleted)
   const fetchPending = useCallback(async () => {
     try {
       const res = await fetch('/api/activities?completed=false')
@@ -148,7 +143,6 @@ export default function ActivitiesPage() {
     fetchPending()
   }
 
-  // Navigation
   function navigate(direction: number) {
     const d = new Date(currentDate)
     if (view === 'month') d.setMonth(d.getMonth() + direction)
@@ -156,11 +150,8 @@ export default function ActivitiesPage() {
     setCurrentDate(d)
   }
 
-  function goToday() {
-    setCurrentDate(new Date())
-  }
+  function goToday() { setCurrentDate(new Date()) }
 
-  // Monthly calendar helpers
   function getMonthDays(): Date[] {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
@@ -219,11 +210,11 @@ export default function ActivitiesPage() {
       })()
 
   return (
-    <>
+    <div className="page-enter">
       {/* Activity Detail Modal */}
       {selectedActivity && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedActivity(null)}>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, width: 440, padding: 28 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-backdrop" onClick={() => setSelectedActivity(null)}>
+          <div className="modal" style={{ width: 440 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 20 }}>{ACTIVITY_ICONS[selectedActivity.type]}</span>
@@ -270,12 +261,10 @@ export default function ActivitiesPage() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => toggleComplete(selectedActivity)} style={{ ...inputStyle, flex: 1, cursor: 'pointer', textAlign: 'center' as const, background: selectedActivity.completed ? 'var(--surface)' : 'var(--gold)', color: selectedActivity.completed ? 'var(--text)' : '#0D0D0F', border: selectedActivity.completed ? '1px solid var(--border)' : 'none', fontWeight: 600 }}>
+              <button onClick={() => toggleComplete(selectedActivity)} className={`btn ${selectedActivity.completed ? 'btn-ghost' : 'btn-primary'}`} style={{ flex: 1 }}>
                 {selectedActivity.completed ? 'Reabrir' : '✓ Concluir'}
               </button>
-              <button onClick={() => deleteActivity(selectedActivity.id)} style={{ ...inputStyle, cursor: 'pointer', background: 'rgba(224,92,92,0.1)', color: 'var(--red)', borderColor: 'rgba(224,92,92,0.25)' }}>
-                Eliminar
-              </button>
+              <button onClick={() => deleteActivity(selectedActivity.id)} className="btn btn-danger">Eliminar</button>
             </div>
           </div>
         </div>
@@ -283,42 +272,40 @@ export default function ActivitiesPage() {
 
       {/* Create Activity Modal */}
       {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowForm(false)}>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, width: 460, padding: 28 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-backdrop" onClick={() => setShowForm(false)}>
+          <div className="modal" style={{ width: 460 }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 className="font-display" style={{ fontSize: 18, margin: 0 }}>Nova Atividade</h3>
               <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
             </div>
             <form onSubmit={createActivity} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4, display: 'block' }}>Tipo</label>
-                <select value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value as ActivityType }))} style={{ ...inputStyle, width: '100%' }}>
-                  {Object.entries(ACTIVITY_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
+                <label className="label">Tipo</label>
+                <select className="input" value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value as ActivityType }))}>
+                  {Object.entries(ACTIVITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4, display: 'block' }}>Título</label>
-                <input style={{ ...inputStyle, width: '100%' }} value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} required />
+                <label className="label">Título</label>
+                <input className="input" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} required />
               </div>
               <div>
-                <label style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4, display: 'block' }}>Descrição</label>
-                <textarea style={{ ...inputStyle, width: '100%', resize: 'vertical', minHeight: 60 }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
+                <label className="label">Descrição</label>
+                <textarea className="input" style={{ resize: 'vertical', minHeight: 60 }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4, display: 'block' }}>Data Início</label>
-                  <input type="datetime-local" style={{ ...inputStyle, width: '100%' }} value={form.due_date} onChange={e => setForm(p => ({ ...p, due_date: e.target.value }))} />
+                  <label className="label">Data Início</label>
+                  <input type="datetime-local" className="input" value={form.due_date} onChange={e => setForm(p => ({ ...p, due_date: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4, display: 'block' }}>Data Fim</label>
-                  <input type="datetime-local" style={{ ...inputStyle, width: '100%' }} value={form.end_date} onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))} />
+                  <label className="label">Data Fim</label>
+                  <input type="datetime-local" className="input" value={form.end_date} onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                <button type="button" onClick={() => setShowForm(false)} style={{ ...inputStyle, flex: 1, cursor: 'pointer', textAlign: 'center' as const }}>Cancelar</button>
-                <button type="submit" disabled={creating} style={{ flex: 1, background: 'var(--gold)', color: '#0D0D0F', border: 'none', borderRadius: 8, padding: '10px 0', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontSize: 13, opacity: creating ? 0.6 : 1 }}>
+                <button type="button" onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
+                <button type="submit" disabled={creating} className="btn btn-primary" style={{ flex: 1 }}>
                   {creating ? 'A criar...' : '+ Criar Atividade'}
                 </button>
               </div>
@@ -328,44 +315,41 @@ export default function ActivitiesPage() {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <h1 className="font-display" style={{ fontSize: 20, fontWeight: 500, marginBottom: 2 }}>Atividades</h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>{pending.length} pendentes</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ ...inputStyle, width: 'auto' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <select className="input hide-mobile" style={{ width: 'auto' }} value={filterType} onChange={e => setFilterType(e.target.value)}>
             <option value="">Todos os tipos</option>
-            {Object.entries(ACTIVITY_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
+            {Object.entries(ACTIVITY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <button onClick={() => setShowForm(true)} style={{ background: 'var(--gold)', color: '#0D0D0F', border: 'none', borderRadius: 8, padding: '0 16px', height: 36, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            + Nova Atividade
-          </button>
+          <button onClick={() => setShowForm(true)} className="btn btn-primary">+ Nova Atividade</button>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 0, flex: 1 }}>
+      {/* Main two-pane layout */}
+      <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', flex: 1 }}>
         {/* Calendar */}
         <div style={{ padding: '20px 24px' }}>
           {/* Calendar Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button onClick={() => navigate(-1)} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', color: 'var(--text)', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>‹</button>
-              <h2 className="font-display" style={{ fontSize: 16, margin: 0, minWidth: 200, textAlign: 'center' }}>{headerTitle}</h2>
-              <button onClick={() => navigate(1)} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 6, width: 32, height: 32, cursor: 'pointer', color: 'var(--text)', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>›</button>
+              <button onClick={() => navigate(-1)} className="btn btn-ghost btn-sm" style={{ width: 32, height: 32, padding: 0 }}>‹</button>
+              <h2 className="font-display" style={{ fontSize: 15, margin: 0, minWidth: 160, textAlign: 'center' }}>{headerTitle}</h2>
+              <button onClick={() => navigate(1)} className="btn btn-ghost btn-sm" style={{ width: 32, height: 32, padding: 0 }}>›</button>
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
-              <button onClick={goToday} style={{ ...inputStyle, cursor: 'pointer', fontSize: 11, padding: '6px 12px' }}>Hoje</button>
-              <button onClick={() => setView('month')} style={{ ...inputStyle, cursor: 'pointer', fontSize: 11, padding: '6px 12px', background: view === 'month' ? 'var(--gold)' : 'var(--card)', color: view === 'month' ? '#0D0D0F' : 'var(--text)', border: view === 'month' ? 'none' : '1px solid var(--border)', fontWeight: view === 'month' ? 600 : 400 }}>Mês</button>
-              <button onClick={() => setView('week')} style={{ ...inputStyle, cursor: 'pointer', fontSize: 11, padding: '6px 12px', background: view === 'week' ? 'var(--gold)' : 'var(--card)', color: view === 'week' ? '#0D0D0F' : 'var(--text)', border: view === 'week' ? 'none' : '1px solid var(--border)', fontWeight: view === 'week' ? 600 : 400 }}>Semana</button>
+              <button onClick={goToday} className="btn btn-ghost btn-sm">Hoje</button>
+              <button onClick={() => setView('month')} className={`btn btn-sm ${view === 'month' ? 'btn-primary' : 'btn-ghost'}`}>Mês</button>
+              <button onClick={() => setView('week')} className={`btn btn-sm ${view === 'week' ? 'btn-primary' : 'btn-ghost'}`}>Semana</button>
             </div>
           </div>
 
           {/* Monthly View */}
           {view === 'month' && (
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+            <div className="card" style={{ overflow: 'hidden' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
                 {WEEKDAYS.map(d => (
                   <div key={d} style={{ padding: '10px 8px', fontSize: 10, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>{d}</div>
@@ -398,7 +382,7 @@ export default function ActivitiesPage() {
 
           {/* Weekly View */}
           {view === 'week' && (
-            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+            <div className="card" style={{ overflow: 'hidden' }}>
               {getWeekDays().map((day, idx) => {
                 const dayActivities = getActivitiesForDay(day)
                 return (
@@ -420,7 +404,7 @@ export default function ActivitiesPage() {
                               </div>
                             )}
                           </div>
-                          <div onClick={e => { e.stopPropagation(); toggleComplete(a) }} style={{ width: 16, height: 16, borderRadius: 4, border: a.completed ? 'none' : '1.5px solid var(--border)', background: a.completed ? 'var(--green)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, color: '#0D0D0F', fontSize: 10 }}>
+                          <div onClick={e => { e.stopPropagation(); toggleComplete(a) }} style={{ width: 16, height: 16, borderRadius: 4, border: a.completed ? 'none' : '1.5px solid var(--border)', background: a.completed ? 'var(--green)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, color: '#fff', fontSize: 10 }}>
                             {a.completed ? '✓' : ''}
                           </div>
                         </div>
@@ -437,16 +421,16 @@ export default function ActivitiesPage() {
         </div>
 
         {/* Pending Sidebar */}
-        <div style={{ borderLeft: '1px solid var(--border)', padding: '20px 16px', background: 'var(--surface)' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14 }}>
+        <div className="activities-pending-sidebar" style={{ borderLeft: '1px solid var(--border)', padding: '20px 16px', background: 'var(--surface)' }}>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14 }}>
             Pendentes ({pending.length})
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {pending.map(a => {
               const isOverdue = a.due_date && new Date(a.due_date) < new Date()
               return (
-                <div key={a.id} onClick={() => setSelectedActivity(a)} style={{ display: 'flex', gap: 8, padding: '10px 12px', background: 'var(--card)', border: `1px solid ${isOverdue ? 'rgba(224,92,92,0.3)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', alignItems: 'start' }}>
-                  <div onClick={e => { e.stopPropagation(); toggleComplete(a) }} style={{ width: 14, height: 14, borderRadius: 3, border: '1.5px solid var(--border)', cursor: 'pointer', flexShrink: 0, marginTop: 2 }} />
+                <div key={a.id} onClick={() => setSelectedActivity(a)} className="card card-hover" style={{ display: 'flex', gap: 8, padding: '10px 12px', border: `1px solid ${isOverdue ? 'rgba(220,38,38,0.25)' : 'var(--border)'}`, cursor: 'pointer', alignItems: 'start' }}>
+                  <div onClick={e => { e.stopPropagation(); toggleComplete(a) }} style={{ width: 14, height: 14, borderRadius: 3, border: '1.5px solid var(--border-strong)', cursor: 'pointer', flexShrink: 0, marginTop: 2 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
@@ -464,11 +448,11 @@ export default function ActivitiesPage() {
               )
             })}
             {pending.length === 0 && (
-              <p style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center', padding: 20 }}>Tudo em dia!</p>
+              <p style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center', padding: 20 }}>Tudo em dia! ✓</p>
             )}
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

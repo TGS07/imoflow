@@ -438,6 +438,46 @@ textarea.input { resize: vertical; line-height: 1.6; }
     display: none !important;
   }
 
+  /* Activities layout — stacked no mobile */
+  .activities-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .activities-pending-sidebar {
+    border-left: none !important;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Reports KPI — 2 colunas no mobile */
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Lead hero card — sem coluna de score */
+  .lead-hero-grid {
+    grid-template-columns: auto 1fr !important;
+  }
+
+  .lead-hero-score {
+    display: none !important;
+  }
+
+  /* Botões de ação no header — compactos */
+  .header-actions .btn {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+  }
+
+  /* Filter bars — quebrar linha */
+  .filter-bar {
+    flex-wrap: wrap;
+  }
+
+  .filter-bar select {
+    min-width: 0;
+    flex: 1;
+  }
+
   /* Inputs e botões — tamanho mínimo para toque */
   input, select, textarea, button {
     font-size: 16px !important; /* evita zoom no iOS ao focar */
@@ -447,3 +487,4 @@ textarea.input { resize: vertical; line-height: 1.6; }
     font-size: 13px !important;
   }
 }
+
