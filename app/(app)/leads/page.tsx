@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lead, PipelineStage } from '@/types'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
@@ -80,6 +81,24 @@ export default function LeadsPage() {
       </div>
 
       <div style={{ padding: '0 32px 32px' }}>
+        {!loading && leads.length === 0 ? (
+          <div className="card" style={{ overflow: 'hidden' }}>
+            {debouncedSearch || stageFilter ? (
+              <EmptyState
+                illustration="search"
+                title="Nenhum resultado"
+                description="Não encontrámos leads com esses critérios. Tenta ajustar a pesquisa ou os filtros."
+              />
+            ) : (
+              <EmptyState
+                illustration="leads"
+                title="Ainda não tens leads"
+                description="Os teus contactos e potenciais negócios aparecem aqui. Cria o primeiro para começar."
+                action={{ label: '+ Novo Lead', onClick: () => setShowModal(true) }}
+              />
+            )}
+          </div>
+        ) : (
         <div className="card" style={{ overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -101,9 +120,6 @@ export default function LeadsPage() {
                   </td>
                 </tr>
               ))}
-              {!loading && leads.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Nenhum lead encontrado.</td></tr>
-              )}
               {leads.map(lead => {
                 const stageInfo = getStageInfo(lead)
                 return (
@@ -133,6 +149,7 @@ export default function LeadsPage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </>
   )

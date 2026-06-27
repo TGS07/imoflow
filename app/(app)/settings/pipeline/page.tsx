@@ -57,7 +57,7 @@ export default function PipelineSettingsPage() {
   }
 
   async function deleteStage(id: string) {
-    if (!confirm('Eliminar esta etapa? Os leads serao movidos para a primeira etapa.')) return
+    if (!confirm('Eliminar esta etapa? Os leads serão movidos para a primeira etapa.')) return
     await fetch(`/api/pipeline-stages/${id}`, { method: 'DELETE' })
     setStages(prev => prev.filter(s => s.id !== id))
   }
@@ -98,7 +98,7 @@ export default function PipelineSettingsPage() {
   }
 
   async function deleteField(id: string) {
-    if (!confirm('Eliminar este campo? Todos os valores serao perdidos.')) return
+    if (!confirm('Eliminar este campo? Todos os valores serão perdidos.')) return
     await fetch(`/api/custom-fields/${id}`, { method: 'DELETE' })
     setCustomFields(prev => prev.filter(f => f.id !== id))
   }
@@ -194,7 +194,7 @@ export default function PipelineSettingsPage() {
               <button type="submit" style={{ ...inputStyle, background: 'var(--gold)', color: '#0D0D0F', border: 'none', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Adicionar</button>
             </div>
             {(newFieldType === 'select' || newFieldType === 'multiselect') && (
-              <input style={inputStyle} placeholder="Opcoes separadas por virgula (ex: Opcao A, Opcao B)" value={newFieldOptions} onChange={e => setNewFieldOptions(e.target.value)} />
+              <input style={inputStyle} placeholder="Opções separadas por vírgula (ex: Opção A, Opção B)" value={newFieldOptions} onChange={e => setNewFieldOptions(e.target.value)} />
             )}
           </form>
         </div>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Organization } from '@/types'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 type OrgWithLeads = Organization & { leads?: { id: string }[] }
 
@@ -81,6 +82,15 @@ export default function OrganizationsPage() {
           onChange={e => setSearch(e.target.value)}
           style={{ marginBottom: 16 }}
         />
+        {!loading && orgs.length === 0 ? (
+          <div className="card" style={{ overflow: 'hidden' }}>
+            {debouncedSearch ? (
+              <EmptyState illustration="search" title="Nenhum resultado" description="Não encontrámos organizações com esse termo." />
+            ) : (
+              <EmptyState illustration="generic" title="Ainda não tens organizações" description="As empresas e entidades ligadas aos teus negócios aparecem aqui." action={{ label: '+ Nova Organização', onClick: () => setShowForm(true) }} />
+            )}
+          </div>
+        ) : (
         <div className="card" style={{ overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -96,9 +106,6 @@ export default function OrganizationsPage() {
               {loading && [0, 1, 2, 3].map(i => (
                 <tr key={i}><td colSpan={5} style={{ padding: '8px 20px' }}><div className="skeleton" style={{ height: 34 }} /></td></tr>
               ))}
-              {!loading && orgs.length === 0 && (
-                <tr><td colSpan={5} style={{ padding: 32, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Nenhuma organização encontrada.</td></tr>
-              )}
               {orgs.map(o => (
                 <tr key={o.id} onClick={() => router.push(`/organizations/${o.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
                   <td style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 13, color: 'var(--text)' }}>
@@ -121,6 +128,7 @@ export default function OrganizationsPage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </div>
   )

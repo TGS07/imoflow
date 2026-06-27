@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Property, PropertyType, PropertyStatus } from '@/types'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 type PropertyWithLeads = Property & { leads?: { id: string }[] }
 
@@ -143,6 +144,15 @@ export default function PropertiesPage() {
             {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
+        {!loading && properties.length === 0 ? (
+          <div className="card" style={{ overflow: 'hidden' }}>
+            {debouncedSearch || filterType || filterStatus ? (
+              <EmptyState illustration="search" title="Nenhum resultado" description="Não encontrámos imóveis com esses critérios. Ajusta a pesquisa ou os filtros." />
+            ) : (
+              <EmptyState illustration="properties" title="Ainda não tens imóveis" description="O teu catálogo de imóveis aparece aqui. Adiciona o primeiro para o associares a leads e negócios." action={{ label: '+ Novo Imóvel', onClick: () => setShowForm(true) }} />
+            )}
+          </div>
+        ) : (
         <div className="card" style={{ overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -162,7 +172,7 @@ export default function PropertiesPage() {
               {loading && [0, 1, 2, 3].map(i => (
                 <tr key={i}><td colSpan={9} style={{ padding: '8px 16px' }}><div className="skeleton" style={{ height: 34 }} /></td></tr>
               ))}
-              {!loading && properties.length === 0 && (
+              {false && (
                 <tr><td colSpan={9} style={{ padding: 32, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Nenhum imóvel encontrado.</td></tr>
               )}
               {properties.map(p => {
@@ -191,6 +201,7 @@ export default function PropertiesPage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </div>
   )

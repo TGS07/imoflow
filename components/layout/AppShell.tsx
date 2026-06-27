@@ -1,7 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { NotificationBell } from './NotificationBell'
+import { CommandPalette } from '@/components/CommandPalette'
+import { Icon } from '@/components/ui/Icon'
 
 type Props = {
   children: React.ReactNode
@@ -12,9 +14,17 @@ type Props = {
 
 export function AppShell({ children, userName, userInitials, userRole }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMac, setIsMac] = useState(true)
+
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad/.test(navigator.platform) || /Mac/.test(navigator.userAgent))
+  }, [])
+
+  const openSearch = () => window.dispatchEvent(new CustomEvent('imoflow:open-cmdk'))
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', overflow: 'hidden' }}>
+      <CommandPalette />
       <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={() => setSidebarOpen(false)} />
       <Sidebar
         userName={userName}
@@ -47,9 +57,12 @@ export function AppShell({ children, userName, userInitials, userRole }: Props) 
               <line x1="2" y1="13" x2="16" y2="13" />
             </svg>
           </button>
-          <div style={{ marginLeft: 'auto' }}>
-            <NotificationBell />
-          </div>
+          <button className="search-trigger" onClick={openSearch} style={{ marginLeft: 'auto' }} aria-label="Pesquisar">
+            <Icon name="search" size={14} />
+            <span className="hide-mobile">Pesquisar…</span>
+            <kbd className="hide-mobile">{isMac ? '⌘' : 'Ctrl'} K</kbd>
+          </button>
+          <NotificationBell />
         </header>
         {children}
       </main>

@@ -71,7 +71,7 @@ export default function FormsPage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{form.name}</span>
-                  <span style={badgeStyle(form.is_active)}>{form.is_active ? 'Activo' : 'Inactivo'}</span>
+                  <span style={badgeStyle(form.is_active)}>{form.is_active ? 'Ativo' : 'Inativo'}</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--muted)' }}>
                   Campos: {form.fields.map(f => WEB_FORM_FIELD_LABELS[f as WebFormField] ?? f).join(', ')}

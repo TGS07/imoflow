@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Person } from '@/types'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 type PersonWithLeads = Person & { leads?: { id: string }[] }
 
@@ -80,6 +81,15 @@ export default function PeoplePage() {
           onChange={e => setSearch(e.target.value)}
           style={{ marginBottom: 16 }}
         />
+        {!loading && people.length === 0 ? (
+          <div className="card" style={{ overflow: 'hidden' }}>
+            {debouncedSearch ? (
+              <EmptyState illustration="search" title="Nenhum resultado" description="Não encontrámos pessoas com esse termo." />
+            ) : (
+              <EmptyState illustration="people" title="Ainda não tens pessoas" description="Os contactos individuais ligados aos teus negócios aparecem aqui." action={{ label: '+ Nova Pessoa', onClick: () => setShowForm(true) }} />
+            )}
+          </div>
+        ) : (
         <div className="card" style={{ overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -94,9 +104,6 @@ export default function PeoplePage() {
               {loading && [0, 1, 2, 3].map(i => (
                 <tr key={i}><td colSpan={4} style={{ padding: '8px 20px' }}><div className="skeleton" style={{ height: 34 }} /></td></tr>
               ))}
-              {!loading && people.length === 0 && (
-                <tr><td colSpan={4} style={{ padding: 32, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Nenhuma pessoa encontrada.</td></tr>
-              )}
               {people.map(p => (
                 <tr key={p.id} onClick={() => router.push(`/people/${p.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
                   <td style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 13, color: 'var(--text)' }}>
@@ -120,6 +127,7 @@ export default function PeoplePage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </div>
   )

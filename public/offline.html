@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ImoFlow — Sem ligação</title>
+  <style>
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      font-family:-apple-system,'Inter',sans-serif; background:#F4F6F9; color:#0F172A; text-align:center; padding:24px; }
+    .box { max-width:320px; }
+    .logo { font-family:Georgia,serif; font-size:32px; background:linear-gradient(120deg,#B07D2E,#8B6F30);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:8px; }
+    p { color:#64748B; font-size:14px; line-height:1.6; }
+    button { margin-top:20px; background:#B07D2E; color:#fff; border:none; border-radius:8px;
+      padding:10px 20px; font-size:14px; font-weight:600; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="logo">ImoFlow</div>
+    <p>Sem ligação à internet. Verifica a tua rede e tenta novamente.</p>
+    <button onclick="location.reload()">Tentar de novo</button>
+  </div>
+</body>
+</html>

@@ -3,6 +3,7 @@ type IconName =
   | 'calendar' | 'chart' | 'settings' | 'zap' | 'form' | 'mail'
   | 'whatsapp' | 'team' | 'plus' | 'pencil' | 'trash' | 'close'
   | 'send' | 'bell' | 'check' | 'x' | 'chevron-down' | 'logout' | 'phone'
+  | 'search' | 'command'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   dashboard: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
@@ -30,6 +31,8 @@ const PATHS: Record<IconName, React.ReactNode> = {
   'chevron-down': <path d="m6 9 6 6 6-6" />,
   logout: <><path d="M14 4h-7a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 7 20h7" /><path d="m17 8 4 4-4 4M21 12H10" /></>,
   phone: <path d="M5 4h4l1.5 4.5L8 10a12 12 0 0 0 6 6l1.5-2.5L20 15v4a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2Z" />,
+  search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
+  command: <path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6Z" />,
 }
 
 type Props = {
