@@ -34,20 +34,20 @@ export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: P
   const visibleItems = navItems.filter(item => item.section !== 'Sistema' || userRole === 'admin')
 
   return (
-    <aside className={`sidebar-desktop${isOpen ? ' open' : ''}`} style={{ width: 240, minHeight: '100vh', background: '#111318', borderRight: '1px solid #1E2028', display: 'flex', flexDirection: 'column', padding: '24px 0', flexShrink: 0 }}>
-      <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #1E2028', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+    <aside className={`sidebar-desktop${isOpen ? ' open' : ''}`} style={{ width: 240, minHeight: '100vh', background: '#FFFFFF', borderRight: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', padding: '24px 0', flexShrink: 0 }}>
+      <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #EEF1F5', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <div className="font-display" style={{ fontSize: 21, background: 'linear-gradient(120deg, #E0C26A, #C9A84C)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+          <div className="font-display" style={{ fontSize: 21, background: 'linear-gradient(120deg, #B07D2E, #8B6F30)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
             ImoFlow
           </div>
-          <div style={{ fontSize: 9, letterSpacing: '0.22em', color: '#4B5563', textTransform: 'uppercase', marginTop: 2 }}>CRM Imobiliário</div>
+          <div style={{ fontSize: 9, letterSpacing: '0.22em', color: '#94A3B8', textTransform: 'uppercase', marginTop: 2 }}>CRM Imobiliário</div>
         </div>
         {onClose && (
           <button
             className="mobile-menu-btn"
             onClick={onClose}
             aria-label="Fechar menu"
-            style={{ marginTop: 2, borderColor: '#1E2028', color: '#9CA3AF' }}
+            style={{ marginTop: 2, borderColor: '#E2E8F0', color: '#64748B' }}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
               <line x1="2" y1="2" x2="14" y2="14" />
@@ -63,7 +63,7 @@ export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: P
           if (sectionItems.length === 0) return null
           return (
             <div key={section}>
-              <div style={{ fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: '#374151', padding: '0 20px', marginBottom: 4, marginTop: 20 }}>{section}</div>
+              <div style={{ fontSize: 9, letterSpacing: '0.25em', textTransform: 'uppercase', color: '#94A3B8', padding: '0 20px', marginBottom: 4, marginTop: 20 }}>{section}</div>
               {sectionItems.map(item => {
                 const active = pathname === item.href || pathname.startsWith(item.href + '/')
                 return (
@@ -77,17 +77,17 @@ export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: P
                       gap: 10,
                       padding: '8px 20px',
                       fontSize: 13,
-                      fontWeight: active ? 500 : 400,
-                      color: active ? '#E0C26A' : '#9CA3AF',
-                      background: active ? 'rgba(201,168,76,0.08)' : 'transparent',
-                      borderLeft: `2px solid ${active ? '#C9A84C' : 'transparent'}`,
+                      fontWeight: active ? 600 : 400,
+                      color: active ? '#B07D2E' : '#475569',
+                      background: active ? 'rgba(176,125,46,0.10)' : 'transparent',
+                      borderLeft: `2px solid ${active ? '#B07D2E' : 'transparent'}`,
                       textDecoration: 'none',
                       transition: 'all 0.15s ease',
                     }}
-                    onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#E2E8F0'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)' } }}
-                    onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#9CA3AF'; e.currentTarget.style.background = 'transparent' } }}
+                    onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#0F172A'; e.currentTarget.style.background = '#F1F5F9' } }}
+                    onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#475569'; e.currentTarget.style.background = 'transparent' } }}
                   >
-                    <Icon name={item.icon} size={15} style={{ flexShrink: 0, opacity: active ? 1 : 0.6 }} />
+                    <Icon name={item.icon} size={15} style={{ flexShrink: 0, opacity: active ? 1 : 0.7 }} />
                     {item.label}
                   </Link>
                 )
@@ -97,13 +97,13 @@ export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: P
         })}
       </nav>
 
-      <div style={{ padding: '16px 20px', borderTop: '1px solid #1E2028', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #C9A84C, #8B6F30)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#0D0D0F', flexShrink: 0 }}>
+      <div style={{ padding: '16px 20px', borderTop: '1px solid #EEF1F5', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #C9A84C, #8B6F30)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#FFFFFF', flexShrink: 0 }}>
           {userInitials}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: '#E2E8F0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName}</div>
-          <div style={{ fontSize: 10, color: '#4B5563', textTransform: 'capitalize' }}>{userRole === 'admin' ? 'Administrador' : 'Consultor'}</div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName}</div>
+          <div style={{ fontSize: 10, color: '#94A3B8', textTransform: 'capitalize' }}>{userRole === 'admin' ? 'Administrador' : 'Consultor'}</div>
         </div>
       </div>
     </aside>

@@ -438,9 +438,48 @@ textarea.input { resize: vertical; line-height: 1.6; }
     display: none !important;
   }
 
+  /* Tabelas — padding compacto para caber no ecrã sem cortar conteúdo */
+  table th,
+  table td {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Badges em células não partem para a linha seguinte */
+  table td span.badge,
+  table td > span {
+    white-space: nowrap;
+  }
+
   /* Activities layout — stacked no mobile */
   .activities-layout {
     grid-template-columns: 1fr !important;
+  }
+
+  /* Calendário mensal — células compactas e eventos como pontos coloridos */
+  .cal-month-cell {
+    min-height: 52px !important;
+    padding: 4px 3px !important;
+  }
+  .cal-events {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 3px !important;
+    padding-left: 2px;
+  }
+  .cal-event {
+    width: 7px;
+    height: 7px;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    font-size: 0 !important;
+    background: var(--dot) !important;
+    overflow: hidden;
+  }
+  .cal-more {
+    font-size: 8px !important;
+    padding-left: 0 !important;
+    width: 100%;
   }
 
   .activities-pending-sidebar {
@@ -466,6 +505,18 @@ textarea.input { resize: vertical; line-height: 1.6; }
   .header-actions .btn {
     font-size: 11px !important;
     padding: 6px 8px !important;
+  }
+
+  /* Linhas de etapa do pipeline — compactas para caber no ecrã */
+  .stage-row {
+    gap: 6px !important;
+    padding: 8px 8px !important;
+  }
+  .stage-prob {
+    min-width: 0 !important;
+  }
+  .stage-prob input {
+    width: 38px !important;
   }
 
   /* Filter bars — quebrar linha */

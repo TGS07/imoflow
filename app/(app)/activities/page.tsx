@@ -359,18 +359,18 @@ export default function ActivitiesPage() {
                 {getMonthDays().map((day, idx) => {
                   const dayActivities = getActivitiesForDay(day)
                   return (
-                    <div key={idx} style={{ minHeight: 80, padding: '6px 8px', borderBottom: '1px solid var(--border)', borderRight: (idx + 1) % 7 !== 0 ? '1px solid var(--border)' : 'none', opacity: isCurrentMonth(day) ? 1 : 0.35 }}>
+                    <div key={idx} className="cal-month-cell" style={{ minHeight: 80, minWidth: 0, padding: '6px 8px', borderBottom: '1px solid var(--border)', borderRight: (idx + 1) % 7 !== 0 ? '1px solid var(--border)' : 'none', opacity: isCurrentMonth(day) ? 1 : 0.35 }}>
                       <div style={{ fontSize: 12, fontWeight: isToday(day) ? 700 : 400, color: isToday(day) ? 'var(--gold)' : 'var(--text)', marginBottom: 4, width: 24, height: 24, borderRadius: '50%', background: isToday(day) ? 'var(--gold-glow)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {day.getDate()}
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <div className="cal-events" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {dayActivities.slice(0, 3).map(a => (
-                          <div key={a.id} onClick={() => setSelectedActivity(a)} style={{ fontSize: 10, padding: '2px 5px', borderRadius: 3, background: `${ACTIVITY_COLORS[a.type]}22`, color: ACTIVITY_COLORS[a.type], cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: a.completed ? 'line-through' : 'none', opacity: a.completed ? 0.5 : 1 }}>
+                          <div key={a.id} className="cal-event" onClick={() => setSelectedActivity(a)} style={{ fontSize: 10, padding: '2px 5px', borderRadius: 3, background: `${ACTIVITY_COLORS[a.type]}22`, color: ACTIVITY_COLORS[a.type], cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: a.completed ? 'line-through' : 'none', opacity: a.completed ? 0.5 : 1, ['--dot' as string]: ACTIVITY_COLORS[a.type] }}>
                             {ACTIVITY_ICONS[a.type]} {a.title}
                           </div>
                         ))}
                         {dayActivities.length > 3 && (
-                          <div style={{ fontSize: 9, color: 'var(--muted)', paddingLeft: 5 }}>+{dayActivities.length - 3} mais</div>
+                          <div className="cal-more" style={{ fontSize: 9, color: 'var(--muted)', paddingLeft: 5 }}>+{dayActivities.length - 3} mais</div>
                         )}
                       </div>
                     </div>

@@ -5,10 +5,10 @@ import { PipelineStage, CustomField } from '@/types'
 const COLORS = ['#3B82F6', '#F59E0B', '#8B5CF6', '#F97316', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E']
 const FIELD_TYPES = [
   { value: 'text', label: 'Texto' },
-  { value: 'number', label: 'Numero' },
+  { value: 'number', label: 'Número' },
   { value: 'date', label: 'Data' },
   { value: 'select', label: 'Lista' },
-  { value: 'boolean', label: 'Sim/Nao' },
+  { value: 'boolean', label: 'Sim/Não' },
   { value: 'currency', label: 'Moeda' },
 ]
 
@@ -106,7 +106,7 @@ export default function PipelineSettingsPage() {
   return (
     <>
       <div style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <h1 className="font-display" style={{ fontSize: 20 }}>Configuracoes do Pipeline</h1>
+        <h1 className="font-display" style={{ fontSize: 20 }}>Configurações do Pipeline</h1>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Personaliza as etapas e campos do teu CRM</p>
       </div>
 
@@ -116,7 +116,7 @@ export default function PipelineSettingsPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
             {stages.map((stage, i) => (
-              <div key={stage.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8 }}>
+              <div key={stage.id} className="stage-row" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <button onClick={() => moveStage(i, -1)} disabled={i === 0} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: i === 0 ? 'default' : 'pointer', fontSize: 10, opacity: i === 0 ? 0.3 : 1, padding: 0 }}>▲</button>
                   <button onClick={() => moveStage(i, 1)} disabled={i === stages.length - 1} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: i === stages.length - 1 ? 'default' : 'pointer', fontSize: 10, opacity: i === stages.length - 1 ? 0.3 : 1, padding: 0 }}>▼</button>
@@ -132,7 +132,7 @@ export default function PipelineSettingsPage() {
                   value={stage.name}
                   onChange={e => updateStage(stage.id, { name: e.target.value })}
                 />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--muted)', minWidth: 80 }}>
+                <div className="stage-prob hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--muted)', minWidth: 80 }}>
                   <input
                     type="number"
                     min={0}
@@ -143,7 +143,7 @@ export default function PipelineSettingsPage() {
                   />
                   <span>%</span>
                 </div>
-                <div style={{ display: 'flex', gap: 4, fontSize: 9 }}>
+                <div className="hide-mobile" style={{ display: 'flex', gap: 4, fontSize: 9 }}>
                   {stage.is_won && <span style={{ padding: '2px 6px', borderRadius: 3, background: '#10B98122', color: '#10B981', fontWeight: 600 }}>WON</span>}
                   {stage.is_lost && <span style={{ padding: '2px 6px', borderRadius: 3, background: '#EF444422', color: '#EF4444', fontWeight: 600 }}>LOST</span>}
                 </div>

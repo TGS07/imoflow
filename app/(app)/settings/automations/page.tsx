@@ -89,8 +89,8 @@ export default function AutomationsPage() {
   }
 
   return (
-    <div className="page-enter" style={{ padding: '32px 40px', maxWidth: 800 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
+    <div className="page-enter page-pad" style={{ padding: '28px 32px', maxWidth: 800 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 className="font-display" style={{ fontSize: 24, marginBottom: 6, color: 'var(--text)' }}>Automações</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>
@@ -121,8 +121,8 @@ export default function AutomationsPage() {
         <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {rules.map(rule => (
             <div key={rule.id} className="card card-hover" style={{ padding: '16px 20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 220px', minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                     <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{rule.name}</span>
                     <span className={rule.is_active ? 'badge badge-green' : 'badge badge-gray'}>
@@ -142,7 +142,7 @@ export default function AutomationsPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center', marginLeft: 'auto' }}>
                   <button onClick={() => expandRule(rule.id)} className="btn btn-ghost btn-sm">
                     {expandedId === rule.id ? 'Fechar' : 'Logs'}
                   </button>

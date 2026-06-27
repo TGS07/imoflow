@@ -125,10 +125,10 @@ export default function PropertyPage() {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Link href="/properties" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 13 }}>← Imóveis</Link>
-          <span style={{ color: 'var(--border)' }}>/</span>
-          <span style={{ fontSize: 13, color: 'var(--text)' }}>{property.title}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+          <Link href="/properties" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 13, flexShrink: 0 }}>← Imóveis</Link>
+          <span style={{ color: 'var(--border)', flexShrink: 0 }}>/</span>
+          <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{property.title}</span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {!editing ? (
@@ -143,7 +143,7 @@ export default function PropertyPage() {
         </div>
       </div>
 
-      <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div className="two-col-grid" style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         {/* Left: Property Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
