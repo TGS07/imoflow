@@ -38,5 +38,9 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/).*)'],
+  // Exclui assets internos do Next, a API e quaisquer ficheiros estáticos
+  // (qualquer caminho com extensão: manifest.webmanifest, sw.js, ícones .png,
+  // offline.html, etc.) para que o PWA e os recursos públicos não sejam
+  // redirecionados para /login.
+  matcher: ['/((?!_next/static|_next/image|api/|.*\\.[\\w]+$).*)'],
 }
