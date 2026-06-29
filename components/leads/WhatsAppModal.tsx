@@ -21,6 +21,7 @@ export function WhatsAppModal({ leadId, leadName, leadPhone, leadEmail, agentNam
   const [message, setMessage] = useState('')
   const [agencyName, setAgencyName] = useState('')
   const [opening, setOpening] = useState(false)
+  const [aiDrafting, setAiDrafting] = useState(false)
 
   useEffect(() => {
     fetch('/api/whatsapp-templates').then(r => r.ok ? r.json() : []).then(setTemplates).catch(() => {})
@@ -43,6 +44,26 @@ export function WhatsAppModal({ leadId, leadName, leadPhone, leadEmail, agentNam
     if (!templateId) return
     const tpl = templates.find(t => t.id === templateId)
     if (tpl) setMessage(fillVariables(tpl.body, vars))
+  }
+
+  async function handleAiDraft() {
+    setAiDrafting(true)
+    try {
+      const res = await fetch('/api/ai/draft-whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: leadId }),
+      })
+      if (res.ok) {
+        const { draft } = await res.json() as { draft: string }
+        setMessage(draft)
+        setSelectedId('')
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setAiDrafting(false)
+    }
   }
 
   async function handleOpen() {
@@ -96,7 +117,23 @@ export function WhatsAppModal({ leadId, leadName, leadPhone, leadEmail, agentNam
           )}
 
           <div>
-            <label className="label">Mensagem</label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <label className="label" style={{ margin: 0 }}>Mensagem</label>
+              <button
+                type="button"
+                onClick={handleAiDraft}
+                disabled={aiDrafting}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '4px 10px',
+                  borderRadius: 6, border: '1px solid rgba(176,125,46,0.3)', background: 'rgba(176,125,46,0.07)',
+                  color: 'var(--gold)', cursor: aiDrafting ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif',
+                  opacity: aiDrafting ? 0.6 : 1,
+                }}
+              >
+                <span>✦</span>
+                {aiDrafting ? 'A redigir...' : 'Sugerir com IA'}
+              </button>
+            </div>
             <textarea
               className="input"
               style={{ minHeight: 130 }}

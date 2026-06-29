@@ -121,6 +121,24 @@ export function NewLeadModal({ onClose, onCreated }: Props) {
         }),
       })
       if (!res.ok) throw new Error('Erro ao criar lead')
+      const created = await res.json() as { id?: string }
+      if (created?.id) {
+        fetch('/api/ai/qualify-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lead_id: created.id }),
+        })
+          .then(r => r.ok ? r.json() : null)
+          .then(async (q: { score: number } | null) => {
+            if (!q) return
+            await fetch(`/api/leads/${created.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ score: q.score }),
+            })
+          })
+          .catch(() => {})
+      }
       onCreated()
       onClose()
     } catch {

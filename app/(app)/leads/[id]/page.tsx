@@ -64,6 +64,8 @@ export default function LeadPage() {
   const [prefLoaded, setPrefLoaded] = useState(false)
   const [prefSaving, setPrefSaving] = useState(false)
   const [zonaInput, setZonaInput] = useState('')
+  const [aiSuggestion, setAiSuggestion] = useState<{ action: string; reason: string; urgency: string } | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
 
   useEffect(() => {
     fetch(`/api/lead-preferences/${id}`)
@@ -79,6 +81,23 @@ export default function LeadPage() {
     setPrefSaving(true)
     await fetch(`/api/lead-preferences/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pref) })
     setPrefSaving(false)
+  }
+
+  async function fetchAiSuggestion() {
+    setAiLoading(true)
+    setAiSuggestion(null)
+    try {
+      const res = await fetch('/api/ai/suggest-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lead_id: id }),
+      })
+      if (res.ok) setAiSuggestion(await res.json())
+    } catch {
+      // silently fail
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   function addZona() {
@@ -284,6 +303,44 @@ export default function LeadPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* AI Suggestion Card */}
+        <div className="card" style={{ overflow: 'hidden', marginBottom: 20, border: '1px solid rgba(176,125,46,0.25)' }}>
+          <div style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15, color: 'var(--gold)' }}>✦</span>
+              <span className="font-display" style={{ fontSize: 13, color: 'var(--gold)' }}>Sugestão IA</span>
+            </div>
+            <button
+              onClick={fetchAiSuggestion}
+              disabled={aiLoading}
+              className="btn btn-ghost btn-sm"
+              style={{ fontSize: 11, opacity: aiLoading ? 0.6 : 1 }}
+            >
+              {aiLoading ? 'A analisar...' : aiSuggestion ? '↺ Atualizar' : 'Analisar lead'}
+            </button>
+          </div>
+          {aiSuggestion && (
+            <div style={{ padding: '0 18px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{
+                  fontSize: 9, padding: '2px 7px', borderRadius: 3, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const,
+                  background: aiSuggestion.urgency === 'alta' ? '#FEE2E2' : aiSuggestion.urgency === 'media' ? '#FEF3C7' : '#F0FDF4',
+                  color: aiSuggestion.urgency === 'alta' ? '#DC2626' : aiSuggestion.urgency === 'media' ? '#D97706' : '#16A34A',
+                }}>
+                  {aiSuggestion.urgency}
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{aiSuggestion.action}</span>
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>{aiSuggestion.reason}</p>
+            </div>
+          )}
+          {!aiSuggestion && !aiLoading && (
+            <p style={{ fontSize: 11, color: 'var(--muted)', padding: '0 18px 14px', margin: 0 }}>
+              Clica em "Analisar lead" para receber uma sugestão personalizada.
+            </p>
+          )}
         </div>
 
         {/* Activities Section */}
