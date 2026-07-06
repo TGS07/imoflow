@@ -5,6 +5,7 @@ import {
   type ContactTypeKey,
 } from '@/lib/contacts/constants'
 import type { ContactDetails } from '@/types'
+import { AudioContactRecorder } from '@/components/contacts/AudioContactRecorder'
 
 type Initial = Partial<{
   name: string
@@ -29,11 +30,23 @@ export function NewContactModal({ initial, onClose, onCreated }: {
   const [source, setSource] = useState(initial?.source ?? '')
   const [details, setDetails] = useState<ContactDetails>(initial?.details ?? {})
   const [saving, setSaving] = useState(false)
+  const [mode, setMode] = useState<'manual' | 'audio'>('manual')
 
   const has = (t: ContactTypeKey) => types.includes(t)
   const toggleType = (t: ContactTypeKey) =>
     setTypes(prev => (prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]))
   const d = (k: keyof ContactDetails, v: unknown) => setDetails(p => ({ ...p, [k]: v }))
+
+  function applyExtracted(f: Record<string, unknown>) {
+    if (typeof f.name === 'string') setName(f.name)
+    if (typeof f.phone === 'string') setPhone(f.phone)
+    if (typeof f.email === 'string') setEmail(f.email)
+    if (Array.isArray(f.types)) setTypes(f.types as ContactTypeKey[])
+    if (typeof f.financial_capacity === 'string') setCapacity(f.financial_capacity)
+    setSource('audio')
+    if (f.details && typeof f.details === 'object') setDetails(f.details as ContactDetails)
+    setMode('manual')
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -65,6 +78,27 @@ export function NewContactModal({ initial, onClose, onCreated }: {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
         </div>
 
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          {(['manual', 'audio'] as const).map(m => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              style={{
+                flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: mode === m ? 'var(--gold-glow)' : 'var(--surface)',
+                color: mode === m ? 'var(--gold)' : 'var(--muted)',
+                border: mode === m ? '1px solid var(--gold)' : '1px solid var(--border)',
+              }}
+            >
+              {m === 'manual' ? 'Manual' : '🎙 Áudio'}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'audio' && <AudioContactRecorder onExtracted={applyExtracted} />}
+
+        {mode === 'manual' && (
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input className="input" placeholder="Nome *" value={name} onChange={e => setName(e.target.value)} required />
           <input className="input" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
@@ -172,6 +206,7 @@ export function NewContactModal({ initial, onClose, onCreated }: {
             <button type="submit" disabled={saving} className="btn btn-primary" style={{ flex: 1 }}>{saving ? 'A criar...' : 'Criar'}</button>
           </div>
         </form>
+        )}
       </div>
     </div>
   )
