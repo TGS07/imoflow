@@ -112,8 +112,14 @@ body {
 
 /* ---------- Page & list entrances ---------- */
 
+/* Termina em transform:none para NÃO criar um containing block que
+   prenderia os modais position:fixed dentro da página (backdrop cortado). */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
 .page-enter {
-  animation: fadeUp 0.4s var(--ease) both;
+  animation: pageEnter 0.4s var(--ease) both;
 }
 
 .stagger > * {
