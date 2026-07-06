@@ -27,9 +27,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
+  const allowed = ['name', 'email', 'phone', 'address', 'notes', 'types', 'financial_capacity', 'source', 'details'] as const
+  const update: Record<string, unknown> = {}
+  for (const k of allowed) if (k in body) update[k] = body[k]
+
   const { data, error } = await supabase
     .from('people')
-    .update(body)
+    .update(update)
     .eq('id', id)
     .select()
     .single()
