@@ -1,132 +1,216 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Person } from '@/types'
+import type { Person } from '@/types'
+import { CONTACT_TYPES, capacityMeta, type ContactTypeKey } from '@/lib/contacts/constants'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
+import { NewContactModal } from '@/components/contacts/NewContactModal'
+import { ContactFilters, EMPTY_FILTERS, applyContactFilters, type ContactFilterState } from '@/components/contacts/ContactFilters'
 
-type PersonWithLeads = Person & { leads?: { id: string }[] }
+function daysSince(iso: string | null): number | null {
+  if (!iso) return null
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
+}
+function relativeContact(iso: string | null): string {
+  const d = daysSince(iso)
+  if (d == null) return 'Sem contacto'
+  if (d === 0) return 'Hoje'
+  if (d === 1) return 'Ontem'
+  return `Há ${d} dias`
+}
+
+function cap(s?: string) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''
+}
+
+function PreviewLine({ p }: { p: Person }) {
+  const dot = <span style={{ color: 'var(--border-strong)' }}> · </span>
+  const t = p.types ?? []
+  const dim: React.CSSProperties = { fontSize: 12, color: 'var(--muted)', marginTop: 4 }
+
+  if (t.includes('vendedor')) {
+    const stale = p.details?.is_active_seller && (() => { const d = daysSince(p.last_interaction_at); return d == null || d > 10 })()
+    return (
+      <div style={{ ...dim, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span>
+          {p.details?.selling_property || '—'}
+          {p.details?.selling_zone && <>{dot}{p.details.selling_zone}</>}
+          {p.details?.selling_price != null && <>{dot}€{p.details.selling_price.toLocaleString('pt-PT')}</>}
+          {dot}Último contacto: {relativeContact(p.last_interaction_at)}
+        </span>
+        {stale && (
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#EF4444', background: 'rgba(239,68,68,0.1)', borderRadius: 6, padding: '2px 8px' }}>
+            ⚠ Sem contacto há +10 dias
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  if (t.includes('comprador') || t.includes('investidor')) {
+    return (
+      <div style={dim}>
+        {p.details?.looking_for || '—'}
+        {p.details?.search_zone && <>{dot}{p.details.search_zone}</>}
+        {capacityMeta(p.financial_capacity)?.label && <>{dot}{capacityMeta(p.financial_capacity)?.label}</>}
+        {p.details?.temperature && <>{dot}{cap(p.details.temperature)}</>}
+      </div>
+    )
+  }
+
+  if (t.includes('servico')) {
+    return (
+      <div style={dim}>
+        {p.details?.service_type || '—'}
+        {(p.email || p.phone) && <>{dot}{p.email ?? p.phone}</>}
+      </div>
+    )
+  }
+
+  return <div style={dim}>{p.email ?? p.phone ?? '—'}</div>
+}
 
 export default function PeoplePage() {
-  const [people, setPeople] = useState<PersonWithLeads[]>([])
+  const [people, setPeople] = useState<Person[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', email: '', phone: '' })
-  const [creating, setCreating] = useState(false)
+  const [activeTypes, setActiveTypes] = useState<ContactTypeKey[]>([])
+  const [showModal, setShowModal] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState<ContactFilterState>(EMPTY_FILTERS)
   const router = useRouter()
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300)
-    return () => clearTimeout(timer)
-  }, [search])
 
   const fetchPeople = useCallback(async () => {
-    const params = new URLSearchParams()
-    if (debouncedSearch) params.set('search', debouncedSearch)
     try {
-      const res = await fetch(`/api/people?${params}`)
+      const res = await fetch('/api/people')
       if (!res.ok) throw new Error()
       setPeople(await res.json())
     } catch { setPeople([]) }
     finally { setLoading(false) }
-  }, [debouncedSearch])
+  }, [])
 
   useEffect(() => { fetchPeople() }, [fetchPeople])
 
-  async function createPerson(e: React.FormEvent) {
-    e.preventDefault()
-    setCreating(true)
-    try {
-      const res = await fetch('/api/people', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
-      if (res.ok) { setForm({ name: '', email: '', phone: '' }); setShowForm(false); fetchPeople() }
-    } finally { setCreating(false) }
-  }
+  const toggleType = (t: ContactTypeKey) =>
+    setActiveTypes(prev => (prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]))
+
+  const visible = useMemo(() => {
+    let list = applyContactFilters(people, filters)
+    if (activeTypes.length) list = list.filter(p => (p.types ?? []).some(t => activeTypes.includes(t)))
+    const q = search.trim().toLowerCase()
+    if (q) {
+      list = list.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.phone ?? '').toLowerCase().includes(q) ||
+        (p.email ?? '').toLowerCase().includes(q)
+      )
+    }
+    return list
+  }, [people, filters, activeTypes, search])
+
+  const filtering = search.trim().length > 0 || activeTypes.length > 0 || JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS)
 
   return (
     <div className="page-enter">
-      {showForm && (
-        <div className="modal-backdrop" onClick={() => setShowForm(false)}>
-          <div className="modal" style={{ width: 420 }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div className="font-display" style={{ fontSize: 18 }}>Nova Pessoa</div>
-              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
-            </div>
-            <form onSubmit={createPerson} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input className="input" placeholder="Nome *" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
-              <input className="input" type="email" placeholder="Email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
-              <input className="input" placeholder="Telefone" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
-              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-                <button type="button" onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
-                <button type="submit" disabled={creating} className="btn btn-primary" style={{ flex: 1 }}>{creating ? 'A criar...' : 'Criar'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {showModal && (
+        <NewContactModal
+          onClose={() => setShowModal(false)}
+          onCreated={fetchPeople}
+        />
       )}
 
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 20 }}>Pessoas</h1>
-          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{people.length} contactos</p>
+          <h1 className="font-display" style={{ fontSize: 20 }}>Contactos</h1>
+          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{visible.length} contactos</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn btn-primary">+ Nova Pessoa</button>
+        <button onClick={() => setShowModal(true)} className="btn btn-primary">+ Novo Contacto</button>
       </div>
 
       <div className="page-pad" style={{ padding: '20px 32px' }}>
-        <input
-          className="input"
-          placeholder="Pesquisar por nome, email ou telefone..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ marginBottom: 16 }}
-        />
-        {!loading && people.length === 0 ? (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+          <button
+            onClick={() => setActiveTypes([])}
+            style={{
+              fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
+              background: activeTypes.length === 0 ? 'var(--gold-glow)' : 'var(--surface)',
+              color: activeTypes.length === 0 ? 'var(--gold)' : 'var(--muted)',
+              border: activeTypes.length === 0 ? '1px solid var(--gold)' : '1px solid var(--border)',
+            }}
+          >
+            Todos
+          </button>
+          {CONTACT_TYPES.map(meta => {
+            const active = activeTypes.includes(meta.key)
+            return (
+              <button
+                key={meta.key}
+                onClick={() => toggleType(meta.key)}
+                style={{
+                  fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
+                  background: active ? `${meta.color}18` : 'var(--surface)',
+                  color: active ? meta.color : 'var(--muted)',
+                  border: active ? `1px solid ${meta.color}55` : '1px solid var(--border)',
+                }}
+              >
+                {meta.plural}
+              </button>
+            )
+          })}
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+          <input
+            className="input"
+            placeholder="Pesquisar por nome, telefone ou email..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <button onClick={() => setShowFilters(s => !s)} className="btn btn-ghost">Filtros</button>
+        </div>
+
+        {showFilters && (
+          <ContactFilters value={filters} onChange={setFilters} onClose={() => setShowFilters(false)} />
+        )}
+
+        {loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="skeleton" style={{ height: 72, borderRadius: 12 }} />
+            ))}
+          </div>
+        ) : visible.length === 0 ? (
           <div className="card" style={{ overflow: 'hidden' }}>
-            {debouncedSearch ? (
-              <EmptyState illustration="search" title="Nenhum resultado" description="Não encontrámos pessoas com esse termo." />
+            {filtering ? (
+              <EmptyState illustration="search" title="Nenhum resultado" description="Não encontrámos contactos com esses critérios." />
             ) : (
-              <EmptyState illustration="people" title="Ainda não tens pessoas" description="Os contactos individuais ligados aos teus negócios aparecem aqui." action={{ label: '+ Nova Pessoa', onClick: () => setShowForm(true) }} />
+              <EmptyState illustration="people" title="Ainda não tens contactos" description="Cria o teu primeiro contacto para começar a organizar compradores, vendedores e investidores." action={{ label: '+ Novo Contacto', onClick: () => setShowModal(true) }} />
             )}
           </div>
         ) : (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Nome</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Email</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Telefone</th>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Negócios</th>
-              </tr>
-            </thead>
-            <tbody className="stagger">
-              {loading && [0, 1, 2, 3].map(i => (
-                <tr key={i}><td colSpan={4} style={{ padding: '8px 20px' }}><div className="skeleton" style={{ height: 34 }} /></td></tr>
-              ))}
-              {people.map(p => (
-                <tr key={p.id} onClick={() => router.push(`/people/${p.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 13, color: 'var(--text)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                        {p.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{p.name}</div>
-                        <div className="hide-mobile" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{p.email ?? p.phone ?? ''}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{p.email ?? '—'}</td>
-                  <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{p.phone ?? '—'}</td>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>{p.leads?.length ?? 0}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {visible.map(p => (
+              <div
+                key={p.id}
+                className="card"
+                onClick={() => router.push(`/people/${p.id}`)}
+                style={{ padding: 16, cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 12 }}
+              >
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                  {p.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{p.name}</div>
+                    <ContactTypeChips types={p.types ?? []} />
+                  </div>
+                  <PreviewLine p={p} />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

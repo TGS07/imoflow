@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { ensureContactForLead } from '@/lib/contacts/from-lead'
 
 // Rate limit: 10 submissões por IP por hora (best-effort, sem persistência entre instâncias Vercel)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
@@ -107,11 +108,21 @@ export async function POST(
   }
   if (fields.includes('message') && body.message) leadData.notes = String(body.message).trim()
 
-  const { error: insertError } = await supabase.from('leads').insert(leadData)
+  const { data: insertedLead, error: insertError } = await supabase
+    .from('leads')
+    .insert(leadData)
+    .select()
+    .single()
 
-  if (insertError) {
+  if (insertError || !insertedLead) {
     console.error('[web-form] lead insert failed', insertError)
     return NextResponse.json({ error: 'Erro ao guardar os seus dados. Tente novamente.' }, { status: 500 })
+  }
+
+  // Toda a lead vira contacto (site => comprador)
+  const personId = await ensureContactForLead(insertedLead, supabase)
+  if (personId) {
+    await supabase.from('leads').update({ person_id: personId }).eq('id', insertedLead.id)
   }
 
   return NextResponse.json({ success: true })

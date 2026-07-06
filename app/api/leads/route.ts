@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { createNotification } from '@/lib/notifications'
 import { triggerAutomations } from '@/lib/automations/engine'
+import { ensureContactForLead } from '@/lib/contacts/from-lead'
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -73,6 +74,17 @@ export async function POST(request: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Garantir que existe um contacto ligado a esta lead (Idealista/site => comprador)
+  if (!data.person_id) {
+    const personId = await ensureContactForLead(data, supabase)
+    if (personId) {
+      await supabase.from('leads').update({ person_id: personId }).eq('id', data.id)
+      data.person_id = personId
+    }
+  } else {
+    await ensureContactForLead(data, supabase)
+  }
 
   // Save custom field values if provided
   if (customFieldValues && typeof customFieldValues === 'object') {

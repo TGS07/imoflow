@@ -8,11 +8,18 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
   const search = searchParams.get('search')
+  const typesParam = searchParams.get('types') // csv: "comprador,vendedor"
 
   let query = supabase
     .from('people')
     .select('*, leads(id, name, stage_id, deal_value, pipeline_stages(name, color))')
+    .order('last_interaction_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
+
+  if (typesParam) {
+    const arr = typesParam.split(',').filter(Boolean)
+    if (arr.length) query = query.overlaps('types', arr)
+  }
 
   if (search) {
     const term = search.replace(/[%_\\]/g, '\\$&')
@@ -38,12 +45,20 @@ export async function POST(request: Request) {
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
   const body = await request.json()
-  const { data, error } = await supabase
-    .from('people')
-    .insert({ ...body, agency_id: profile.agency_id })
-    .select()
-    .single()
+  const insert = {
+    agency_id: profile.agency_id,
+    name: body.name,
+    email: body.email || null,
+    phone: body.phone || null,
+    address: body.address || null,
+    notes: body.notes || null,
+    types: Array.isArray(body.types) ? body.types : [],
+    financial_capacity: body.financial_capacity || null,
+    source: body.source || 'manual',
+    details: body.details && typeof body.details === 'object' ? body.details : {},
+  }
 
+  const { data, error } = await supabase.from('people').insert(insert).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data, { status: 201 })
 }

@@ -10,7 +10,7 @@ const NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: 'dashboard', keywords: 'inicio home painel' },
   { label: 'Leads', href: '/leads', icon: 'leads', keywords: 'clientes contactos negocios' },
   { label: 'Pipeline', href: '/pipeline', icon: 'pipeline', keywords: 'funil kanban etapas' },
-  { label: 'Pessoas', href: '/people', icon: 'people', keywords: 'contactos pessoas' },
+  { label: 'Contactos', href: '/people', icon: 'people', keywords: 'contactos pessoas' },
   { label: 'Organizações', href: '/organizations', icon: 'building', keywords: 'empresas organizacoes' },
   { label: 'Imóveis', href: '/properties', icon: 'home', keywords: 'propriedades casas imoveis' },
   { label: 'Atividades', href: '/activities', icon: 'calendar', keywords: 'calendario tarefas agenda' },

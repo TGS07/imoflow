@@ -7,7 +7,7 @@ const navItems: { href: string; icon: IconName; label: string; section: string }
   { href: '/dashboard', icon: 'dashboard', label: 'Dashboard', section: 'Principal' },
   { href: '/leads', icon: 'leads', label: 'Leads', section: 'Principal' },
   { href: '/pipeline', icon: 'pipeline', label: 'Pipeline', section: 'Principal' },
-  { href: '/people', icon: 'people', label: 'Pessoas', section: 'Principal' },
+  { href: '/people', icon: 'people', label: 'Contactos', section: 'Principal' },
   { href: '/organizations', icon: 'building', label: 'Organizações', section: 'Principal' },
   { href: '/properties', icon: 'home', label: 'Imóveis', section: 'Principal' },
   { href: '/activities', icon: 'calendar', label: 'Atividades', section: 'Principal' },

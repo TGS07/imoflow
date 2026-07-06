@@ -13,12 +13,14 @@ type Props = {
   leadEmail: string | null
   onClose: () => void
   onSent: () => void
+  initialSubject?: string
+  initialBody?: string
 }
 
-export function SendEmailModal({ leadId, leadEmail, onClose, onSent }: Props) {
+export function SendEmailModal({ leadId, leadEmail, onClose, onSent, initialSubject, initialBody }: Props) {
   const [to, setTo] = useState(leadEmail ?? '')
-  const [subject, setSubject] = useState('')
-  const [body, setBody] = useState('')
+  const [subject, setSubject] = useState(initialSubject ?? '')
+  const [body, setBody] = useState(initialBody ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [templates, setTemplates] = useState<EmailTemplate[]>([])

@@ -89,3 +89,39 @@ REGRAS:
 
 Responde apenas com o texto da mensagem, sem aspas nem formatação.`
 }
+
+export function buildClosingEmailPrompt(params: {
+  propertyTitle: string
+  contactNames: string[]
+  agentName: string
+  agencyName: string
+  reviewLink: string
+}): string {
+  const { propertyTitle, contactNames, agentName, agencyName, reviewLink } = params
+  return [
+    `Escreve um email caloroso e profissional em português de Portugal.`,
+    `Contexto: acabámos de fechar a venda do imóvel "${propertyTitle}".`,
+    `Destinatários envolvidos no negócio: ${contactNames.join(', ')}.`,
+    `Objetivos do email:`,
+    `1) Agradecer e parabenizar todos os envolvidos pelo negócio concluído.`,
+    `2) Pedir gentilmente uma avaliação (Google review) com este link: ${reviewLink}`,
+    `Assina como ${agentName}, da agência ${agencyName}.`,
+    `Devolve APENAS o corpo do email (sem assunto, sem markdown).`,
+  ].join('\n')
+}
+
+export function buildContactExtractionPrompt(transcript: string): string {
+  return [
+    `Extrai dados de contacto imobiliário a partir desta transcrição (português).`,
+    `Transcrição: """${transcript}"""`,
+    `Devolve APENAS JSON válido com este formato (sem texto extra):`,
+    `{"name": string, "phone": string|null, "email": string|null,`,
+    ` "types": array de ("comprador"|"vendedor"|"investidor"|"servico"),`,
+    ` "financial_capacity": ("muito_baixo"|"baixo"|"medio"|"medio_alto"|"alto"|"altissimo")|null,`,
+    ` "details": {"looking_for"?: string, "search_zone"?: string, "temperature"?: ("quente"|"morno"|"frio"),`,
+    `  "selling_property"?: string, "selling_zone"?: string, "selling_price"?: number, "typology"?: string,`,
+    `  "has_garage"?: boolean, "has_balcony"?: boolean, "has_exclusivity"?: boolean, "is_active_seller"?: boolean,`,
+    `  "service_type"?: string}}`,
+    `Se um campo não for mencionado, omite-o (ou usa null para name/phone/email). Bandas: <250k muito_baixo; 250-500k baixo; 500k-1M medio; 1-2.5M medio_alto; 2.5-5M alto; 5M+ altissimo.`,
+  ].join('\n')
+}
