@@ -57,7 +57,7 @@ export function NewContactModal({ initial, onClose, onCreated }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name, email, phone, types,
-          financial_capacity: capacity || null,
+          financial_capacity: (types.includes('comprador') || types.includes('investidor')) ? (capacity || null) : null,
           source, details,
         }),
       })
@@ -98,8 +98,8 @@ export function NewContactModal({ initial, onClose, onCreated }: {
           </div>
         </div>
 
-        {/* Corpo com scroll próprio */}
-        <div style={{ padding: '16px 24px 20px', overflowY: 'auto', flex: 1 }}>
+        {/* Corpo com scroll próprio (minHeight:0 permite ao flex encolher e ativar o scroll) */}
+        <div style={{ padding: '16px 24px 20px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
         {mode === 'audio' && <AudioContactRecorder onExtracted={applyExtracted} />}
 
         {mode === 'manual' && (
@@ -132,15 +132,17 @@ export function NewContactModal({ initial, onClose, onCreated }: {
             </div>
           </div>
 
-          <div>
-            <div style={sectionLabel}>Capacidade financeira</div>
-            <select className="input" value={capacity} onChange={e => setCapacity(e.target.value)}>
-              <option value="">—</option>
-              {CAPACITY_BANDS.map(b => (
-                <option key={b.key} value={b.key}>{b.label} ({b.range})</option>
-              ))}
-            </select>
-          </div>
+          {(has('comprador') || has('investidor')) && (
+            <div>
+              <div style={sectionLabel}>Capacidade financeira</div>
+              <select className="input" value={capacity} onChange={e => setCapacity(e.target.value)}>
+                <option value="">—</option>
+                {CAPACITY_BANDS.map(b => (
+                  <option key={b.key} value={b.key}>{b.label} ({b.range})</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <div style={sectionLabel}>Origem</div>
