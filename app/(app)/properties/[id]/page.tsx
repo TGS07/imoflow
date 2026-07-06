@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Property, PropertyType, PropertyStatus, PropertyCondition } from '@/types'
+import { PropertySeller } from '@/components/properties/PropertySeller'
+import { PropertyVisits } from '@/components/properties/PropertyVisits'
 
 const TYPES: { value: PropertyType; label: string }[] = [
   { value: 'apartamento', label: 'Apartamento' },
@@ -46,7 +48,8 @@ type LeadSummary = {
   people?: { name: string }
 }
 
-type PropertyDetail = Property & { leads?: LeadSummary[] }
+type SellerSummary = { id: string; name: string; phone: string | null; email: string | null }
+type PropertyDetail = Property & { leads?: LeadSummary[]; seller?: SellerSummary | null }
 
 export default function PropertyPage() {
   const { id } = useParams<{ id: string }>()
@@ -260,8 +263,10 @@ export default function PropertyPage() {
           </div>
         </div>
 
-        {/* Right: Deals */}
-        <div>
+        {/* Right: Seller, Visits, Deals */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <PropertySeller propertyId={id} seller={property.seller ?? null} onChange={fetchProperty} />
+          <PropertyVisits propertyId={id} />
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
             <div className="font-display" style={{ fontSize: 15, marginBottom: 16 }}>Negócios</div>
 

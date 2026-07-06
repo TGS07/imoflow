@@ -108,6 +108,7 @@ export type Property = {
   features: string[]
   photos: string[]
   notes: string | null
+  seller_id: string | null
   created_at: string
 }
 
