@@ -72,30 +72,34 @@ export function NewContactModal({ initial, onClose, onCreated }: {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" style={{ width: 480, maxHeight: '86vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div className="font-display" style={{ fontSize: 18 }}>Novo Contacto</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
+      <div className="modal" style={{ width: '100%', maxWidth: 480, maxHeight: '90vh', padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+        {/* Cabeçalho fixo: título + seletor de modo (sempre visível) */}
+        <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div className="font-display" style={{ fontSize: 18 }}>Novo Contacto</div>
+            <button onClick={onClose} aria-label="Fechar" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>✕</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {(['manual', 'audio'] as const).map(m => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                style={{
+                  flex: 1, padding: '9px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  background: mode === m ? 'var(--gold-glow)' : 'var(--surface)',
+                  color: mode === m ? 'var(--gold)' : 'var(--muted)',
+                  border: mode === m ? '1px solid var(--gold)' : '1px solid var(--border)',
+                }}
+              >
+                {m === 'manual' ? '✍ Manual' : '🎙 Áudio'}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          {(['manual', 'audio'] as const).map(m => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              style={{
-                flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                background: mode === m ? 'var(--gold-glow)' : 'var(--surface)',
-                color: mode === m ? 'var(--gold)' : 'var(--muted)',
-                border: mode === m ? '1px solid var(--gold)' : '1px solid var(--border)',
-              }}
-            >
-              {m === 'manual' ? 'Manual' : '🎙 Áudio'}
-            </button>
-          ))}
-        </div>
-
+        {/* Corpo com scroll próprio */}
+        <div style={{ padding: '16px 24px 20px', overflowY: 'auto', flex: 1 }}>
         {mode === 'audio' && <AudioContactRecorder onExtracted={applyExtracted} />}
 
         {mode === 'manual' && (
@@ -207,6 +211,7 @@ export function NewContactModal({ initial, onClose, onCreated }: {
           </div>
         </form>
         )}
+        </div>
       </div>
     </div>
   )
