@@ -89,3 +89,23 @@ REGRAS:
 
 Responde apenas com o texto da mensagem, sem aspas nem formatação.`
 }
+
+export function buildClosingEmailPrompt(params: {
+  propertyTitle: string
+  contactNames: string[]
+  agentName: string
+  agencyName: string
+  reviewLink: string
+}): string {
+  const { propertyTitle, contactNames, agentName, agencyName, reviewLink } = params
+  return [
+    `Escreve um email caloroso e profissional em português de Portugal.`,
+    `Contexto: acabámos de fechar a venda do imóvel "${propertyTitle}".`,
+    `Destinatários envolvidos no negócio: ${contactNames.join(', ')}.`,
+    `Objetivos do email:`,
+    `1) Agradecer e parabenizar todos os envolvidos pelo negócio concluído.`,
+    `2) Pedir gentilmente uma avaliação (Google review) com este link: ${reviewLink}`,
+    `Assina como ${agentName}, da agência ${agencyName}.`,
+    `Devolve APENAS o corpo do email (sem assunto, sem markdown).`,
+  ].join('\n')
+}

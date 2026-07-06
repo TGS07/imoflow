@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Property, PropertyType, PropertyStatus, PropertyCondition } from '@/types'
 import { PropertySeller } from '@/components/properties/PropertySeller'
 import { PropertyVisits } from '@/components/properties/PropertyVisits'
+import { SendEmailModal } from '@/components/leads/SendEmailModal'
 
 const TYPES: { value: PropertyType; label: string }[] = [
   { value: 'apartamento', label: 'Apartamento' },
@@ -56,6 +57,8 @@ export default function PropertyPage() {
   const router = useRouter()
   const [property, setProperty] = useState<PropertyDetail | null>(null)
   const [editing, setEditing] = useState(false)
+  const [closingLoading, setClosingLoading] = useState(false)
+  const [emailModal, setEmailModal] = useState<{ leadId: string; email: string | null; subject: string; body: string } | null>(null)
   const [form, setForm] = useState({
     title: '', reference: '', type: 'apartamento' as PropertyType, status: 'disponivel' as PropertyStatus,
     price: '', area_m2: '', typology: '', bedrooms: '', bathrooms: '', floor: '',
@@ -118,6 +121,32 @@ export default function PropertyPage() {
     router.push('/properties')
   }
 
+  async function generateClosingEmail() {
+    if (!property) return
+    const leads = property.leads ?? []
+    if (leads.length === 0) {
+      alert('Este imóvel não tem negócios associados para enviar o email.')
+      return
+    }
+    setClosingLoading(true)
+    try {
+      const res = await fetch('/api/ai/closing-email', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ property_id: id }),
+      })
+      if (!res.ok) { alert('Não foi possível gerar o email.'); return }
+      const data = await res.json() as { body: string }
+      // lead vencedora = maior deal_value
+      const winner = [...leads].sort((a, b) => (b.deal_value ?? 0) - (a.deal_value ?? 0))[0]
+      setEmailModal({
+        leadId: winner.id,
+        email: property.seller?.email ?? null,
+        subject: `Parabéns pelo negócio — ${property.title}`,
+        body: data.body,
+      })
+    } finally { setClosingLoading(false) }
+  }
+
   if (!property) return <div style={{ padding: 40, color: 'var(--muted)', fontSize: 13 }}>A carregar...</div>
 
   const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif', width: '100%' }
@@ -127,6 +156,16 @@ export default function PropertyPage() {
 
   return (
     <>
+      {emailModal && (
+        <SendEmailModal
+          leadId={emailModal.leadId}
+          leadEmail={emailModal.email}
+          initialSubject={emailModal.subject}
+          initialBody={emailModal.body}
+          onClose={() => setEmailModal(null)}
+          onSent={() => setEmailModal(null)}
+        />
+      )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
           <Link href="/properties" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 13, flexShrink: 0 }}>← Imóveis</Link>
@@ -134,6 +173,9 @@ export default function PropertyPage() {
           <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{property.title}</span>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          {!editing && property.status === 'vendido' && (
+            <button onClick={generateClosingEmail} disabled={closingLoading} style={{ background: 'var(--gold-glow)', border: '1px solid var(--gold)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--gold)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>{closingLoading ? 'A gerar...' : '✉ Email de fecho'}</button>
+          )}
           {!editing ? (
             <button onClick={() => setEditing(true)} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--text)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Editar</button>
           ) : (
