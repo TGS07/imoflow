@@ -60,6 +60,11 @@ export type Person = {
   phone: string | null
   address: string | null
   notes: string | null
+  types: import('./contact').ContactTypeKey[]
+  financial_capacity: import('./contact').CapacityBand | null
+  source: string | null
+  last_interaction_at: string | null
+  details: import('./contact').ContactDetails
   created_at: string
 }
 
@@ -174,3 +179,4 @@ export type { ReportPeriod, ReportKpis, ReportFunnelEntry, ReportSourceEntry, Re
 export type { WebFormField, WebForm } from './web-form'
 export type { WhatsAppTemplate, WhatsAppMessage } from './whatsapp'
 export { WEB_FORM_FIELD_LABELS, OPTIONAL_FORM_FIELDS } from './web-form'
+export type { ContactDetails, ContactTemperature, ContactInteraction, ContactInteractionType } from './contact'
