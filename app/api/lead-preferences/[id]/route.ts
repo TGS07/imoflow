@@ -31,9 +31,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const body = await request.json()
   const supabase = createServiceClient()
 
+  const { data: lead } = await supabase.from('leads').select('agency_id').eq('id', id).single()
+  if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
+
   const { data, error } = await supabase
     .from('lead_preferences')
-    .upsert({ lead_id: id, ...body }, { onConflict: 'lead_id' })
+    .upsert({ lead_id: id, agency_id: lead.agency_id, ...body }, { onConflict: 'lead_id' })
     .select()
     .single()
 

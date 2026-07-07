@@ -8,6 +8,8 @@ import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { InteractionTimeline } from '@/components/contacts/InteractionTimeline'
 import { CONTACT_TYPES, CAPACITY_BANDS, capacityMeta, type ContactTypeKey } from '@/lib/contacts/constants'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
+import { ContactAiSuggestion } from '@/components/contacts/ContactAiSuggestion'
+import { ContactIdealistaPreferences } from '@/components/contacts/ContactIdealistaPreferences'
 
 type LeadSummary = {
   id: string
@@ -364,8 +366,9 @@ export default function PersonPage() {
           </div>
         </div>
 
-        {/* Right: Interactions + Deals */}
+        {/* Right: AI Suggestion + Interactions + Deals + Idealista */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <ContactAiSuggestion personId={id} />
           <InteractionTimeline personId={id} onLogged={fetchPerson} />
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -404,6 +407,10 @@ export default function PersonPage() {
               </div>
             )}
           </div>
+
+          {showBuyer && (
+            <ContactIdealistaPreferences personId={id} defaultZone={person.details?.search_zone} />
+          )}
         </div>
       </div>
     </>

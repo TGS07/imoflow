@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Lead, PipelineStage, Activity, ActivityType } from '@/types'
 import { SendEmailModal } from '@/components/leads/SendEmailModal'
 import { WhatsAppModal } from '@/components/leads/WhatsAppModal'
+import { LinkContactModal } from '@/components/leads/LinkContactModal'
 import { Icon } from '@/components/ui/Icon'
 
 const EXTRAS_SUGERIDOS = ['vista mar', 'garagem', 'piscina', 'jardim', 'varanda', 'elevador', 'ar condicionado', 'lareira']
@@ -57,6 +58,7 @@ export default function LeadPage() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [showEmail, setShowEmail] = useState(false)
+  const [showLinkContact, setShowLinkContact] = useState(false)
   const [showWhatsApp, setShowWhatsApp] = useState(false)
   const [activityFilter, setActivityFilter] = useState<ActivityType | ''>('')
   const [newActivity, setNewActivity] = useState({ type: 'nota' as ActivityType, title: '', description: '', due_date: '' })
@@ -197,6 +199,9 @@ export default function LeadPage() {
           onSent={fetchAll}
         />
       )}
+      {showLinkContact && (
+        <LinkContactModal leadId={id} onClose={() => setShowLinkContact(false)} onLinked={fetchAll} />
+      )}
 
       {/* Breadcrumb header */}
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 8 }}>
@@ -246,12 +251,21 @@ export default function LeadPage() {
                   Fecho: {new Date(lead.expected_close_date).toLocaleDateString('pt-PT')}
                 </span>
               )}
-              {lead.people && (
-                <Link href={`/people/${lead.people.id}`} style={{ textDecoration: 'none' }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(176,125,46,0.08)', color: 'var(--gold)', border: '1px solid rgba(176,125,46,0.2)', cursor: 'pointer' }}>
-                    👤 {lead.people.name}
+              {lead.people ? (
+                <>
+                  <Link href={`/people/${lead.people.id}`} style={{ textDecoration: 'none' }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(176,125,46,0.08)', color: 'var(--gold)', border: '1px solid rgba(176,125,46,0.2)', cursor: 'pointer' }}>
+                      👤 {lead.people.name}
+                    </span>
+                  </Link>
+                  <span onClick={() => setShowLinkContact(true)} style={{ fontSize: 10, fontWeight: 500, padding: '3px 10px', borderRadius: 5, background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)', cursor: 'pointer' }}>
+                    🔗 Trocar contacto
                   </span>
-                </Link>
+                </>
+              ) : (
+                <span onClick={() => setShowLinkContact(true)} style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(176,125,46,0.08)', color: 'var(--gold)', border: '1px solid rgba(176,125,46,0.2)', cursor: 'pointer' }}>
+                  🔗 Ligar contacto
+                </span>
               )}
               {lead.organizations && (
                 <Link href={`/organizations/${lead.organizations.id}`} style={{ textDecoration: 'none' }}>

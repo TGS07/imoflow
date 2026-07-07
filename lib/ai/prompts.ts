@@ -1,4 +1,4 @@
-import type { Lead, Activity } from '@/types'
+import type { Lead, Activity, Person, ContactInteraction } from '@/types'
 
 export function buildSuggestActionPrompt(lead: Lead, activities: Activity[]): string {
   const lastActivity = activities[0]
@@ -136,4 +136,56 @@ export function buildInteractionExtractionPrompt(transcript: string): string {
     `"note" é um resumo claro e conciso em português de Portugal (1-3 frases),`,
     `escrito na primeira pessoa do agente, com os factos importantes (preços, datas, decisões).`,
   ].join('\n')
+}
+
+export function buildSuggestContactActionPrompt(
+  person: Person,
+  interactions: ContactInteraction[],
+): string {
+  const lastInteraction = interactions[0]
+  const daysSinceLast = lastInteraction
+    ? Math.floor((Date.now() - new Date(lastInteraction.created_at).getTime()) / 86_400_000)
+    : null
+
+  const typeLabels: Record<string, string> = { comprador: 'Comprador', vendedor: 'Vendedor', investidor: 'Investidor', servico: 'Serviço' }
+  const types = (person.types ?? []).map(t => typeLabels[t] ?? t).join(', ') || 'não definido'
+  const d = person.details ?? {}
+
+  const detailLines: string[] = []
+  if (person.types?.includes('comprador') || person.types?.includes('investidor')) {
+    detailLines.push(`- O que procura: ${d.looking_for ?? 'não definido'}`)
+    detailLines.push(`- Zona de procura: ${d.search_zone ?? 'não definida'}`)
+    detailLines.push(`- Temperatura: ${d.temperature ?? 'não definida'}`)
+    detailLines.push(`- Já comprou connosco: ${d.already_bought ? 'sim' : 'não'}`)
+  }
+  if (person.types?.includes('vendedor')) {
+    detailLines.push(`- O que vende: ${d.selling_property ?? 'não definido'}`)
+    detailLines.push(`- Zona de venda: ${d.selling_zone ?? 'não definida'}`)
+    detailLines.push(`- Preço pedido: ${d.selling_price ? `${d.selling_price}€` : 'não definido'}`)
+    detailLines.push(`- Vendedor ativo: ${d.is_active_seller ? 'sim' : 'não'}`)
+    detailLines.push(`- Exclusividade: ${d.has_exclusivity ? 'sim' : 'não'}`)
+  }
+  if (person.types?.includes('servico')) {
+    detailLines.push(`- Tipo de serviço: ${d.service_type ?? 'não definido'}`)
+  }
+
+  const history = interactions
+    .slice(0, 10)
+    .map(i => `- [${new Date(i.created_at).toLocaleDateString('pt-PT')}] ${i.type}${i.note ? ` — ${i.note}` : ''}`)
+    .join('\n')
+
+  return `És um assistente de vendas imobiliárias. Analisa o seguinte contacto e sugere a próxima ação mais importante.
+
+CONTACTO:
+- Nome: ${person.name}
+- Tipo(s): ${types}
+- Capacidade financeira: ${person.financial_capacity ?? 'não definida'}
+${detailLines.join('\n')}
+${daysSinceLast !== null ? `- Dias desde última interação: ${daysSinceLast}` : '- Sem interações anteriores'}
+
+HISTORIAL RECENTE:
+${history || 'Sem interações registadas.'}
+
+Responde em JSON com exatamente este formato (sem markdown, sem texto extra):
+{"action": "descrição curta da ação (máx 80 chars)", "reason": "justificação curta (máx 120 chars)", "urgency": "alta|media|baixa"}`
 }
