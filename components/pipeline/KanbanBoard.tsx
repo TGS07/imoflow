@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -72,6 +72,9 @@ type Props = {
 export function KanbanBoard({ initialLeads, stages }: Props) {
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  // Re-sincroniza quando o servidor devolve leads novos (ex: após criar via router.refresh())
+  useEffect(() => { setLeads(initialLeads) }, [initialLeads])
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const visibleStages = stages.filter(s => !s.is_lost)

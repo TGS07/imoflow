@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Lead, PipelineStage } from '@/types'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -13,6 +13,8 @@ export default function LeadsPage() {
   const [stageFilter, setStageFilter] = useState('')
   const [showModal, setShowModal] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const personFilter = searchParams.get('person_id')
 
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
@@ -29,6 +31,7 @@ export default function LeadsPage() {
     const params = new URLSearchParams()
     if (debouncedSearch) params.set('search', debouncedSearch)
     if (stageFilter) params.set('stage_id', stageFilter)
+    if (personFilter) params.set('person_id', personFilter)
     try {
       const res = await fetch(`/api/leads?${params}`)
       if (!res.ok) throw new Error('Erro ao carregar leads')
@@ -39,7 +42,7 @@ export default function LeadsPage() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, stageFilter])
+  }, [debouncedSearch, stageFilter, personFilter])
 
   useEffect(() => { fetchLeads() }, [fetchLeads])
 
@@ -61,6 +64,14 @@ export default function LeadsPage() {
         </button>
       </div>
 
+      {personFilter && (
+        <div className="page-enter" style={{ padding: '14px 32px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, background: 'var(--gold-glow)', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            Filtrado por contacto
+            <button onClick={() => router.push('/leads')} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1 }}>✕</button>
+          </span>
+        </div>
+      )}
       <div className="page-enter" style={{ padding: '20px 32px', display: 'flex', gap: 10 }}>
         <input
           placeholder="Pesquisar por nome, email ou telefone..."

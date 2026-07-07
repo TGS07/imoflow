@@ -5,6 +5,8 @@ import { LeadSource, CustomField, Person, Organization, Property } from '@/types
 type Props = {
   onClose: () => void
   onCreated: () => void
+  initialPerson?: Person
+  initialValues?: Partial<{ zone: string; typology: string; budget: number }>
 }
 
 const SOURCES: { value: LeadSource; label: string }[] = [
@@ -15,16 +17,26 @@ const SOURCES: { value: LeadSource; label: string }[] = [
   { value: 'outro', label: '◯ Outro' },
 ]
 
-export function NewLeadModal({ onClose, onCreated }: Props) {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', source: 'site' as LeadSource, zone: '', typology: '', budget: '', deal_value: '', expected_close_date: '' })
+export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues }: Props) {
+  const [form, setForm] = useState({
+    name: initialPerson?.name ?? '',
+    email: initialPerson?.email ?? '',
+    phone: initialPerson?.phone ?? '',
+    source: 'site' as LeadSource,
+    zone: initialValues?.zone ?? '',
+    typology: initialValues?.typology ?? '',
+    budget: initialValues?.budget != null ? String(initialValues.budget) : '',
+    deal_value: '',
+    expected_close_date: '',
+  })
   const [customFields, setCustomFields] = useState<CustomField[]>([])
   const [customValues, setCustomValues] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
 
   // Person autocomplete
-  const [personSearch, setPersonSearch] = useState('')
+  const [personSearch, setPersonSearch] = useState(initialPerson?.name ?? '')
   const [personResults, setPersonResults] = useState<Person[]>([])
-  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(initialPerson ?? null)
   const [showPersonDropdown, setShowPersonDropdown] = useState(false)
   const personRef = useRef<HTMLDivElement>(null)
 

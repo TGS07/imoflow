@@ -19,6 +19,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const stageId = searchParams.get('stage_id')
   const search = searchParams.get('search')
+  const personId = searchParams.get('person_id')
 
   let query = supabase
     .from('leads')
@@ -28,6 +29,7 @@ export async function GET(request: Request) {
 
   if (profile.role === 'agent') query = query.eq('assigned_to', user.id)
   if (stageId) query = query.eq('stage_id', stageId)
+  if (personId) query = query.eq('person_id', personId)
   if (search) {
     const term = search.replace(/[%_\\]/g, '\\$&')
     query = query.or(`name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`)
