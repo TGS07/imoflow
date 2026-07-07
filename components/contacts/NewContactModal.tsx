@@ -1,11 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   CONTACT_TYPES, CAPACITY_BANDS, CONTACT_SOURCES, SOURCE_LABELS,
   type ContactTypeKey,
 } from '@/lib/contacts/constants'
-import type { ContactDetails } from '@/types'
+import type { ContactDetails, Person } from '@/types'
 import { AudioContactRecorder } from '@/components/contacts/AudioContactRecorder'
+import { normalizePhone } from '@/lib/whatsapp/utils'
 
 type Initial = Partial<{
   name: string
@@ -31,6 +32,25 @@ export function NewContactModal({ initial, onClose, onCreated }: {
   const [details, setDetails] = useState<ContactDetails>(initial?.details ?? {})
   const [saving, setSaving] = useState(false)
   const [mode, setMode] = useState<'manual' | 'audio'>('manual')
+  const [existing, setExisting] = useState<Person[]>([])
+
+  // Carregar contactos existentes uma vez, para detetar duplicados enquanto se escreve
+  useEffect(() => {
+    fetch('/api/people')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Person[]) => setExisting(data))
+      .catch(() => {})
+  }, [])
+
+  const duplicate = useMemo(() => {
+    const phoneNorm = phone.trim() ? normalizePhone(phone) : null
+    const emailNorm = email.trim().toLowerCase() || null
+    if (!phoneNorm && !emailNorm) return null
+    return existing.find(p =>
+      (phoneNorm && p.phone && normalizePhone(p.phone) === phoneNorm) ||
+      (emailNorm && p.email && p.email.toLowerCase() === emailNorm)
+    ) ?? null
+  }, [existing, phone, email])
 
   const has = (t: ContactTypeKey) => types.includes(t)
   const toggleType = (t: ContactTypeKey) =>
@@ -107,6 +127,14 @@ export function NewContactModal({ initial, onClose, onCreated }: {
           <input className="input" placeholder="Nome *" value={name} onChange={e => setName(e.target.value)} required />
           <input className="input" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
           <input className="input" placeholder="Telefone" value={phone} onChange={e => setPhone(e.target.value)} />
+
+          {duplicate && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#B45309' }}>
+              <span>⚠</span>
+              <span style={{ flex: 1 }}>Já existe um contacto com este {duplicate.phone && phone && normalizePhone(duplicate.phone) === normalizePhone(phone) ? 'telefone' : 'email'}: <strong>{duplicate.name}</strong></span>
+              <a href={`/people/${duplicate.id}`} style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>Ver ficha →</a>
+            </div>
+          )}
 
           <div>
             <div style={sectionLabel}>Tipo</div>

@@ -125,3 +125,15 @@ export function buildContactExtractionPrompt(transcript: string): string {
     `Se um campo não for mencionado, omite-o (ou usa null para name/phone/email). Bandas: <250k muito_baixo; 250-500k baixo; 500k-1M medio; 1-2.5M medio_alto; 2.5-5M alto; 5M+ altissimo.`,
   ].join('\n')
 }
+
+export function buildInteractionExtractionPrompt(transcript: string): string {
+  return [
+    `Um agente imobiliário gravou uma nota de voz sobre uma interação com um contacto.`,
+    `Transcrição: """${transcript}"""`,
+    `Devolve APENAS JSON válido (sem texto extra) com este formato:`,
+    `{"type": "chamada"|"visita"|"email"|"whatsapp"|"nota", "note": string}`,
+    `Regras: "type" é o tipo de interação descrita (na dúvida usa "nota").`,
+    `"note" é um resumo claro e conciso em português de Portugal (1-3 frases),`,
+    `escrito na primeira pessoa do agente, com os factos importantes (preços, datas, decisões).`,
+  ].join('\n')
+}

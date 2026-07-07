@@ -165,6 +165,21 @@ export default function ActivitiesPage() {
     setCurrentDate(d)
   }
 
+  async function moveActivity(a: Activity, newStart: Date) {
+    const duration = a.due_date && a.end_date
+      ? new Date(a.end_date).getTime() - new Date(a.due_date).getTime()
+      : null
+    const body: Record<string, string> = { due_date: newStart.toISOString() }
+    if (duration != null && duration > 0) body.end_date = new Date(newStart.getTime() + duration).toISOString()
+    await fetch(`/api/activities/${a.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    fetchActivities()
+    fetchPending()
+  }
+
   function openFormAt(start: Date) {
     const end = new Date(start)
     end.setHours(end.getHours() + 1)
@@ -415,6 +430,7 @@ export default function ActivitiesPage() {
               onEventClick={setSelectedActivity}
               onSlotClick={openFormAt}
               onDayHeaderClick={view === 'week' ? (day) => { setCurrentDate(day); setView('day') } : undefined}
+              onEventMove={moveActivity}
             />
           )}
         </div>
