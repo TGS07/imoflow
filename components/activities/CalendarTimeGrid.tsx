@@ -59,9 +59,85 @@ type Props = {
   onEventClick: (a: Activity) => void
   onSlotClick: (start: Date) => void
   onDayHeaderClick?: (day: Date) => void
+  onEventMove?: (a: Activity, newStart: Date) => void
 }
 
-export function CalendarTimeGrid({ days, activities, colors, icons, onEventClick, onSlotClick, onDayHeaderClick }: Props) {
+const SNAP_MIN = 15 // arrastar ajusta a intervalos de 15 minutos
+const DRAG_THRESHOLD = 5 // px: abaixo disto conta como clique
+
+// Evento arrastável: vertical muda a hora (snap 15min), horizontal muda o dia
+// (vista Semana). Menos de 5px de movimento conta como clique.
+function DraggableEvent({ children, style, title, onTap, onMove, dayIndex, dayCount, durationMin, startMin }: {
+  children: React.ReactNode
+  style: React.CSSProperties
+  title: string
+  onTap: () => void
+  onMove?: (dayShift: number, newStartMin: number) => void
+  dayIndex: number
+  dayCount: number
+  durationMin: number
+  startMin: number
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null)
+
+  function onPointerDown(e: React.PointerEvent) {
+    if (!onMove) return
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* pointer não capturável */ }
+    drag.current = { x: e.clientX, y: e.clientY, moved: false }
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!drag.current || !ref.current) return
+    const dx = e.clientX - drag.current.x
+    const dy = e.clientY - drag.current.y
+    if (!drag.current.moved && Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return
+    drag.current.moved = true
+    ref.current.style.transform = `translate(${dx}px, ${dy}px)`
+    ref.current.style.zIndex = '10'
+    ref.current.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)'
+    ref.current.style.opacity = '0.9'
+  }
+
+  function onPointerUp(e: React.PointerEvent) {
+    const d = drag.current
+    drag.current = null
+    if (!ref.current) return
+    const el = ref.current
+    el.style.transform = ''
+    el.style.zIndex = ''
+    el.style.boxShadow = ''
+    el.style.opacity = ''
+    if (!d) return
+    if (!d.moved) { onTap(); return }
+    if (!onMove) return
+    const dx = e.clientX - d.x
+    const dy = e.clientY - d.y
+    const colW = el.parentElement?.getBoundingClientRect().width ?? 1
+    const dayShift = dayCount > 1 ? Math.round(dx / colW) : 0
+    const clampedShift = Math.max(-dayIndex, Math.min(dayCount - 1 - dayIndex, dayShift))
+    const deltaMin = Math.round((dy / HOUR_H) * 60 / SNAP_MIN) * SNAP_MIN
+    const newStart = Math.max(0, Math.min(24 * 60 - durationMin, startMin + deltaMin))
+    if (clampedShift === 0 && newStart === startMin) return
+    onMove(clampedShift, newStart)
+  }
+
+  return (
+    <div
+      ref={ref}
+      title={title}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onClick={e => e.stopPropagation()}
+      style={{ ...style, touchAction: 'none' }}
+    >
+      {children}
+    </div>
+  )
+}
+
+export function CalendarTimeGrid({ days, activities, colors, icons, onEventClick, onSlotClick, onDayHeaderClick, onEventMove }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [now, setNow] = useState(() => new Date())
 
@@ -167,10 +243,19 @@ export function CalendarTimeGrid({ days, activities, colors, icons, onEventClick
                   const height = Math.max(((endMin - startMin) / 60) * HOUR_H - 2, 18)
                   const width = 100 / cols
                   return (
-                    <div
+                    <DraggableEvent
                       key={a.id}
-                      onClick={e => { e.stopPropagation(); onEventClick(a) }}
                       title={a.title}
+                      onTap={() => onEventClick(a)}
+                      dayIndex={di}
+                      dayCount={days.length}
+                      durationMin={endMin - startMin}
+                      startMin={startMin}
+                      onMove={onEventMove ? (dayShift, newStartMin) => {
+                        const target = new Date(days[di + dayShift])
+                        target.setHours(Math.floor(newStartMin / 60), newStartMin % 60, 0, 0)
+                        onEventMove(a, target)
+                      } : undefined}
                       style={{
                         position: 'absolute',
                         top,
@@ -182,7 +267,7 @@ export function CalendarTimeGrid({ days, activities, colors, icons, onEventClick
                         borderRadius: 4,
                         padding: '2px 4px',
                         overflow: 'hidden',
-                        cursor: 'pointer',
+                        cursor: onEventMove ? 'grab' : 'pointer',
                         opacity: a.completed ? 0.45 : 1,
                         zIndex: 2,
                       }}
@@ -197,7 +282,7 @@ export function CalendarTimeGrid({ days, activities, colors, icons, onEventClick
                           {!isWeek && a.leads && ` · ${a.leads.name}`}
                         </div>
                       )}
-                    </div>
+                    </DraggableEvent>
                   )
                 })}
 

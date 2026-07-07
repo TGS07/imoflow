@@ -2,7 +2,11 @@
 'use client'
 import { useState, useRef } from 'react'
 
-export function AudioContactRecorder({ onExtracted }: { onExtracted: (fields: Record<string, unknown>) => void }) {
+export function AudioContactRecorder({ onExtracted, endpoint = '/api/ai/transcribe-contact', hint = 'Descreve o contacto em voz alta e confirma os dados a seguir.' }: {
+  onExtracted: (fields: Record<string, unknown>) => void
+  endpoint?: string
+  hint?: string
+}) {
   const [recording, setRecording] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
@@ -31,7 +35,7 @@ export function AudioContactRecorder({ onExtracted }: { onExtracted: (fields: Re
       const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
       const fd = new FormData()
       fd.append('audio', new File([blob], 'contacto.webm', { type: 'audio/webm' }))
-      const res = await fetch('/api/ai/transcribe-contact', { method: 'POST', body: fd })
+      const res = await fetch(endpoint, { method: 'POST', body: fd })
       if (!res.ok) { setError('Falha na transcrição.'); return }
       const data = await res.json()
       onExtracted({ ...(data.fields ?? {}), source: 'audio' })
@@ -47,7 +51,7 @@ export function AudioContactRecorder({ onExtracted }: { onExtracted: (fields: Re
         {processing ? 'A processar...' : recording ? '⏹ Parar' : '🎙 Gravar'}
       </button>
       <div style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>
-        {processing ? 'A transcrever e a extrair dados...' : 'Descreve o contacto em voz alta e confirma os dados a seguir.'}
+        {processing ? 'A transcrever e a extrair dados...' : hint}
       </div>
       {error && <div style={{ fontSize: 12, color: '#EF4444' }}>{error}</div>}
     </div>

@@ -72,6 +72,10 @@ export default async function DashboardPage() {
   const typeColors: Record<string, string> = { chamada: '#3B82F6', visita: '#F59E0B', email: '#8B5CF6', reuniao: '#10B981', tarefa: '#EF4444', nota: '#6B7280' }
   const typeIcons: Record<string, string> = { chamada: '📞', visita: '🏠', email: '✉', reuniao: '🤝', tarefa: '✓', nota: '📝' }
 
+  // Próximo evento de hoje (ainda por acontecer e não concluído)
+  const nowTs = new Date().getTime()
+  const nextActivity = (todayActivities ?? []).find(a => !a.completed && a.due_date && new Date(a.due_date).getTime() >= nowTs)
+
   return (
     <>
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -148,6 +152,18 @@ export default async function DashboardPage() {
               Atividades de Hoje
               <Link href="/activities" style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: 'var(--gold)', fontWeight: 500, textDecoration: 'none' }}>Ver tudo →</Link>
             </div>
+            {nextActivity && (
+              <Link href="/activities" style={{ display: 'block', textDecoration: 'none', background: 'var(--gold-glow)', border: '1px solid var(--gold)', borderRadius: 10, padding: '10px 14px', marginBottom: 12 }}>
+                <div style={{ fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', fontWeight: 700, marginBottom: 3 }}>A seguir</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                  {typeIcons[nextActivity.type] ?? '📝'} {nextActivity.title}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
+                  {nextActivity.due_date && new Date(nextActivity.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                  {nextActivity.leads?.[0]?.name && ` · ${nextActivity.leads[0].name}`}
+                </div>
+              </Link>
+            )}
             <div>
               {(todayActivities ?? []).map((a: { id: string; type: string; title: string; due_date: string | null; completed: boolean; leads: { name: string }[] | null; users: { name: string }[] | null }, i: number) => {
                 const color = typeColors[a.type] ?? '#6B7280'
