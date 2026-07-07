@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Activity, ActivityType } from '@/types'
 import Link from 'next/link'
+import { CalendarTimeGrid } from '@/components/activities/CalendarTimeGrid'
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
   chamada: '#3B82F6',
@@ -36,7 +37,13 @@ const ACTIVITY_LABELS: Record<ActivityType, string> = {
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 const MONTHS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
-type ViewMode = 'month' | 'week'
+type ViewMode = 'month' | 'week' | 'day'
+
+// Converte Date para o formato do input datetime-local (hora local)
+function toLocalInput(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
 
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<Activity[]>([])
@@ -64,6 +71,13 @@ export default function ActivitiesPage() {
       start.setDate(start.getDate() - startOffset)
       const end = new Date(lastDay)
       end.setDate(end.getDate() + (6 - ((lastDay.getDay() + 6) % 7)))
+      dateFrom = start.toISOString()
+      dateTo = end.toISOString()
+    } else if (view === 'day') {
+      const start = new Date(currentDate)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(currentDate)
+      end.setHours(23, 59, 59, 999)
       dateFrom = start.toISOString()
       dateTo = end.toISOString()
     } else {
@@ -146,8 +160,16 @@ export default function ActivitiesPage() {
   function navigate(direction: number) {
     const d = new Date(currentDate)
     if (view === 'month') d.setMonth(d.getMonth() + direction)
+    else if (view === 'day') d.setDate(d.getDate() + direction)
     else d.setDate(d.getDate() + direction * 7)
     setCurrentDate(d)
+  }
+
+  function openFormAt(start: Date) {
+    const end = new Date(start)
+    end.setHours(end.getHours() + 1)
+    setForm(p => ({ ...p, due_date: toLocalInput(start), end_date: toLocalInput(end) }))
+    setShowForm(true)
   }
 
   function goToday() { setCurrentDate(new Date()) }
@@ -204,6 +226,8 @@ export default function ActivitiesPage() {
 
   const headerTitle = view === 'month'
     ? `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`
+    : view === 'day'
+    ? `${WEEKDAYS[(currentDate.getDay() + 6) % 7]}, ${currentDate.getDate()} ${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`
     : (() => {
         const days = getWeekDays()
         return `${days[0].getDate()} ${MONTHS[days[0].getMonth()].substring(0, 3)} — ${days[6].getDate()} ${MONTHS[days[6].getMonth()].substring(0, 3)} ${days[6].getFullYear()}`
@@ -342,8 +366,9 @@ export default function ActivitiesPage() {
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
               <button onClick={goToday} className="btn btn-ghost btn-sm">Hoje</button>
-              <button onClick={() => setView('month')} className={`btn btn-sm ${view === 'month' ? 'btn-primary' : 'btn-ghost'}`}>Mês</button>
+              <button onClick={() => setView('day')} className={`btn btn-sm ${view === 'day' ? 'btn-primary' : 'btn-ghost'}`}>Dia</button>
               <button onClick={() => setView('week')} className={`btn btn-sm ${view === 'week' ? 'btn-primary' : 'btn-ghost'}`}>Semana</button>
+              <button onClick={() => setView('month')} className={`btn btn-sm ${view === 'month' ? 'btn-primary' : 'btn-ghost'}`}>Mês</button>
             </div>
           </div>
 
@@ -360,7 +385,7 @@ export default function ActivitiesPage() {
                   const dayActivities = getActivitiesForDay(day)
                   return (
                     <div key={idx} className="cal-month-cell" style={{ minHeight: 80, minWidth: 0, padding: '6px 8px', borderBottom: '1px solid var(--border)', borderRight: (idx + 1) % 7 !== 0 ? '1px solid var(--border)' : 'none', opacity: isCurrentMonth(day) ? 1 : 0.35 }}>
-                      <div style={{ fontSize: 12, fontWeight: isToday(day) ? 700 : 400, color: isToday(day) ? 'var(--gold)' : 'var(--text)', marginBottom: 4, width: 24, height: 24, borderRadius: '50%', background: isToday(day) ? 'var(--gold-glow)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div onClick={() => { setCurrentDate(day); setView('day') }} title="Ver dia" style={{ fontSize: 12, fontWeight: isToday(day) ? 700 : 400, color: isToday(day) ? 'var(--gold)' : 'var(--text)', marginBottom: 4, width: 24, height: 24, borderRadius: '50%', background: isToday(day) ? 'var(--gold-glow)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                         {day.getDate()}
                       </div>
                       <div className="cal-events" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -370,7 +395,7 @@ export default function ActivitiesPage() {
                           </div>
                         ))}
                         {dayActivities.length > 3 && (
-                          <div className="cal-more" style={{ fontSize: 9, color: 'var(--muted)', paddingLeft: 5 }}>+{dayActivities.length - 3} mais</div>
+                          <div className="cal-more" onClick={() => { setCurrentDate(day); setView('day') }} style={{ fontSize: 9, color: 'var(--muted)', paddingLeft: 5, cursor: 'pointer' }}>+{dayActivities.length - 3} mais</div>
                         )}
                       </div>
                     </div>
@@ -380,43 +405,17 @@ export default function ActivitiesPage() {
             </div>
           )}
 
-          {/* Weekly View */}
-          {view === 'week' && (
-            <div className="card" style={{ overflow: 'hidden' }}>
-              {getWeekDays().map((day, idx) => {
-                const dayActivities = getActivitiesForDay(day)
-                return (
-                  <div key={idx} style={{ display: 'flex', borderBottom: idx < 6 ? '1px solid var(--border)' : 'none' }}>
-                    <div style={{ width: 80, padding: '12px 14px', borderRight: '1px solid var(--border)', flexShrink: 0 }}>
-                      <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{WEEKDAYS[idx]}</div>
-                      <div style={{ fontSize: 20, fontWeight: isToday(day) ? 700 : 400, color: isToday(day) ? 'var(--gold)' : 'var(--text)' }}>{day.getDate()}</div>
-                    </div>
-                    <div style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 4, minHeight: 60 }}>
-                      {dayActivities.map(a => (
-                        <div key={a.id} onClick={() => setSelectedActivity(a)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 6, background: `${ACTIVITY_COLORS[a.type]}11`, cursor: 'pointer', opacity: a.completed ? 0.5 : 1 }}>
-                          <span style={{ fontSize: 12 }}>{ACTIVITY_ICONS[a.type]}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', textDecoration: a.completed ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
-                            {a.due_date && (
-                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>
-                                {new Date(a.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                                {a.leads && <span> · {a.leads.name}</span>}
-                              </div>
-                            )}
-                          </div>
-                          <div onClick={e => { e.stopPropagation(); toggleComplete(a) }} style={{ width: 16, height: 16, borderRadius: 4, border: a.completed ? 'none' : '1.5px solid var(--border)', background: a.completed ? 'var(--green)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, color: '#fff', fontSize: 10 }}>
-                            {a.completed ? '✓' : ''}
-                          </div>
-                        </div>
-                      ))}
-                      {dayActivities.length === 0 && (
-                        <div style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.5, padding: '8px 0' }}>Sem atividades</div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+          {/* Vistas Dia e Semana — grelha de horas estilo Google Calendar */}
+          {(view === 'week' || view === 'day') && (
+            <CalendarTimeGrid
+              days={view === 'week' ? getWeekDays() : [currentDate]}
+              activities={activities}
+              colors={ACTIVITY_COLORS}
+              icons={ACTIVITY_ICONS}
+              onEventClick={setSelectedActivity}
+              onSlotClick={openFormAt}
+              onDayHeaderClick={view === 'week' ? (day) => { setCurrentDate(day); setView('day') } : undefined}
+            />
           )}
         </div>
 
