@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { LeadSource, CustomField, Person, Organization, Property } from '@/types'
+import { AudioRecorder } from '@/components/shared/AudioRecorder'
 
 type Props = {
   onClose: () => void
@@ -32,6 +33,20 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues 
   const [customFields, setCustomFields] = useState<CustomField[]>([])
   const [customValues, setCustomValues] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState<'manual' | 'audio'>('manual')
+
+  function applyVoice(f: Record<string, unknown>) {
+    setForm(p => ({
+      ...p,
+      name: typeof f.name === 'string' ? f.name : p.name,
+      email: typeof f.email === 'string' ? f.email : p.email,
+      phone: typeof f.phone === 'string' ? f.phone : p.phone,
+      zone: typeof f.zone === 'string' ? f.zone : p.zone,
+      typology: typeof f.typology === 'string' ? f.typology : p.typology,
+      budget: typeof f.budget === 'number' ? String(f.budget) : p.budget,
+    }))
+    setMode('manual')
+  }
 
   // Person autocomplete
   const [personSearch, setPersonSearch] = useState(initialPerson?.name ?? '')
@@ -163,10 +178,32 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" style={{ width: 480 }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div className="font-display" style={{ fontSize: 18 }}>Novo Lead</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
         </div>
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          {(['manual', 'audio'] as const).map(m => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              style={{
+                flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                background: mode === m ? 'var(--gold-glow)' : 'var(--surface)',
+                color: mode === m ? 'var(--gold)' : 'var(--muted)',
+                border: mode === m ? '1px solid var(--gold)' : '1px solid var(--border)',
+              }}
+            >
+              {m === 'manual' ? '✍ Manual' : '🎙 Áudio'}
+            </button>
+          ))}
+        </div>
+
+        {mode === 'audio' && <AudioRecorder entity="lead" onExtracted={applyVoice} hint="Descreve o lead em voz alta (nome, contacto, zona, tipologia, orçamento) e confirma os dados a seguir." />}
+
+        {mode === 'manual' && (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Person autocomplete */}
           <div ref={personRef} style={{ position: 'relative' }}>
@@ -315,6 +352,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues 
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   )

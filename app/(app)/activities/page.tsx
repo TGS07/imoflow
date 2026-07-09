@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Activity, ActivityType } from '@/types'
 import Link from 'next/link'
 import { CalendarTimeGrid } from '@/components/activities/CalendarTimeGrid'
+import { AudioRecorder } from '@/components/shared/AudioRecorder'
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
   chamada: '#3B82F6',
@@ -56,6 +57,18 @@ export default function ActivitiesPage() {
   const [form, setForm] = useState({ type: 'tarefa' as ActivityType, title: '', description: '', due_date: '', end_date: '', lead_id: '' })
   const [creating, setCreating] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+  const [addMode, setAddMode] = useState<'manual' | 'audio'>('manual')
+  const VALID_ACTIVITY_TYPES = Object.keys(ACTIVITY_LABELS)
+
+  function applyVoiceActivity(f: Record<string, unknown>) {
+    setForm(p => ({
+      ...p,
+      type: typeof f.type === 'string' && VALID_ACTIVITY_TYPES.includes(f.type) ? f.type as ActivityType : p.type,
+      title: typeof f.title === 'string' ? f.title : p.title,
+      description: typeof f.description === 'string' ? f.description : p.description,
+    }))
+    setAddMode('manual')
+  }
 
   const fetchActivities = useCallback(async () => {
     let dateFrom: string
@@ -313,10 +326,29 @@ export default function ActivitiesPage() {
       {showForm && (
         <div className="modal-backdrop" onClick={() => setShowForm(false)}>
           <div className="modal" style={{ width: 460 }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 className="font-display" style={{ fontSize: 18, margin: 0 }}>Nova Atividade</h3>
               <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
             </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              {(['manual', 'audio'] as const).map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setAddMode(m)}
+                  style={{
+                    flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    background: addMode === m ? 'var(--gold-glow)' : 'var(--surface)',
+                    color: addMode === m ? 'var(--gold)' : 'var(--muted)',
+                    border: addMode === m ? '1px solid var(--gold)' : '1px solid var(--border)',
+                  }}
+                >
+                  {m === 'manual' ? '✍ Manual' : '🎙 Áudio'}
+                </button>
+              ))}
+            </div>
+            {addMode === 'audio' && <AudioRecorder entity="activity" onExtracted={applyVoiceActivity} hint="Descreve a atividade em voz alta (tipo, título, descrição) e confirma os dados a seguir. A data fica por preencher manualmente." />}
+            {addMode === 'manual' && (
             <form onSubmit={createActivity} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label className="label">Tipo</label>
@@ -349,6 +381,7 @@ export default function ActivitiesPage() {
                 </button>
               </div>
             </form>
+            )}
           </div>
         </div>
       )}
