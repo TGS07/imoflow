@@ -1,10 +1,14 @@
-// components/contacts/AudioContactRecorder.tsx
+// components/shared/AudioRecorder.tsx
+// Gravador de voz genérico: grava, envia para /api/ai/transcribe-entity com o
+// tipo de entidade certo, e devolve os campos extraídos para o formulário
+// que o usa pré-preencher (o utilizador confirma sempre antes de guardar).
 'use client'
 import { useState, useRef } from 'react'
+import type { VoiceEntity } from '@/lib/ai/prompts'
 
-export function AudioContactRecorder({ onExtracted, endpoint = '/api/ai/transcribe-contact', hint = 'Descreve o contacto em voz alta e confirma os dados a seguir.' }: {
+export function AudioRecorder({ entity, onExtracted, hint = 'Descreve em voz alta e confirma os dados a seguir.' }: {
+  entity: VoiceEntity
   onExtracted: (fields: Record<string, unknown>) => void
-  endpoint?: string
   hint?: string
 }) {
   const [recording, setRecording] = useState(false)
@@ -34,11 +38,12 @@ export function AudioContactRecorder({ onExtracted, endpoint = '/api/ai/transcri
     try {
       const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
       const fd = new FormData()
-      fd.append('audio', new File([blob], 'contacto.webm', { type: 'audio/webm' }))
-      const res = await fetch(endpoint, { method: 'POST', body: fd })
+      fd.append('audio', new File([blob], 'gravacao.webm', { type: 'audio/webm' }))
+      fd.append('entity', entity)
+      const res = await fetch('/api/ai/transcribe-entity', { method: 'POST', body: fd })
       if (!res.ok) { setError('Falha na transcrição.'); return }
       const data = await res.json()
-      onExtracted({ ...(data.fields ?? {}), source: 'audio' })
+      onExtracted(data.fields ?? {})
     } catch { setError('Erro ao processar o áudio.') }
     finally { setProcessing(false) }
   }

@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Organization } from '@/types'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { AudioRecorder } from '@/components/shared/AudioRecorder'
 
 type OrgWithLeads = Organization & { leads?: { id: string }[] }
 
@@ -13,6 +14,17 @@ export default function OrganizationsPage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', phone: '', website: '' })
   const [creating, setCreating] = useState(false)
+  const [mode, setMode] = useState<'manual' | 'audio'>('manual')
+
+  function applyVoice(f: Record<string, unknown>) {
+    setForm(p => ({
+      name: typeof f.name === 'string' ? f.name : p.name,
+      email: typeof f.email === 'string' ? f.email : p.email,
+      phone: typeof f.phone === 'string' ? f.phone : p.phone,
+      website: typeof f.website === 'string' ? f.website : p.website,
+    }))
+    setMode('manual')
+  }
   const router = useRouter()
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
@@ -48,10 +60,29 @@ export default function OrganizationsPage() {
       {showForm && (
         <div className="modal-backdrop" onClick={() => setShowForm(false)}>
           <div className="modal" style={{ width: 420 }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div className="font-display" style={{ fontSize: 18 }}>Nova Organização</div>
               <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
             </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              {(['manual', 'audio'] as const).map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMode(m)}
+                  style={{
+                    flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    background: mode === m ? 'var(--gold-glow)' : 'var(--surface)',
+                    color: mode === m ? 'var(--gold)' : 'var(--muted)',
+                    border: mode === m ? '1px solid var(--gold)' : '1px solid var(--border)',
+                  }}
+                >
+                  {m === 'manual' ? '✍ Manual' : '🎙 Áudio'}
+                </button>
+              ))}
+            </div>
+            {mode === 'audio' && <AudioRecorder entity="organization" onExtracted={applyVoice} hint="Descreve a organização em voz alta (nome, contacto, website) e confirma os dados a seguir." />}
+            {mode === 'manual' && (
             <form onSubmit={createOrg} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input className="input" placeholder="Nome *" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required />
               <input className="input" type="email" placeholder="Email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
@@ -62,6 +93,7 @@ export default function OrganizationsPage() {
                 <button type="submit" disabled={creating} className="btn btn-primary" style={{ flex: 1 }}>{creating ? 'A criar...' : 'Criar'}</button>
               </div>
             </form>
+            )}
           </div>
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import type { Person } from '@/types'
+import { AudioRecorder } from '@/components/shared/AudioRecorder'
 
 type Visit = {
   id: string
@@ -25,6 +26,14 @@ export function PropertyVisits({ propertyId }: { propertyId: string }) {
   const [agencyName, setAgencyName] = useState('')
   const [visitedAt, setVisitedAt] = useState(() => new Date().toISOString().slice(0, 10))
   const [notes, setNotes] = useState('')
+  const [mode, setMode] = useState<'manual' | 'audio'>('manual')
+
+  function applyVoice(f: Record<string, unknown>) {
+    if (typeof f.visitor_name === 'string') setVisitorName(f.visitor_name)
+    if (typeof f.agency_name === 'string') setAgencyName(f.agency_name)
+    if (typeof f.notes === 'string') setNotes(f.notes)
+    setMode('manual')
+  }
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/properties/${propertyId}/visits`)
@@ -42,6 +51,7 @@ export function PropertyVisits({ propertyId }: { propertyId: string }) {
   function reset() {
     setAdding(false); setSearch(''); setResults([]); setSelected(null)
     setVisitorName(''); setAgencyName(''); setNotes(''); setVisitedAt(new Date().toISOString().slice(0, 10))
+    setMode('manual')
   }
 
   async function add() {
@@ -76,6 +86,26 @@ export function PropertyVisits({ propertyId }: { propertyId: string }) {
 
       {adding && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16, padding: 14, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {(['manual', 'audio'] as const).map(m => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                style={{
+                  flex: 1, padding: '6px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                  background: mode === m ? 'var(--gold-glow)' : 'var(--card)',
+                  color: mode === m ? 'var(--gold)' : 'var(--muted)',
+                  border: mode === m ? '1px solid var(--gold)' : '1px solid var(--border)',
+                }}
+              >
+                {m === 'manual' ? '✍ Manual' : '🎙 Áudio'}
+              </button>
+            ))}
+          </div>
+          {mode === 'audio' && <AudioRecorder entity="visit" onExtracted={applyVoice} hint="Diz quem visitou (nome, agência, notas) e confirma a seguir." />}
+          {mode === 'manual' && (
+          <>
           <div>
             <div style={labelStyle}>Contacto (opcional)</div>
             {selected ? (
@@ -117,9 +147,13 @@ export function PropertyVisits({ propertyId }: { propertyId: string }) {
             <div style={labelStyle}>Notas</div>
             <input style={inputStyle} placeholder="Notas" value={notes} onChange={e => setNotes(e.target.value)} />
           </div>
+          </>
+          )}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={reset} className="btn btn-ghost" style={{ flex: 1, fontSize: 12 }}>Cancelar</button>
-            <button onClick={add} disabled={saving} className="btn btn-primary" style={{ flex: 1, fontSize: 12 }}>{saving ? 'A guardar...' : 'Guardar'}</button>
+            {mode === 'manual' && (
+              <button onClick={add} disabled={saving} className="btn btn-primary" style={{ flex: 1, fontSize: 12 }}>{saving ? 'A guardar...' : 'Guardar'}</button>
+            )}
           </div>
         </div>
       )}

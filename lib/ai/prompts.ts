@@ -189,3 +189,45 @@ ${history || 'Sem interações registadas.'}
 Responde em JSON com exatamente este formato (sem markdown, sem texto extra):
 {"action": "descrição curta da ação (máx 80 chars)", "reason": "justificação curta (máx 120 chars)", "urgency": "alta|media|baixa"}`
 }
+
+export type VoiceEntity = 'contact' | 'interaction' | 'lead' | 'organization' | 'property' | 'activity' | 'visit'
+
+const VOICE_ENTITY_SCHEMAS: Record<Exclude<VoiceEntity, 'contact' | 'interaction'>, { intro: string; schema: string }> = {
+  lead: {
+    intro: 'Um agente imobiliário descreveu um novo lead (potencial cliente) em voz alta.',
+    schema: '{"name": string, "email": string|null, "phone": string|null, "zone": string|null, "typology": string|null, "budget": número inteiro em euros ou null (ex: 370000, não "370.000 €")}',
+  },
+  organization: {
+    intro: 'Um agente imobiliário descreveu uma nova organização/empresa parceira em voz alta.',
+    schema: '{"name": string, "email": string|null, "phone": string|null, "website": string|null}',
+  },
+  property: {
+    intro: 'Um agente imobiliário descreveu um novo imóvel para catalogar em voz alta.',
+    schema: '{"title": string, "type": "apartamento"|"moradia"|"terreno"|"loja"|"escritorio"|"armazem"|"outro"|null, "price": número inteiro em euros ou null, "area_m2": número inteiro ou null, "typology": string|null, "bedrooms": número inteiro ou null, "bathrooms": número inteiro ou null, "zone": string|null, "address": string|null}',
+  },
+  activity: {
+    intro: 'Um agente imobiliário descreveu uma atividade (chamada, visita, reunião, tarefa ou nota) em voz alta.',
+    schema: '{"type": "chamada"|"visita"|"email"|"reuniao"|"tarefa"|"nota"|"whatsapp", "title": string, "description": string|null}',
+  },
+  visit: {
+    intro: 'Um agente imobiliário descreveu quem visitou um imóvel em voz alta.',
+    schema: '{"visitor_name": string|null, "agency_name": string|null, "notes": string|null}',
+  },
+}
+
+// Prompt único para todas as gravações de voz da app. 'contact' e 'interaction'
+// reaproveitam os prompts já existentes e testados; as restantes entidades
+// partilham a mesma estrutura de instruções, só muda o esquema de campos.
+export function buildEntityExtractionPrompt(entity: VoiceEntity, transcript: string): string {
+  if (entity === 'contact') return buildContactExtractionPrompt(transcript)
+  if (entity === 'interaction') return buildInteractionExtractionPrompt(transcript)
+
+  const { intro, schema } = VOICE_ENTITY_SCHEMAS[entity]
+  return [
+    intro,
+    `Transcrição: """${transcript}"""`,
+    `Devolve APENAS JSON válido (sem texto extra) com este formato:`,
+    schema,
+    `Se um campo não for mencionado, omite-o ou usa null. Nunca inventes valores.`,
+  ].join('\n')
+}

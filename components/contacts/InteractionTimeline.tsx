@@ -2,7 +2,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import type { ContactInteraction } from '@/types'
-import { AudioContactRecorder } from '@/components/contacts/AudioContactRecorder'
+import { AudioRecorder } from '@/components/shared/AudioRecorder'
 
 const TYPES = [['chamada','Chamada'],['visita','Visita'],['email','Email'],['whatsapp','WhatsApp'],['nota','Nota']] as const
 const VALID_TYPES = TYPES.map(([v]) => v as string)
@@ -60,7 +60,7 @@ export function InteractionTimeline({ personId, onLogged }: { personId: string; 
       </div>
       {showRecorder && (
         <div style={{ border: '1px dashed var(--border)', borderRadius: 10, marginBottom: 14 }}>
-          <AudioContactRecorder endpoint="/api/ai/transcribe-interaction" hint="Descreve a interação em voz alta — a IA preenche o tipo e a nota para confirmares." onExtracted={applyVoice} />
+          <AudioRecorder entity="interaction" hint="Descreve a interação em voz alta — a IA preenche o tipo e a nota para confirmares." onExtracted={applyVoice} />
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

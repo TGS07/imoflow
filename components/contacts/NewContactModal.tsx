@@ -5,7 +5,7 @@ import {
   type ContactTypeKey,
 } from '@/lib/contacts/constants'
 import type { ContactDetails, Person } from '@/types'
-import { AudioContactRecorder } from '@/components/contacts/AudioContactRecorder'
+import { AudioRecorder } from '@/components/shared/AudioRecorder'
 import { normalizePhone } from '@/lib/whatsapp/utils'
 
 type Initial = Partial<{
@@ -120,7 +120,7 @@ export function NewContactModal({ initial, onClose, onCreated }: {
 
         {/* Corpo com scroll próprio (minHeight:0 permite ao flex encolher e ativar o scroll) */}
         <div style={{ padding: '16px 24px 20px', overflowY: 'auto', flex: 1, minHeight: 0 }}>
-        {mode === 'audio' && <AudioContactRecorder onExtracted={applyExtracted} />}
+        {mode === 'audio' && <AudioRecorder entity="contact" onExtracted={applyExtracted} />}
 
         {mode === 'manual' && (
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
