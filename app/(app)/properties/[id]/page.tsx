@@ -6,6 +6,7 @@ import { Property, PropertyType, PropertyStatus, PropertyCondition } from '@/typ
 import { PropertySeller } from '@/components/properties/PropertySeller'
 import { PropertyVisits } from '@/components/properties/PropertyVisits'
 import { SuggestedBuyers } from '@/components/properties/SuggestedBuyers'
+import { NearbyConsultants } from '@/components/properties/NearbyConsultants'
 import { SendEmailModal } from '@/components/leads/SendEmailModal'
 
 const TYPES: { value: PropertyType; label: string }[] = [
@@ -310,6 +311,7 @@ export default function PropertyPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <PropertySeller propertyId={id} seller={property.seller ?? null} onChange={fetchProperty} />
           <SuggestedBuyers propertyId={id} propertyTitle={property.title} propertyPrice={property.price} />
+          <NearbyConsultants propertyId={id} propertyTitle={property.title} />
           <PropertyVisits propertyId={id} />
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
             <div className="font-display" style={{ fontSize: 15, marginBottom: 16 }}>Negócios</div>
