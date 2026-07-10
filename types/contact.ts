@@ -18,6 +18,9 @@ export type ContactDetails = {
   has_balcony?: boolean
   has_exclusivity?: boolean
   is_active_seller?: boolean
+  // consultor imobiliário
+  agency_name?: string
+  working_zone?: string
   // serviço
   service_type?: string
 }

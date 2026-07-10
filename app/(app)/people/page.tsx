@@ -59,6 +59,16 @@ function PreviewLine({ p }: { p: Person }) {
     )
   }
 
+  if (t.includes('consultor')) {
+    return (
+      <div style={dim}>
+        {p.details?.agency_name || '—'}
+        {p.details?.working_zone && <>{dot}{p.details.working_zone}</>}
+        {(p.email || p.phone) && <>{dot}{p.email ?? p.phone}</>}
+      </div>
+    )
+  }
+
   if (t.includes('servico')) {
     return (
       <div style={dim}>

@@ -116,12 +116,13 @@ export function buildContactExtractionPrompt(transcript: string): string {
     `Transcrição: """${transcript}"""`,
     `Devolve APENAS JSON válido com este formato (sem texto extra):`,
     `{"name": string, "phone": string|null, "email": string|null,`,
-    ` "types": array de ("comprador"|"vendedor"|"investidor"|"servico"),`,
+    ` "types": array de ("comprador"|"vendedor"|"investidor"|"consultor"|"servico"),`,
     ` "financial_capacity": ("muito_baixo"|"baixo"|"medio"|"medio_alto"|"alto"|"altissimo")|null,`,
     ` "details": {"looking_for"?: string, "search_zone"?: string, "temperature"?: ("quente"|"morno"|"frio"),`,
     `  "selling_property"?: string, "selling_zone"?: string, "selling_price"?: number, "typology"?: string,`,
     `  "has_garage"?: boolean, "has_balcony"?: boolean, "has_exclusivity"?: boolean, "is_active_seller"?: boolean,`,
-    `  "service_type"?: string}}`,
+    `  "agency_name"?: string, "working_zone"?: string, "service_type"?: string}}`,
+    `Nota: "consultor" é um consultor imobiliário de outra agência; "agency_name" é a agência dele e "working_zone" a zona onde atua.`,
     `Se um campo não for mencionado, omite-o (ou usa null para name/phone/email). Bandas: <250k muito_baixo; 250-500k baixo; 500k-1M medio; 1-2.5M medio_alto; 2.5-5M alto; 5M+ altissimo.`,
   ].join('\n')
 }
@@ -147,7 +148,7 @@ export function buildSuggestContactActionPrompt(
     ? Math.floor((Date.now() - new Date(lastInteraction.created_at).getTime()) / 86_400_000)
     : null
 
-  const typeLabels: Record<string, string> = { comprador: 'Comprador', vendedor: 'Vendedor', investidor: 'Investidor', servico: 'Serviço' }
+  const typeLabels: Record<string, string> = { comprador: 'Comprador', vendedor: 'Vendedor', investidor: 'Investidor', consultor: 'Consultor Imobiliário', servico: 'Serviço' }
   const types = (person.types ?? []).map(t => typeLabels[t] ?? t).join(', ') || 'não definido'
   const d = person.details ?? {}
 
@@ -164,6 +165,10 @@ export function buildSuggestContactActionPrompt(
     detailLines.push(`- Preço pedido: ${d.selling_price ? `${d.selling_price}€` : 'não definido'}`)
     detailLines.push(`- Vendedor ativo: ${d.is_active_seller ? 'sim' : 'não'}`)
     detailLines.push(`- Exclusividade: ${d.has_exclusivity ? 'sim' : 'não'}`)
+  }
+  if (person.types?.includes('consultor')) {
+    detailLines.push(`- Agência: ${d.agency_name ?? 'não definida'}`)
+    detailLines.push(`- Zona de atuação: ${d.working_zone ?? 'não definida'}`)
   }
   if (person.types?.includes('servico')) {
     detailLines.push(`- Tipo de serviço: ${d.service_type ?? 'não definido'}`)

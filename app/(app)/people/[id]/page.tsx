@@ -88,6 +88,7 @@ export default function PersonPage() {
   const activeTypes = person.types ?? []
   const showBuyer = activeTypes.includes('comprador') || activeTypes.includes('investidor')
   const showSeller = activeTypes.includes('vendedor')
+  const showConsultant = activeTypes.includes('consultor')
   const showService = activeTypes.includes('servico')
 
   const d = editing ? form.details : (person.details ?? {})
@@ -211,7 +212,7 @@ export default function PersonPage() {
               </div>
 
               {/* Secção específica por tipo */}
-              {(showBuyer || showSeller || showService) && (
+              {(showBuyer || showSeller || showConsultant || showService) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
                   <div className="font-display" style={{ fontSize: 13 }}>Detalhes</div>
 
@@ -336,6 +337,27 @@ export default function PersonPage() {
                           </label>
                         ) : (
                           <div style={{ fontSize: 13, color: 'var(--text)' }}>{yesNo(d.is_active_seller)}</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {showConsultant && (
+                    <>
+                      <div>
+                        <div style={labelStyle}>Agência</div>
+                        {editing ? (
+                          <input style={inputStyle} value={d.agency_name ?? ''} onChange={e => setDetail('agency_name', e.target.value)} />
+                        ) : (
+                          <div style={{ fontSize: 13, color: d.agency_name ? 'var(--text)' : 'var(--muted)' }}>{d.agency_name ?? '—'}</div>
+                        )}
+                      </div>
+                      <div>
+                        <div style={labelStyle}>Zona de atuação</div>
+                        {editing ? (
+                          <input style={inputStyle} value={d.working_zone ?? ''} onChange={e => setDetail('working_zone', e.target.value)} />
+                        ) : (
+                          <div style={{ fontSize: 13, color: d.working_zone ? 'var(--text)' : 'var(--muted)' }}>{d.working_zone ?? '—'}</div>
                         )}
                       </div>
                     </>

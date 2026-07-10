@@ -1,10 +1,11 @@
 // lib/contacts/constants.ts
-export type ContactTypeKey = 'comprador' | 'vendedor' | 'investidor' | 'servico'
+export type ContactTypeKey = 'comprador' | 'vendedor' | 'investidor' | 'consultor' | 'servico'
 
 export const CONTACT_TYPES: { key: ContactTypeKey; label: string; plural: string; color: string }[] = [
   { key: 'comprador',  label: 'Comprador',  plural: 'Compradores',  color: '#3B82F6' }, // azul suave
   { key: 'vendedor',   label: 'Vendedor',   plural: 'Vendedores',   color: '#10B981' }, // verde suave
   { key: 'investidor', label: 'Investidor', plural: 'Investidores', color: '#8B5CF6' }, // roxo suave
+  { key: 'consultor',  label: 'Consultor Imobiliário', plural: 'Consultores Imobiliários', color: '#14B8A6' }, // teal suave
   { key: 'servico',    label: 'Serviço',    plural: 'Serviços',     color: '#B07D2E' }, // âmbar
 ]
 
