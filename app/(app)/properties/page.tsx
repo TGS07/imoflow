@@ -38,7 +38,7 @@ export default function PropertiesPage() {
   const [filterType, setFilterType] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ title: '', type: 'apartamento' as PropertyType, price: '', area_m2: '', typology: '', zone: '', address: '', bedrooms: '', bathrooms: '' })
+  const [form, setForm] = useState({ title: '', type: 'apartamento' as PropertyType, price: '', area_m2: '', typology: '', zone: '', address: '', bedrooms: '', bathrooms: '', notes: '' })
   const [creating, setCreating] = useState(false)
   const [mode, setMode] = useState<'manual' | 'audio'>('manual')
   const VALID_TYPES = TYPES.map(t => t.value)
@@ -54,6 +54,7 @@ export default function PropertiesPage() {
       address: typeof f.address === 'string' ? f.address : p.address,
       bedrooms: typeof f.bedrooms === 'number' ? String(f.bedrooms) : p.bedrooms,
       bathrooms: typeof f.bathrooms === 'number' ? String(f.bathrooms) : p.bathrooms,
+      notes: typeof f.notes === 'string' ? f.notes : p.notes,
     }))
     setMode('manual')
   }
@@ -96,10 +97,11 @@ export default function PropertiesPage() {
           typology: form.typology || null,
           zone: form.zone || null,
           address: form.address || null,
+          notes: form.notes || null,
         }),
       })
       if (res.ok) {
-        setForm({ title: '', type: 'apartamento', price: '', area_m2: '', typology: '', zone: '', address: '', bedrooms: '', bathrooms: '' })
+        setForm({ title: '', type: 'apartamento', price: '', area_m2: '', typology: '', zone: '', address: '', bedrooms: '', bathrooms: '', notes: '' })
         setShowForm(false)
         fetchProperties()
       }
@@ -132,7 +134,7 @@ export default function PropertiesPage() {
                 </button>
               ))}
             </div>
-            {mode === 'audio' && <AudioRecorder entity="property" onExtracted={applyVoice} hint="Descreve o imóvel em voz alta (título, tipo, preço, área, tipologia, zona) e confirma os dados a seguir." />}
+            {mode === 'audio' && <AudioRecorder entity="property" onExtracted={applyVoice} hint="Descreve o imóvel em voz alta (título, tipo, preço, área, tipologia, zona e qualquer detalhe extra) e confirma os dados a seguir." />}
             {mode === 'manual' && (
             <form onSubmit={createProperty} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input className="input" placeholder="Título *" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} required />
@@ -152,6 +154,7 @@ export default function PropertiesPage() {
               </div>
               <input className="input" placeholder="Zona" value={form.zone} onChange={e => setForm(p => ({ ...p, zone: e.target.value }))} />
               <input className="input" placeholder="Morada" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
+              <textarea className="input" placeholder="Notas (luz natural, vista, motivo da venda, etc.)" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="button" onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
                 <button type="submit" disabled={creating} className="btn btn-primary" style={{ flex: 1 }}>{creating ? 'A criar...' : 'Criar'}</button>

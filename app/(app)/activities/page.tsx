@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Activity, ActivityType } from '@/types'
 import Link from 'next/link'
 import { CalendarTimeGrid } from '@/components/activities/CalendarTimeGrid'
@@ -48,7 +48,6 @@ function toLocalInput(d: Date): string {
 
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<Activity[]>([])
-  const [pending, setPending] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<ViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -117,15 +116,17 @@ export default function ActivitiesPage() {
     finally { setLoading(false) }
   }, [currentDate, view, filterType])
 
-  const fetchPending = useCallback(async () => {
-    try {
-      const res = await fetch('/api/activities?completed=false')
-      if (!res.ok) throw new Error()
-      setPending(await res.json())
-    } catch { setPending([]) }
-  }, [])
+  // Pendentes deriva-se das atividades já carregadas para a janela de datas
+  // atual (dia/semana/mês), em vez de uma pesquisa global sem filtro de data —
+  // assim a sidebar mostra só o que falta fazer no período que se está a ver.
+  const pending = useMemo(
+    () => activities
+      .filter(a => !a.completed)
+      .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? '')),
+    [activities]
+  )
 
-  useEffect(() => { fetchActivities(); fetchPending() }, [fetchActivities, fetchPending])
+  useEffect(() => { fetchActivities() }, [fetchActivities])
 
   async function createActivity(e: React.FormEvent) {
     e.preventDefault()
@@ -147,7 +148,6 @@ export default function ActivitiesPage() {
         setForm({ type: 'tarefa', title: '', description: '', due_date: '', end_date: '', lead_id: '' })
         setShowForm(false)
         fetchActivities()
-        fetchPending()
       }
     } finally { setCreating(false) }
   }
@@ -159,7 +159,6 @@ export default function ActivitiesPage() {
       body: JSON.stringify({ completed: !activity.completed })
     })
     fetchActivities()
-    fetchPending()
   }
 
   async function deleteActivity(id: string) {
@@ -167,7 +166,6 @@ export default function ActivitiesPage() {
     await fetch(`/api/activities/${id}`, { method: 'DELETE' })
     setSelectedActivity(null)
     fetchActivities()
-    fetchPending()
   }
 
   function navigate(direction: number) {
@@ -190,7 +188,6 @@ export default function ActivitiesPage() {
       body: JSON.stringify(body),
     })
     fetchActivities()
-    fetchPending()
   }
 
   function openFormAt(start: Date) {
@@ -251,6 +248,12 @@ export default function ActivitiesPage() {
   }
 
   const isCurrentMonth = (d: Date) => d.getMonth() === currentDate.getMonth()
+
+  const pendingScopeLabel = view === 'month'
+    ? MONTHS[currentDate.getMonth()]
+    : view === 'day'
+    ? (isToday(currentDate) ? 'hoje' : `${currentDate.getDate()} ${MONTHS[currentDate.getMonth()].substring(0, 3)}`)
+    : 'esta semana'
 
   const headerTitle = view === 'month'
     ? `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`
@@ -471,7 +474,7 @@ export default function ActivitiesPage() {
         {/* Pending Sidebar */}
         <div className="activities-pending-sidebar" style={{ borderLeft: '1px solid var(--border)', padding: '20px 16px', background: 'var(--surface)' }}>
           <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 14 }}>
-            Pendentes ({pending.length})
+            Pendentes ({pending.length}) <span style={{ textTransform: 'none', letterSpacing: 'normal', fontWeight: 400 }}>· {pendingScopeLabel}</span>
           </div>
           <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {pending.map(a => {
