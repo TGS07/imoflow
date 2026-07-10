@@ -110,6 +110,13 @@ export function buildClosingEmailPrompt(params: {
   ].join('\n')
 }
 
+// Instrução partilhada por todos os prompts de extração por voz: tudo o que
+// for dito e não couber num campo estruturado (nomes de familiares, profissão,
+// motivo da venda/compra, para onde quer ir, preferências como luz natural ou
+// vista, timing/urgência, etc.) deve ficar resumido em "notes", em vez de
+// ser perdido. Só isto justifica ter um campo de notas em todas as entidades.
+const NOTES_FIELD_INSTRUCTION = `"notes": string|null — qualquer informação adicional relevante que não tenha campo próprio no esquema (ex: nomes de familiares/cônjuge, profissão, motivo da venda ou compra, para onde a pessoa quer ir, preferências como luz natural, vista, arrumação, timing ou urgência, contexto pessoal relevante). Resume em frases curtas e factuais, em português de Portugal. Usa null se não houver nada relevante além dos outros campos. Nunca inventes informação que não foi dita.`
+
 export function buildContactExtractionPrompt(transcript: string): string {
   return [
     `Extrai dados de contacto imobiliário a partir desta transcrição (português).`,
@@ -121,7 +128,8 @@ export function buildContactExtractionPrompt(transcript: string): string {
     ` "details": {"looking_for"?: string, "search_zone"?: string, "temperature"?: ("quente"|"morno"|"frio"),`,
     `  "selling_property"?: string, "selling_zone"?: string, "selling_price"?: number, "typology"?: string,`,
     `  "has_garage"?: boolean, "has_balcony"?: boolean, "has_exclusivity"?: boolean, "is_active_seller"?: boolean,`,
-    `  "agency_name"?: string, "working_zone"?: string, "service_type"?: string}}`,
+    `  "agency_name"?: string, "working_zone"?: string, "service_type"?: string},`,
+    ` ${NOTES_FIELD_INSTRUCTION}}`,
     `Nota: "consultor" é um consultor imobiliário de outra agência ("agency_name" é a agência dele). "servico" é um prestador de serviços ("service_type" é o que faz, ex: canalizador). "working_zone" é a zona onde o consultor ou prestador atua.`,
     `Se um campo não for mencionado, omite-o (ou usa null para name/phone/email). Bandas: <250k muito_baixo; 250-500k baixo; 500k-1M medio; 1-2.5M medio_alto; 2.5-5M alto; 5M+ altissimo.`,
   ].join('\n')
@@ -201,15 +209,15 @@ export type VoiceEntity = 'contact' | 'interaction' | 'lead' | 'organization' | 
 const VOICE_ENTITY_SCHEMAS: Record<Exclude<VoiceEntity, 'contact' | 'interaction'>, { intro: string; schema: string }> = {
   lead: {
     intro: 'Um agente imobiliário descreveu um novo lead (potencial cliente) em voz alta.',
-    schema: '{"name": string, "email": string|null, "phone": string|null, "zone": string|null, "typology": string|null, "budget": número inteiro em euros ou null (ex: 370000, não "370.000 €")}',
+    schema: `{"name": string, "email": string|null, "phone": string|null, "zone": string|null, "typology": string|null, "budget": número inteiro em euros ou null (ex: 370000, não "370.000 €"), ${NOTES_FIELD_INSTRUCTION}}`,
   },
   organization: {
     intro: 'Um agente imobiliário descreveu uma nova organização/empresa parceira em voz alta.',
-    schema: '{"name": string, "email": string|null, "phone": string|null, "website": string|null}',
+    schema: `{"name": string, "email": string|null, "phone": string|null, "website": string|null, ${NOTES_FIELD_INSTRUCTION}}`,
   },
   property: {
     intro: 'Um agente imobiliário descreveu um novo imóvel para catalogar em voz alta.',
-    schema: '{"title": string, "type": "apartamento"|"moradia"|"terreno"|"loja"|"escritorio"|"armazem"|"outro"|null, "price": número inteiro em euros ou null, "area_m2": número inteiro ou null, "typology": string|null, "bedrooms": número inteiro ou null, "bathrooms": número inteiro ou null, "zone": string|null, "address": string|null}',
+    schema: `{"title": string, "type": "apartamento"|"moradia"|"terreno"|"loja"|"escritorio"|"armazem"|"outro"|null, "price": número inteiro em euros ou null, "area_m2": número inteiro ou null, "typology": string|null, "bedrooms": número inteiro ou null, "bathrooms": número inteiro ou null, "zone": string|null, "address": string|null, ${NOTES_FIELD_INSTRUCTION}}`,
   },
   activity: {
     intro: 'Um agente imobiliário descreveu uma atividade (chamada, visita, reunião, tarefa ou nota) em voz alta.',

@@ -12,7 +12,7 @@ export default function OrganizationsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', email: '', phone: '', website: '' })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', website: '', notes: '' })
   const [creating, setCreating] = useState(false)
   const [mode, setMode] = useState<'manual' | 'audio'>('manual')
 
@@ -22,6 +22,7 @@ export default function OrganizationsPage() {
       email: typeof f.email === 'string' ? f.email : p.email,
       phone: typeof f.phone === 'string' ? f.phone : p.phone,
       website: typeof f.website === 'string' ? f.website : p.website,
+      notes: typeof f.notes === 'string' ? f.notes : p.notes,
     }))
     setMode('manual')
   }
@@ -50,8 +51,8 @@ export default function OrganizationsPage() {
     e.preventDefault()
     setCreating(true)
     try {
-      const res = await fetch('/api/organizations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
-      if (res.ok) { setForm({ name: '', email: '', phone: '', website: '' }); setShowForm(false); fetchOrgs() }
+      const res = await fetch('/api/organizations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, notes: form.notes || null }) })
+      if (res.ok) { setForm({ name: '', email: '', phone: '', website: '', notes: '' }); setShowForm(false); fetchOrgs() }
     } finally { setCreating(false) }
   }
 
@@ -88,6 +89,7 @@ export default function OrganizationsPage() {
               <input className="input" type="email" placeholder="Email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
               <input className="input" placeholder="Telefone" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
               <input className="input" placeholder="Website" value={form.website} onChange={e => setForm(p => ({ ...p, website: e.target.value }))} />
+              <textarea className="input" placeholder="Notas (contexto adicional relevante)" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="button" onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
                 <button type="submit" disabled={creating} className="btn btn-primary" style={{ flex: 1 }}>{creating ? 'A criar...' : 'Criar'}</button>

@@ -29,6 +29,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues 
     budget: initialValues?.budget != null ? String(initialValues.budget) : '',
     deal_value: '',
     expected_close_date: '',
+    notes: '',
   })
   const [customFields, setCustomFields] = useState<CustomField[]>([])
   const [customValues, setCustomValues] = useState<Record<string, string>>({})
@@ -44,6 +45,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues 
       zone: typeof f.zone === 'string' ? f.zone : p.zone,
       typology: typeof f.typology === 'string' ? f.typology : p.typology,
       budget: typeof f.budget === 'number' ? String(f.budget) : p.budget,
+      notes: typeof f.notes === 'string' ? f.notes : p.notes,
     }))
     setMode('manual')
   }
@@ -141,6 +143,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues 
           budget: form.budget ? Number(form.budget) : null,
           deal_value: form.deal_value ? Number(form.deal_value) : null,
           expected_close_date: form.expected_close_date || null,
+          notes: form.notes || null,
           person_id: selectedPerson?.id ?? null,
           organization_id: selectedOrg?.id ?? null,
           property_id: selectedProp?.id ?? null,
@@ -201,7 +204,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues 
           ))}
         </div>
 
-        {mode === 'audio' && <AudioRecorder entity="lead" onExtracted={applyVoice} hint="Descreve o lead em voz alta (nome, contacto, zona, tipologia, orçamento) e confirma os dados a seguir." />}
+        {mode === 'audio' && <AudioRecorder entity="lead" onExtracted={applyVoice} hint="Descreve o lead em voz alta (nome, contacto, zona, tipologia, orçamento e qualquer contexto extra) e confirma os dados a seguir." />}
 
         {mode === 'manual' && (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -293,6 +296,17 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues 
                 {SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Notas</label>
+            <textarea
+              style={{ ...inputStyle, resize: 'vertical' as const }}
+              placeholder="Contexto adicional: familiares, profissão, motivo, preferências..."
+              value={form.notes}
+              onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
+              rows={3}
+            />
           </div>
 
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>

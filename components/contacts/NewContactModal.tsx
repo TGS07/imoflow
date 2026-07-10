@@ -16,6 +16,7 @@ type Initial = Partial<{
   financial_capacity: string
   source: string
   details: ContactDetails
+  notes: string
 }>
 
 export function NewContactModal({ initial, onClose, onCreated }: {
@@ -30,6 +31,7 @@ export function NewContactModal({ initial, onClose, onCreated }: {
   const [capacity, setCapacity] = useState(initial?.financial_capacity ?? '')
   const [source, setSource] = useState(initial?.source ?? '')
   const [details, setDetails] = useState<ContactDetails>(initial?.details ?? {})
+  const [notes, setNotes] = useState(initial?.notes ?? '')
   const [saving, setSaving] = useState(false)
   const [mode, setMode] = useState<'manual' | 'audio'>('manual')
   const [existing, setExisting] = useState<Person[]>([])
@@ -65,6 +67,7 @@ export function NewContactModal({ initial, onClose, onCreated }: {
     if (typeof f.financial_capacity === 'string') setCapacity(f.financial_capacity)
     setSource('audio')
     if (f.details && typeof f.details === 'object') setDetails(f.details as ContactDetails)
+    if (typeof f.notes === 'string') setNotes(f.notes)
     setMode('manual')
   }
 
@@ -78,7 +81,7 @@ export function NewContactModal({ initial, onClose, onCreated }: {
         body: JSON.stringify({
           name, email, phone, types,
           financial_capacity: (types.includes('comprador') || types.includes('investidor')) ? (capacity || null) : null,
-          source, details,
+          source, details, notes: notes || null,
         }),
       })
       if (res.ok) { onCreated(); onClose() }
@@ -243,6 +246,18 @@ export function NewContactModal({ initial, onClose, onCreated }: {
               <input className="input" placeholder="Zona de atuação" value={details.working_zone ?? ''} onChange={e => d('working_zone', e.target.value)} />
             </div>
           )}
+
+          <div>
+            <div style={sectionLabel}>Notas</div>
+            <textarea
+              className="input"
+              placeholder="Contexto adicional: familiares, profissão, motivo da venda/compra, preferências..."
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              rows={3}
+              style={{ resize: 'vertical', fontFamily: 'inherit' }}
+            />
+          </div>
 
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <button type="button" onClick={onClose} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
