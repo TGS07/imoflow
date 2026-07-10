@@ -30,14 +30,14 @@ export default async function PipelinePage() {
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
           <h1 className="font-display" style={{ fontSize: 20 }}>Pipeline</h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{leads?.length ?? 0} leads no pipeline</p>
         </div>
         <AddLeadButton />
       </div>
-      <div style={{ padding: '24px 32px', flex: 1, overflow: 'hidden' }}>
+      <div className="page-pad" style={{ padding: '24px 32px', flex: 1, overflow: 'hidden' }}>
         <KanbanBoard initialLeads={(leads ?? []) as Lead[]} stages={(stages ?? []) as PipelineStage[]} />
       </div>
     </>

@@ -86,7 +86,7 @@ export default function TeamPage() {
   const otherMembers = members.filter(m => m.id !== removeTarget?.id)
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: 900 }}>
+    <div className="page-pad" style={{ padding: '32px 40px', maxWidth: 900 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Equipa</h1>

@@ -44,11 +44,11 @@ export default function AdminPage() {
 
   return (
     <>
-      <div style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+      <div className="page-pad" style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
         <h1 className="font-display" style={{ fontSize: 20 }}>Admin — ImoFlow</h1>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Gestão de agências clientes</p>
       </div>
-      <div style={{ padding: '28px 32px', display: 'grid', gridTemplateColumns: '380px 1fr', gap: 28 }}>
+      <div className="two-col-grid page-pad" style={{ padding: '28px 32px', display: 'grid', gridTemplateColumns: '380px 1fr', gap: 28 }}>
         {/* FORM */}
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
           <div className="font-display" style={{ fontSize: 15, marginBottom: 20 }}>Nova Agência</div>

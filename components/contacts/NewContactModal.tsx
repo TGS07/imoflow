@@ -236,13 +236,6 @@ export function NewContactModal({ initial, onClose, onCreated }: {
             </div>
           )}
 
-          {has('servico') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
-              <div style={sectionLabel}>Serviço</div>
-              <input className="input" placeholder="Tipo de serviço" value={details.service_type ?? ''} onChange={e => d('service_type', e.target.value)} />
-            </div>
-          )}
-
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <button type="button" onClick={onClose} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
             <button type="submit" disabled={saving} className="btn btn-primary" style={{ flex: 1 }}>{saving ? 'A criar...' : 'Criar'}</button>

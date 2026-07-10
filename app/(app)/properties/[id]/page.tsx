@@ -167,13 +167,13 @@ export default function PropertyPage() {
           onSent={() => setEmailModal(null)}
         />
       )}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 10, padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div className="detail-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
           <Link href="/properties" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 13, flexShrink: 0 }}>← Imóveis</Link>
           <span style={{ color: 'var(--border)', flexShrink: 0 }}>/</span>
           <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{property.title}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="header-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {!editing && property.status === 'vendido' && (
             <button onClick={generateClosingEmail} disabled={closingLoading} style={{ background: 'var(--gold-glow)', border: '1px solid var(--gold)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--gold)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>{closingLoading ? 'A gerar...' : '✉ Email de fecho'}</button>
           )}
@@ -189,7 +189,7 @@ export default function PropertyPage() {
         </div>
       </div>
 
-      <div className="two-col-grid" style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div className="two-col-grid page-pad" style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         {/* Left: Property Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>

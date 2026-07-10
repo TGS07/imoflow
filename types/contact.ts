@@ -21,8 +21,6 @@ export type ContactDetails = {
   // consultor imobiliário
   agency_name?: string
   working_zone?: string
-  // serviço
-  service_type?: string
 }
 
 export type ContactInteractionType = 'chamada' | 'visita' | 'email' | 'whatsapp' | 'nota'
