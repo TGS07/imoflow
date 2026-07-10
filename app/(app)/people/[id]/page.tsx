@@ -88,6 +88,7 @@ export default function PersonPage() {
   const activeTypes = person.types ?? []
   const showBuyer = activeTypes.includes('comprador') || activeTypes.includes('investidor')
   const showSeller = activeTypes.includes('vendedor')
+  const showConsultant = activeTypes.includes('consultor')
   const showService = activeTypes.includes('servico')
 
   const d = editing ? form.details : (person.details ?? {})
@@ -107,13 +108,13 @@ export default function PersonPage() {
           onCreated={fetchPerson}
         />
       )}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 10, padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div className="detail-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
           <Link href="/people" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 13, flexShrink: 0 }}>← Pessoas</Link>
           <span style={{ color: 'var(--border)', flexShrink: 0 }}>/</span>
           <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{person.name}</span>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <div className="header-actions" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           {!editing ? (
             <button onClick={() => setEditing(true)} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--text)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Editar</button>
           ) : (
@@ -126,7 +127,7 @@ export default function PersonPage() {
         </div>
       </div>
 
-      <div className="two-col-grid" style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div className="two-col-grid page-pad" style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         {/* Left: Person Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
@@ -211,7 +212,7 @@ export default function PersonPage() {
               </div>
 
               {/* Secção específica por tipo */}
-              {(showBuyer || showSeller || showService) && (
+              {(showBuyer || showSeller || showConsultant || showService) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
                   <div className="font-display" style={{ fontSize: 13 }}>Detalhes</div>
 
@@ -341,16 +342,50 @@ export default function PersonPage() {
                     </>
                   )}
 
-                  {showService && (
-                    <div>
-                      <div style={labelStyle}>Tipo de serviço</div>
-                      {editing ? (
-                        <input style={inputStyle} value={d.service_type ?? ''} onChange={e => setDetail('service_type', e.target.value)} />
-                      ) : (
-                        <div style={{ fontSize: 13, color: d.service_type ? 'var(--text)' : 'var(--muted)' }}>{d.service_type ?? '—'}</div>
-                      )}
-                    </div>
+                  {showConsultant && (
+                    <>
+                      <div>
+                        <div style={labelStyle}>Agência</div>
+                        {editing ? (
+                          <input style={inputStyle} value={d.agency_name ?? ''} onChange={e => setDetail('agency_name', e.target.value)} />
+                        ) : (
+                          <div style={{ fontSize: 13, color: d.agency_name ? 'var(--text)' : 'var(--muted)' }}>{d.agency_name ?? '—'}</div>
+                        )}
+                      </div>
+                      <div>
+                        <div style={labelStyle}>Zona de atuação</div>
+                        {editing ? (
+                          <input style={inputStyle} value={d.working_zone ?? ''} onChange={e => setDetail('working_zone', e.target.value)} />
+                        ) : (
+                          <div style={{ fontSize: 13, color: d.working_zone ? 'var(--text)' : 'var(--muted)' }}>{d.working_zone ?? '—'}</div>
+                        )}
+                      </div>
+                    </>
                   )}
+
+                  {showService && (
+                    <>
+                      <div>
+                        <div style={labelStyle}>O que faz</div>
+                        {editing ? (
+                          <input style={inputStyle} value={d.service_type ?? ''} onChange={e => setDetail('service_type', e.target.value)} />
+                        ) : (
+                          <div style={{ fontSize: 13, color: d.service_type ? 'var(--text)' : 'var(--muted)' }}>{d.service_type ?? '—'}</div>
+                        )}
+                      </div>
+                      {!showConsultant && (
+                        <div>
+                          <div style={labelStyle}>Zona de atuação</div>
+                          {editing ? (
+                            <input style={inputStyle} value={d.working_zone ?? ''} onChange={e => setDetail('working_zone', e.target.value)} />
+                          ) : (
+                            <div style={{ fontSize: 13, color: d.working_zone ? 'var(--text)' : 'var(--muted)' }}>{d.working_zone ?? '—'}</div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+
                 </div>
               )}
 

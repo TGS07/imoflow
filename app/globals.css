@@ -578,6 +578,14 @@ textarea.input { resize: vertical; line-height: 1.6; }
     grid-template-columns: 1fr !important;
   }
 
+  /* Filhos da grelha podem encolher — sem isto, um elemento interior largo
+     (ex.: linha de botões) rebenta a coluna e os cartões saem do ecrã à direita */
+  .two-col-grid > *,
+  .two-col-grid > * > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   /* Formulários e cards com largura fixa */
   [style*="width: 420"],
   [style*="width: 380"],
@@ -671,6 +679,20 @@ textarea.input { resize: vertical; line-height: 1.6; }
   .header-actions .btn {
     font-size: 11px !important;
     padding: 6px 8px !important;
+  }
+
+  /* Botões "crus" (sem .btn) nos headers das fichas de detalhe — compactos,
+     senão a regra global de 16px incha-os e o header transborda no telefone */
+  .header-actions button {
+    font-size: 12px !important;
+    padding: 0 10px !important;
+    height: 30px !important;
+  }
+
+  /* Breadcrumb das fichas de detalhe: largura mínima legível — quando os
+     botões de ação não couberem ao lado, o flex-wrap manda-os para baixo */
+  .detail-breadcrumb {
+    min-width: 180px !important;
   }
 
   /* Linhas de etapa do pipeline — compactas para caber no ecrã */

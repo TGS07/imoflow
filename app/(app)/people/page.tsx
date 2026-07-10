@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { NewContactModal } from '@/components/contacts/NewContactModal'
 import { ContactFilters, EMPTY_FILTERS, applyContactFilters, type ContactFilterState } from '@/components/contacts/ContactFilters'
+import { buildWaLink } from '@/lib/whatsapp/utils'
 
 function daysSince(iso: string | null): number | null {
   if (!iso) return null
@@ -59,10 +60,21 @@ function PreviewLine({ p }: { p: Person }) {
     )
   }
 
+  if (t.includes('consultor')) {
+    return (
+      <div style={dim}>
+        {p.details?.agency_name || '—'}
+        {p.details?.working_zone && <>{dot}{p.details.working_zone}</>}
+        {(p.email || p.phone) && <>{dot}{p.email ?? p.phone}</>}
+      </div>
+    )
+  }
+
   if (t.includes('servico')) {
     return (
       <div style={dim}>
         {p.details?.service_type || '—'}
+        {p.details?.working_zone && <>{dot}{p.details.working_zone}</>}
         {(p.email || p.phone) && <>{dot}{p.email ?? p.phone}</>}
       </div>
     )
@@ -208,6 +220,30 @@ export default function PeoplePage() {
                   </div>
                   <PreviewLine p={p} />
                 </div>
+                {p.phone && (
+                  <div className="quick-actions" style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    <a
+                      href={`tel:${p.phone}`}
+                      onClick={e => e.stopPropagation()}
+                      aria-label="Ligar"
+                      title="Ligar"
+                      style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', textDecoration: 'none', fontSize: 14 }}
+                    >
+                      📞
+                    </a>
+                    <a
+                      href={buildWaLink(p.phone, `Olá ${p.name.split(' ')[0]}!`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      aria-label="WhatsApp"
+                      title="WhatsApp"
+                      style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.3)', color: '#25D366', textDecoration: 'none', fontSize: 14 }}
+                    >
+                      💬
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -11,13 +11,27 @@ export default async function DashboardPage() {
   const todayStart = new Date(new Date().setHours(0,0,0,0)).toISOString()
   const todayEnd = new Date(new Date().setHours(23,59,59,999)).toISOString()
 
-  const [{ data: profile }, { data: leads }, { data: todayActivities }, { count: pendingCount }, { data: stages }] = await Promise.all([
+  const [{ data: profile }, { data: leads }, { data: todayActivities }, { count: pendingCount }, { data: stages }, { data: lastSyncRows }] = await Promise.all([
     supabase.from('users').select('name').eq('id', user.id).single(),
     supabase.from('leads').select('id, name, stage_id, typology, zone, budget, deal_value, expected_close_date, created_at, pipeline_stages(id, name, color, probability, is_won, is_lost)').order('created_at', { ascending: false }),
     supabase.from('activities').select('id, type, title, due_date, completed, leads(name), users:assigned_to(name)').gte('due_date', todayStart).lte('due_date', todayEnd).order('due_date', { ascending: true }),
     supabase.from('activities').select('id', { count: 'exact', head: true }).eq('completed', false),
     supabase.from('pipeline_stages').select('*').order('position', { ascending: true }),
+    supabase.from('contacts_sync_runs').select('ran_at, contacts_processed').order('ran_at', { ascending: false }).limit(1),
   ])
+
+  const lastSync = lastSyncRows?.[0] ?? null
+  const lastSyncHoursAgo = lastSync ? (Date.now() - new Date(lastSync.ran_at).getTime()) / 3_600_000 : null
+
+  function relativeSync(iso: string): string {
+    const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000)
+    if (mins < 1) return 'agora mesmo'
+    if (mins < 60) return `há ${mins} min`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `há ${hours}h`
+    const days = Math.floor(hours / 24)
+    return `há ${days}d`
+  }
 
   const allLeads = leads ?? []
   const allStages = stages ?? []
@@ -89,6 +103,12 @@ export default async function DashboardPage() {
       </div>
 
       <div className="page-enter page-pad" style={{ padding: '28px 32px', flex: 1 }}>
+        {lastSync && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', marginBottom: 20, fontSize: 12, color: 'var(--muted)', flexWrap: 'wrap' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: lastSyncHoursAgo != null && lastSyncHoursAgo > 8 ? '#EF4444' : '#10B981' }} />
+            <span>Sincronização de Contactos (iPhone): <strong style={{ color: 'var(--text)' }}>{relativeSync(lastSync.ran_at)}</strong>{lastSync.contacts_processed > 0 && ` · ${lastSync.contacts_processed} atualizado${lastSync.contacts_processed !== 1 ? 's' : ''}`}</span>
+          </div>
+        )}
         <div className="stagger stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
           <StatCard label="Leads Ativos" value={activeLeads} icon="leads" />
           <StatCard label="Pipeline Total" value={formatValue(pipelineTotal)} icon="chart" />

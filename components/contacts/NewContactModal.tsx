@@ -228,10 +228,19 @@ export function NewContactModal({ initial, onClose, onCreated }: {
             </div>
           )}
 
+          {has('consultor') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+              <div style={sectionLabel}>Consultor Imobiliário</div>
+              <input className="input" placeholder="Agência" value={details.agency_name ?? ''} onChange={e => d('agency_name', e.target.value)} />
+              <input className="input" placeholder="Zona de atuação" value={details.working_zone ?? ''} onChange={e => d('working_zone', e.target.value)} />
+            </div>
+          )}
+
           {has('servico') && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
               <div style={sectionLabel}>Serviço</div>
-              <input className="input" placeholder="Tipo de serviço" value={details.service_type ?? ''} onChange={e => d('service_type', e.target.value)} />
+              <input className="input" placeholder="O que faz (ex: canalizador, eletricista)" value={details.service_type ?? ''} onChange={e => d('service_type', e.target.value)} />
+              <input className="input" placeholder="Zona de atuação" value={details.working_zone ?? ''} onChange={e => d('working_zone', e.target.value)} />
             </div>
           )}
 

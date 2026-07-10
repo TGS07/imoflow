@@ -54,7 +54,7 @@ export default function LeadsPage() {
   return (
     <>
       {showModal && <NewLeadModal onClose={() => setShowModal(false)} onCreated={fetchLeads} />}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
           <h1 className="font-display" style={{ fontSize: 20 }}>Leads</h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{leads.length} leads</p>
@@ -65,14 +65,14 @@ export default function LeadsPage() {
       </div>
 
       {personFilter && (
-        <div className="page-enter" style={{ padding: '14px 32px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="page-enter page-pad" style={{ padding: '14px 32px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, background: 'var(--gold-glow)', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 6 }}>
             Filtrado por contacto
             <button onClick={() => router.push('/leads')} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1 }}>✕</button>
           </span>
         </div>
       )}
-      <div className="page-enter" style={{ padding: '20px 32px', display: 'flex', gap: 10 }}>
+      <div className="page-enter page-pad" style={{ padding: '20px 32px', display: 'flex', gap: 10 }}>
         <input
           placeholder="Pesquisar por nome, email ou telefone..."
           value={search}
@@ -91,7 +91,7 @@ export default function LeadsPage() {
         </select>
       </div>
 
-      <div style={{ padding: '0 32px 32px' }}>
+      <div className="page-pad" style={{ padding: '0 32px 32px' }}>
         {!loading && leads.length === 0 ? (
           <div className="card" style={{ overflow: 'hidden' }}>
             {debouncedSearch || stageFilter ? (

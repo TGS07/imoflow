@@ -105,12 +105,12 @@ export default function PipelineSettingsPage() {
 
   return (
     <>
-      <div style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div className="page-pad" style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <h1 className="font-display" style={{ fontSize: 20 }}>Configurações do Pipeline</h1>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Personaliza as etapas e campos do teu CRM</p>
       </div>
 
-      <div style={{ padding: '28px 32px', maxWidth: 720 }}>
+      <div className="page-pad" style={{ padding: '28px 32px', maxWidth: 720 }}>
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 22, marginBottom: 24 }}>
           <div className="font-display" style={{ fontSize: 16, marginBottom: 16 }}>Etapas do Pipeline</div>
 
