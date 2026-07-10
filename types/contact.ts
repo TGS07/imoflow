@@ -18,9 +18,11 @@ export type ContactDetails = {
   has_balcony?: boolean
   has_exclusivity?: boolean
   is_active_seller?: boolean
-  // consultor imobiliário
+  // consultor imobiliário / serviço (zona de atuação partilhada)
   agency_name?: string
   working_zone?: string
+  // serviço
+  service_type?: string
 }
 
 export type ContactInteractionType = 'chamada' | 'visita' | 'email' | 'whatsapp' | 'nota'

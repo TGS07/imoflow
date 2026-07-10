@@ -69,6 +69,16 @@ function PreviewLine({ p }: { p: Person }) {
     )
   }
 
+  if (t.includes('servico')) {
+    return (
+      <div style={dim}>
+        {p.details?.service_type || '—'}
+        {p.details?.working_zone && <>{dot}{p.details.working_zone}</>}
+        {(p.email || p.phone) && <>{dot}{p.email ?? p.phone}</>}
+      </div>
+    )
+  }
+
   return <div style={dim}>{p.email ?? p.phone ?? '—'}</div>
 }
 

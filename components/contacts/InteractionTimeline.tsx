@@ -42,11 +42,11 @@ export function InteractionTimeline({ personId, onLogged }: { personId: string; 
   return (
     <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
       <div className="font-display" style={{ fontSize: 15, marginBottom: 14 }}>Interações</div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
         <select className="input" value={type} onChange={e => setType(e.target.value)} style={{ width: 130 }}>
           {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
-        <input className="input" placeholder="Nota..." value={note} onChange={e => setNote(e.target.value)} style={{ flex: 1 }} />
+        <input className="input" placeholder="Nota..." value={note} onChange={e => setNote(e.target.value)} style={{ flex: 1, minWidth: 120 }} />
         <button
           type="button"
           onClick={() => setShowRecorder(s => !s)}
