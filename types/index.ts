@@ -65,6 +65,9 @@ export type Person = {
   source: string | null
   last_interaction_at: string | null
   details: import('./contact').ContactDetails
+  is_regular: boolean
+  assigned_to: string | null
+  birthday: string | null
   created_at: string
 }
 
@@ -133,6 +136,7 @@ export type Lead = {
   person_id: string | null
   organization_id: string | null
   property_id: string | null
+  is_regular: boolean
   created_at: string
   users?: User
   pipeline_stages?: PipelineStage

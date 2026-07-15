@@ -8,6 +8,8 @@ type AgencyData = {
   email: string
   email_from_name: string | null
   email_reply_to: string | null
+  followup_first_days: number
+  followup_second_days: number
   whatsapp_configured?: boolean
 }
 
@@ -15,6 +17,8 @@ export default function AgencySettingsPage() {
   const [agency, setAgency] = useState<AgencyData | null>(null)
   const [fromName, setFromName] = useState('')
   const [replyTo, setReplyTo] = useState('')
+  const [firstDays, setFirstDays] = useState('7')
+  const [secondDays, setSecondDays] = useState('30')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -27,6 +31,8 @@ export default function AgencySettingsPage() {
         setAgency(d)
         setFromName(d.email_from_name ?? '')
         setReplyTo(d.email_reply_to ?? '')
+        setFirstDays(String(d.followup_first_days ?? 7))
+        setSecondDays(String(d.followup_second_days ?? 30))
       })
       .catch(() => setError('Erro ao carregar dados da agência.'))
       .finally(() => setLoading(false))
@@ -44,6 +50,8 @@ export default function AgencySettingsPage() {
         body: JSON.stringify({
           email_from_name: fromName.trim() || null,
           email_reply_to: replyTo.trim() || null,
+          followup_first_days: Number(firstDays) || 7,
+          followup_second_days: Number(secondDays) || 30,
         }),
       })
       if (res.ok) {
@@ -108,6 +116,23 @@ export default function AgencySettingsPage() {
             <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 5 }}>
               Quando a lead responder ao email, a resposta vai para este endereço.
             </p>
+          </div>
+
+          <div style={{ paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+            <label className="label">Lembretes de contactos regulares</label>
+            <p style={{ fontSize: 11, color: 'var(--muted)', margin: '4px 0 12px' }}>
+              Para contactos e leads marcados como <strong>regulares</strong>, avisamos o responsável quando passam demasiados dias sem contacto.
+            </p>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 140 }}>
+                <label className="label" style={{ fontSize: 11 }}>1º lembrete (dias)</label>
+                <input className="input" type="number" min={1} max={365} value={firstDays} onChange={e => setFirstDays(e.target.value)} />
+              </div>
+              <div style={{ flex: 1, minWidth: 140 }}>
+                <label className="label" style={{ fontSize: 11 }}>2º lembrete (dias)</label>
+                <input className="input" type="number" min={1} max={365} value={secondDays} onChange={e => setSecondDays(e.target.value)} />
+              </div>
+            </div>
           </div>
 
           {error && <div style={{ fontSize: 12, color: 'var(--red)' }}>{error}</div>}

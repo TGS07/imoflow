@@ -56,6 +56,11 @@ export async function POST(request: Request) {
     financial_capacity: body.financial_capacity || null,
     source: body.source || 'manual',
     details: body.details && typeof body.details === 'object' ? body.details : {},
+    // Responsável obrigatório na criação; sem ele, ninguém recebe os
+    // lembretes de follow-up. O frontend pré-seleciona o utilizador atual.
+    assigned_to: body.assigned_to || user.id,
+    is_regular: body.is_regular === true,
+    birthday: body.birthday || null,
   }
 
   const { data, error } = await supabase.from('people').insert(insert).select().single()

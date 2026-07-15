@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Property, PropertyType, PropertyStatus } from '@/types'
+import { Property, PropertyType, PropertyStatus, PropertyCondition } from '@/types'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
 
@@ -24,6 +24,13 @@ const STATUSES: { value: PropertyStatus; label: string }[] = [
   { value: 'arrendado', label: 'Arrendado' },
 ]
 
+const CONDITIONS: { value: PropertyCondition; label: string }[] = [
+  { value: 'novo', label: 'Novo' },
+  { value: 'usado', label: 'Usado' },
+  { value: 'renovado', label: 'Renovado' },
+  { value: 'em_construcao', label: 'Em Construção' },
+]
+
 const STATUS_COLORS: Record<PropertyStatus, string> = {
   disponivel: '#10B981',
   reservado: '#F59E0B',
@@ -38,13 +45,21 @@ export default function PropertiesPage() {
   const [filterType, setFilterType] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ title: '', type: 'apartamento' as PropertyType, price: '', area_m2: '', typology: '', zone: '', address: '', bedrooms: '', bathrooms: '', notes: '' })
+  const emptyForm = {
+    title: '', type: 'apartamento' as PropertyType, status: 'disponivel' as PropertyStatus,
+    price: '', area_m2: '', typology: '', bedrooms: '', bathrooms: '', floor: '',
+    condition: '' as PropertyCondition | '', reference: '',
+    zone: '', address: '', city: '', postal_code: '',
+    description: '', features: '', photos: '', notes: '',
+  }
+  const [form, setForm] = useState(emptyForm)
   const [creating, setCreating] = useState(false)
   const [mode, setMode] = useState<'manual' | 'audio'>('manual')
   const VALID_TYPES = TYPES.map(t => t.value)
 
   function applyVoice(f: Record<string, unknown>) {
     setForm(p => ({
+      ...p,
       title: typeof f.title === 'string' ? f.title : p.title,
       type: typeof f.type === 'string' && VALID_TYPES.includes(f.type as PropertyType) ? f.type as PropertyType : p.type,
       price: typeof f.price === 'number' ? String(f.price) : p.price,
@@ -89,19 +104,29 @@ export default function PropertiesPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...form,
+          title: form.title,
+          type: form.type,
+          status: form.status,
           price: form.price ? Number(form.price) : null,
           area_m2: form.area_m2 ? Number(form.area_m2) : null,
           bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
           bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
+          floor: form.floor || null,
+          condition: form.condition || null,
+          reference: form.reference || null,
           typology: form.typology || null,
           zone: form.zone || null,
           address: form.address || null,
+          city: form.city || null,
+          postal_code: form.postal_code || null,
+          description: form.description || null,
           notes: form.notes || null,
+          features: form.features ? form.features.split(',').map(s => s.trim()).filter(Boolean) : [],
+          photos: form.photos ? form.photos.split('\n').map(s => s.trim()).filter(Boolean) : [],
         }),
       })
       if (res.ok) {
-        setForm({ title: '', type: 'apartamento', price: '', area_m2: '', typology: '', zone: '', address: '', bedrooms: '', bathrooms: '', notes: '' })
+        setForm(emptyForm)
         setShowForm(false)
         fetchProperties()
       }
@@ -112,7 +137,7 @@ export default function PropertiesPage() {
     <div className="page-enter">
       {showForm && (
         <div className="modal-backdrop" onClick={() => setShowForm(false)}>
-          <div className="modal" style={{ width: 520 }} onClick={e => e.stopPropagation()}>
+          <div className="modal" style={{ width: 520, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div className="font-display" style={{ fontSize: 18 }}>Novo Imóvel</div>
               <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
@@ -142,19 +167,44 @@ export default function PropertiesPage() {
                 <select className="input" value={form.type} onChange={e => setForm(p => ({ ...p, type: e.target.value as PropertyType }))}>
                   {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
+                <select className="input" value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value as PropertyStatus }))}>
+                  {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <input className="input" placeholder="Tipologia (ex: T3)" value={form.typology} onChange={e => setForm(p => ({ ...p, typology: e.target.value }))} />
+                <input className="input" placeholder="Referência" value={form.reference} onChange={e => setForm(p => ({ ...p, reference: e.target.value }))} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <input type="number" className="input" placeholder="Preço (€)" value={form.price} onChange={e => setForm(p => ({ ...p, price: e.target.value }))} />
                 <input type="number" className="input" placeholder="Área (m²)" value={form.area_m2} onChange={e => setForm(p => ({ ...p, area_m2: e.target.value }))} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                 <input type="number" className="input" placeholder="Quartos" value={form.bedrooms} onChange={e => setForm(p => ({ ...p, bedrooms: e.target.value }))} />
-                <input type="number" className="input" placeholder="Casas de banho" value={form.bathrooms} onChange={e => setForm(p => ({ ...p, bathrooms: e.target.value }))} />
+                <input type="number" className="input" placeholder="WC" value={form.bathrooms} onChange={e => setForm(p => ({ ...p, bathrooms: e.target.value }))} />
+                <input className="input" placeholder="Andar" value={form.floor} onChange={e => setForm(p => ({ ...p, floor: e.target.value }))} />
               </div>
+              <select className="input" value={form.condition} onChange={e => setForm(p => ({ ...p, condition: e.target.value as PropertyCondition | '' }))}>
+                <option value="">Condição —</option>
+                {CONDITIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+
+              <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginTop: 4 }}>Localização</div>
               <input className="input" placeholder="Zona" value={form.zone} onChange={e => setForm(p => ({ ...p, zone: e.target.value }))} />
               <input className="input" placeholder="Morada" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
-              <textarea className="input" placeholder="Notas (luz natural, vista, motivo da venda, etc.)" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <input className="input" placeholder="Cidade" value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} />
+                <input className="input" placeholder="Código postal" value={form.postal_code} onChange={e => setForm(p => ({ ...p, postal_code: e.target.value }))} />
+              </div>
+
+              <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginTop: 4 }}>Detalhes</div>
+              <textarea className="input" placeholder="Descrição" value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={2} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+              <input className="input" placeholder="Características (garagem, piscina, varanda — separadas por vírgulas)" value={form.features} onChange={e => setForm(p => ({ ...p, features: e.target.value }))} />
+              <textarea className="input" placeholder="Notas (luz natural, vista, motivo da venda, etc.)" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+
+              <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginTop: 4 }}>Fotos (opcional)</div>
+              <textarea className="input" placeholder="URLs das fotos, uma por linha" value={form.photos} onChange={e => setForm(p => ({ ...p, photos: e.target.value }))} rows={2} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="button" onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
                 <button type="submit" disabled={creating} className="btn btn-primary" style={{ flex: 1 }}>{creating ? 'A criar...' : 'Criar'}</button>

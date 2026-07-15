@@ -21,9 +21,6 @@ function relativeContact(iso: string | null): string {
   return `Há ${d} dias`
 }
 
-function cap(s?: string) {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''
-}
 
 function PreviewLine({ p }: { p: Person }) {
   const dot = <span style={{ color: 'var(--border-strong)' }}> · </span>
@@ -55,7 +52,6 @@ function PreviewLine({ p }: { p: Person }) {
         {p.details?.looking_for || '—'}
         {p.details?.search_zone && <>{dot}{p.details.search_zone}</>}
         {capacityMeta(p.financial_capacity)?.label && <>{dot}{capacityMeta(p.financial_capacity)?.label}</>}
-        {p.details?.temperature && <>{dot}{cap(p.details.temperature)}</>}
       </div>
     )
   }

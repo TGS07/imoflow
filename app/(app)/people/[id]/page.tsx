@@ -29,10 +29,13 @@ export default function PersonPage() {
   const [person, setPerson] = useState<PersonDetail | null>(null)
   const [editing, setEditing] = useState(false)
   const [showNewLead, setShowNewLead] = useState(false)
+  const [members, setMembers] = useState<{ id: string; name: string }[]>([])
+  const [pipelineBusy, setPipelineBusy] = useState(false)
   const [form, setForm] = useState<{
     name: string; email: string; phone: string; address: string; notes: string
     types: ContactTypeKey[]; financial_capacity: string; source: string; details: ContactDetails
-  }>({ name: '', email: '', phone: '', address: '', notes: '', types: [], financial_capacity: '', source: '', details: {} })
+    assigned_to: string; is_regular: boolean; birthday: string
+  }>({ name: '', email: '', phone: '', address: '', notes: '', types: [], financial_capacity: '', source: '', details: {}, assigned_to: '', is_regular: false, birthday: '' })
 
   const fetchPerson = useCallback(async () => {
     const res = await fetch(`/api/people/${id}`)
@@ -42,10 +45,18 @@ export default function PersonPage() {
     setForm({
       name: data.name, email: data.email ?? '', phone: data.phone ?? '', address: data.address ?? '', notes: data.notes ?? '',
       types: data.types ?? [], financial_capacity: data.financial_capacity ?? '', source: data.source ?? '', details: data.details ?? {},
+      assigned_to: data.assigned_to ?? '', is_regular: data.is_regular ?? false, birthday: data.birthday ?? '',
     })
   }, [id])
 
   useEffect(() => { fetchPerson() }, [fetchPerson])
+
+  useEffect(() => {
+    fetch('/api/team/members')
+      .then(r => r.ok ? r.json() : { members: [] })
+      .then((d: { members: { id: string; name: string }[] }) => setMembers(d.members))
+      .catch(() => {})
+  }, [])
 
   async function save() {
     const res = await fetch(`/api/people/${id}`, {
@@ -61,9 +72,45 @@ export default function PersonPage() {
         financial_capacity: form.financial_capacity || null,
         source: form.source || null,
         details: form.details,
+        assigned_to: form.assigned_to || null,
+        is_regular: form.is_regular,
+        birthday: form.birthday || null,
       }),
     })
     if (res.ok) { setEditing(false); fetchPerson() }
+  }
+
+  // Alternar rapidamente o estado "regular" sem entrar em modo de edição
+  async function toggleRegular() {
+    if (!person) return
+    const next = !person.is_regular
+    await fetch(`/api/people/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_regular: next }),
+    })
+    fetchPerson()
+  }
+
+  async function addToPipeline() {
+    setPipelineBusy(true)
+    try {
+      const res = await fetch(`/api/people/${id}/pipeline`, { method: 'POST' })
+      if (res.ok) fetchPerson()
+    } finally {
+      setPipelineBusy(false)
+    }
+  }
+
+  async function removeFromPipeline() {
+    if (!confirm('Remover do pipeline? A lead ativa é apagada; o contacto e o histórico ficam.')) return
+    setPipelineBusy(true)
+    try {
+      const res = await fetch(`/api/people/${id}/pipeline`, { method: 'DELETE' })
+      if (res.ok) fetchPerson()
+    } finally {
+      setPipelineBusy(false)
+    }
   }
 
   async function deletePerson() {
@@ -84,6 +131,10 @@ export default function PersonPage() {
     setForm(p => ({ ...p, types: p.types.includes(key) ? p.types.filter(t => t !== key) : [...p.types, key] }))
   const setDetail = <K extends keyof ContactDetails>(k: K, v: ContactDetails[K]) =>
     setForm(p => ({ ...p, details: { ...p.details, [k]: v } }))
+
+  // Lead "ativa" = ligada a este contacto e numa etapa que não é fechada/perdida
+  const activeLead = person.leads?.find(l => l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost) ?? null
+  const age = person.birthday ? Math.floor((Date.now() - new Date(person.birthday).getTime()) / (365.25 * 24 * 3600 * 1000)) : null
 
   const activeTypes = person.types ?? []
   const showBuyer = activeTypes.includes('comprador') || activeTypes.includes('investidor')
@@ -115,6 +166,18 @@ export default function PersonPage() {
           <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{person.name}</span>
         </div>
         <div className="header-actions" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          {!editing && (
+            activeLead ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Link href="/pipeline" style={{ textDecoration: 'none', background: `${activeLead.pipeline_stages?.color ?? 'var(--gold)'}18`, border: `1px solid ${activeLead.pipeline_stages?.color ?? 'var(--gold)'}55`, borderRadius: 8, padding: '0 12px', height: 32, display: 'flex', alignItems: 'center', fontSize: 12, color: activeLead.pipeline_stages?.color ?? 'var(--gold)', fontWeight: 600 }}>
+                  No pipeline · {activeLead.pipeline_stages?.name ?? 'Lead'}
+                </Link>
+                <button onClick={removeFromPipeline} disabled={pipelineBusy} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 12px', height: 32, fontSize: 12, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Remover</button>
+              </div>
+            ) : (
+              <button onClick={addToPipeline} disabled={pipelineBusy} style={{ background: 'var(--gold-glow)', border: '1px solid var(--gold)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--gold)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>{pipelineBusy ? '…' : '+ Pipeline'}</button>
+            )
+          )}
           {!editing ? (
             <button onClick={() => setEditing(true)} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--text)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Editar</button>
           ) : (
@@ -211,6 +274,38 @@ export default function PersonPage() {
                 )}
               </div>
 
+              {/* Responsável */}
+              <div>
+                <div style={labelStyle}>Responsável</div>
+                {editing ? (
+                  <select style={inputStyle} value={form.assigned_to} onChange={e => setForm(p => ({ ...p, assigned_to: e.target.value }))}>
+                    <option value="">—</option>
+                    {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  </select>
+                ) : (
+                  <div style={{ fontSize: 13, color: person.assigned_to ? 'var(--text)' : 'var(--muted)' }}>{members.find(m => m.id === person.assigned_to)?.name ?? '—'}</div>
+                )}
+              </div>
+
+              {/* Nascimento */}
+              <div>
+                <div style={labelStyle}>Nascimento</div>
+                {editing ? (
+                  <input style={inputStyle} type="date" value={form.birthday} onChange={e => setForm(p => ({ ...p, birthday: e.target.value }))} />
+                ) : (
+                  <div style={{ fontSize: 13, color: person.birthday ? 'var(--text)' : 'var(--muted)' }}>{person.birthday ? `${new Date(person.birthday).toLocaleDateString('pt-PT')}${age != null ? ` · ${age} anos` : ''}` : '—'}</div>
+                )}
+              </div>
+
+              {/* Contacto regular (toggle rápido fora do modo edição) */}
+              <div>
+                <div style={labelStyle}>Follow-ups</div>
+                <button onClick={toggleRegular} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer', background: person.is_regular ? 'var(--gold-glow)' : 'var(--surface)', border: `1px solid ${person.is_regular ? 'var(--gold)' : 'var(--border)'}`, color: person.is_regular ? 'var(--gold)' : 'var(--muted)', borderRadius: 8, padding: '7px 12px', fontFamily: 'Jost, sans-serif', width: '100%' }}>
+                  <span style={{ fontWeight: 600 }}>{person.is_regular ? '✓ Contacto regular' : 'Marcar como regular'}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.8 }}>{person.is_regular ? 'lembretes ativos' : 'sem lembretes'}</span>
+                </button>
+              </div>
+
               {/* Secção específica por tipo */}
               {(showBuyer || showSeller || showConsultant || showService) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
@@ -232,19 +327,6 @@ export default function PersonPage() {
                           <input style={inputStyle} value={d.search_zone ?? ''} onChange={e => setDetail('search_zone', e.target.value)} />
                         ) : (
                           <div style={{ fontSize: 13, color: d.search_zone ? 'var(--text)' : 'var(--muted)' }}>{d.search_zone ?? '—'}</div>
-                        )}
-                      </div>
-                      <div>
-                        <div style={labelStyle}>Temperatura</div>
-                        {editing ? (
-                          <select style={inputStyle} value={d.temperature ?? ''} onChange={e => setDetail('temperature', (e.target.value || undefined) as ContactDetails['temperature'])}>
-                            <option value="">—</option>
-                            <option value="quente">Quente</option>
-                            <option value="morno">Morno</option>
-                            <option value="frio">Frio</option>
-                          </select>
-                        ) : (
-                          <div style={{ fontSize: 13, color: d.temperature ? 'var(--text)' : 'var(--muted)', textTransform: 'capitalize' }}>{d.temperature ?? '—'}</div>
                         )}
                       </div>
                       <div>

@@ -68,6 +68,14 @@ export default function LeadPage() {
   const [zonaInput, setZonaInput] = useState('')
   const [aiSuggestion, setAiSuggestion] = useState<{ action: string; reason: string; urgency: string } | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
+  const [members, setMembers] = useState<{ id: string; name: string }[]>([])
+
+  useEffect(() => {
+    fetch('/api/team/members')
+      .then(r => r.ok ? r.json() : { members: [] })
+      .then((d: { members: { id: string; name: string }[] }) => setMembers(d.members))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     fetch(`/api/lead-preferences/${id}`)
@@ -133,6 +141,18 @@ export default function LeadPage() {
   async function updateStage(stageId: string) {
     await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage_id: stageId }) })
     setLead(prev => prev ? { ...prev, stage_id: stageId } : prev)
+  }
+
+  async function toggleRegular() {
+    if (!lead) return
+    const next = !lead.is_regular
+    setLead(prev => prev ? { ...prev, is_regular: next } : prev)
+    await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_regular: next }) })
+  }
+
+  async function updateAssignee(userId: string) {
+    setLead(prev => prev ? { ...prev, assigned_to: userId || null } : prev)
+    await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assigned_to: userId || null }) })
   }
 
   async function addActivity(e: React.FormEvent) {
@@ -210,7 +230,14 @@ export default function LeadPage() {
           <span style={{ color: 'var(--border-strong)' }}>›</span>
           <span style={{ color: 'var(--text)', fontWeight: 500 }}>{lead.name}</span>
         </div>
-        <div className="header-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="header-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <select value={lead.assigned_to ?? ''} onChange={e => updateAssignee(e.target.value)} title="Responsável" style={{ height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 12, padding: '0 8px', fontFamily: 'Jost, sans-serif', cursor: 'pointer' }}>
+            <option value="">Sem responsável</option>
+            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </select>
+          <button onClick={toggleRegular} title="Follow-ups automáticos" style={{ height: 30, borderRadius: 8, border: `1px solid ${lead.is_regular ? 'var(--gold)' : 'var(--border)'}`, background: lead.is_regular ? 'var(--gold-glow)' : 'var(--card)', color: lead.is_regular ? 'var(--gold)' : 'var(--muted)', fontSize: 12, padding: '0 12px', fontFamily: 'Jost, sans-serif', cursor: 'pointer', fontWeight: 600 }}>
+            {lead.is_regular ? '✓ Regular' : 'Regular'}
+          </button>
           {lead.phone && (
             <button onClick={() => setShowWhatsApp(true)} className="btn btn-whatsapp btn-sm">
               <Icon name="whatsapp" size={13} /> WhatsApp
