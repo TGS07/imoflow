@@ -17,8 +17,10 @@ campos do que a edição (bug percebido).
   `position`), com `name`/`email`/`phone` copiados do contacto e
   `person_id` a apontar para ele. `assigned_to` da lead = `assigned_to` do
   contacto.
-- Se o contacto já tiver uma lead ativa (existe lead com `person_id` = este
-  contacto): em vez do botão, mostra **"No pipeline · {etapa}"** (link para
+- **Lead "ativa"** = lead com `person_id` = este contacto cuja etapa não é
+  `is_won` nem `is_lost`. Uma lead fechada/perdida antiga não impede voltar a
+  adicionar o contacto ao pipeline.
+- Se o contacto já tiver uma lead ativa: em vez do botão, mostra **"No pipeline · {etapa}"** (link para
   `/pipeline`) e ação **"Remover do pipeline"** que apaga essa lead. O
   contacto, interações e preferências ficam intactos.
 - Cuidado com o trigger `leads_ensure_contact`: ao criar a lead com
