@@ -19,7 +19,7 @@ export async function GET() {
 
   const { data: members, error } = await supabase
     .from('users')
-    .select('id, name, email, role, avatar_initials, created_at')
+    .select('id, name, email, role, avatar_initials, created_at, telegram_chat_id')
     .eq('agency_id', profile.agency_id)
     .order('created_at', { ascending: true })
 
