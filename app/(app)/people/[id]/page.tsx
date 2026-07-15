@@ -7,7 +7,6 @@ import type { ContactDetails } from '@/types'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { InteractionTimeline } from '@/components/contacts/InteractionTimeline'
 import { CONTACT_TYPES, CAPACITY_BANDS, capacityMeta, type ContactTypeKey } from '@/lib/contacts/constants'
-import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { ContactAiSuggestion } from '@/components/contacts/ContactAiSuggestion'
 import { ContactIdealistaPreferences } from '@/components/contacts/ContactIdealistaPreferences'
 
@@ -28,7 +27,6 @@ export default function PersonPage() {
   const router = useRouter()
   const [person, setPerson] = useState<PersonDetail | null>(null)
   const [editing, setEditing] = useState(false)
-  const [showNewLead, setShowNewLead] = useState(false)
   const [members, setMembers] = useState<{ id: string; name: string }[]>([])
   const [pipelineBusy, setPipelineBusy] = useState(false)
   const [form, setForm] = useState<{
@@ -147,18 +145,6 @@ export default function PersonPage() {
 
   return (
     <>
-      {showNewLead && (
-        <NewLeadModal
-          initialPerson={person}
-          initialValues={{
-            zone: person.details?.selling_zone ?? person.details?.search_zone,
-            typology: person.details?.typology,
-            budget: person.details?.selling_price,
-          }}
-          onClose={() => setShowNewLead(false)}
-          onCreated={fetchPerson}
-        />
-      )}
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 10, padding: '14px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div className="detail-breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
           <Link href="/people" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 13, flexShrink: 0 }}>← Pessoas</Link>
@@ -490,10 +476,7 @@ export default function PersonPage() {
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div className="font-display" style={{ fontSize: 15 }}>Negócios</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <button onClick={() => setShowNewLead(true)} style={{ fontSize: 11, color: 'var(--gold)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'Jost, sans-serif', padding: 0 }}>+ Criar negócio</button>
-                <Link href={`/leads?person_id=${id}`} style={{ fontSize: 11, color: 'var(--gold)', textDecoration: 'none' }}>Ver todos →</Link>
-              </div>
+              <Link href={`/leads?person_id=${id}`} style={{ fontSize: 11, color: 'var(--gold)', textDecoration: 'none' }}>Ver todos →</Link>
             </div>
 
             {(!person.leads || person.leads.length === 0) ? (
