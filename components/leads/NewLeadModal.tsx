@@ -8,6 +8,7 @@ type Props = {
   onCreated: () => void
   initialPerson?: Person
   initialValues?: Partial<{ zone: string; typology: string; budget: number }>
+  pipelineId?: string
 }
 
 const SOURCES: { value: LeadSource; label: string }[] = [
@@ -18,7 +19,7 @@ const SOURCES: { value: LeadSource; label: string }[] = [
   { value: 'outro', label: '◯ Outro' },
 ]
 
-export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues }: Props) {
+export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues, pipelineId }: Props) {
   const [form, setForm] = useState({
     name: initialPerson?.name ?? '',
     email: initialPerson?.email ?? '',
@@ -147,6 +148,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues 
           person_id: selectedPerson?.id ?? null,
           organization_id: selectedOrg?.id ?? null,
           property_id: selectedProp?.id ?? null,
+          pipeline_id: pipelineId ?? null,
           custom_fields: Object.keys(cfValues).length > 0 ? cfValues : undefined,
         }),
       })

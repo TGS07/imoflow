@@ -19,6 +19,7 @@ export async function GET(request: Request) {
   const stageId = searchParams.get('stage_id')
   const search = searchParams.get('search')
   const personId = searchParams.get('person_id')
+  const pipelineId = searchParams.get('pipeline_id')
 
   let query = supabase
     .from('leads')
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
   if (profile.role === 'agent') query = query.eq('assigned_to', user.id)
   if (stageId) query = query.eq('stage_id', stageId)
   if (personId) query = query.eq('person_id', personId)
+  if (pipelineId) query = query.eq('pipeline_id', pipelineId)
   if (search) {
     const term = search.replace(/[%_\\]/g, '\\$&')
     query = query.or(`name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`)
@@ -55,17 +57,32 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { custom_fields: customFieldValues, ...leadData } = body
 
-  // If no stage_id provided, use the first stage of the agency
+  // Se não vier stage_id, usar a 1ª etapa da pipeline indicada (ou, na falta
+  // de pipeline_id, a 1ª pipeline da agência). O trigger leads_ensure_pipeline
+  // é o backstop, mas resolvemos aqui para devolver logo o stage correto.
   if (!leadData.stage_id) {
-    const { data: firstStage } = await supabase
-      .from('pipeline_stages')
-      .select('id')
-      .eq('agency_id', profile.agency_id)
-      .order('position', { ascending: true })
-      .limit(1)
-      .single()
-
-    if (firstStage) leadData.stage_id = firstStage.id
+    let pipelineId = leadData.pipeline_id
+    if (!pipelineId) {
+      const { data: firstPipeline } = await supabase
+        .from('pipelines')
+        .select('id')
+        .eq('agency_id', profile.agency_id)
+        .order('position', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      pipelineId = firstPipeline?.id
+      if (pipelineId) leadData.pipeline_id = pipelineId
+    }
+    if (pipelineId) {
+      const { data: firstStage } = await supabase
+        .from('pipeline_stages')
+        .select('id')
+        .eq('pipeline_id', pipelineId)
+        .order('position', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      if (firstStage) leadData.stage_id = firstStage.id
+    }
   }
 
   const { data, error } = await supabase
