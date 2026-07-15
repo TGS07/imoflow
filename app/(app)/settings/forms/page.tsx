@@ -45,15 +45,15 @@ export default function FormsPage() {
   })
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: 900 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+    <div className="page-pad" style={{ padding: '32px 40px', maxWidth: 900 }}>
+      <div className="settings-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Formulários Web</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Formulários para capturar leads no seu site via iframe.</p>
         </div>
         <Link
           href="/settings/forms/new"
-          style={{ background: 'var(--gold)', color: '#0D0D0F', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+          style={{ background: 'var(--gold)', color: '#0D0D0F', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}
         >
           + Novo formulário
         </Link>
@@ -67,7 +67,7 @@ export default function FormsPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {forms.map(form => (
-            <div key={form.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div key={form.id} className="settings-row" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{form.name}</span>
@@ -82,7 +82,7 @@ export default function FormsPage() {
                   </div>
                 )}
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div className="settings-row-actions" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button
                   onClick={() => copyLink(form.id)}
                   style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: copied === form.id ? '#10B981' : 'var(--muted)', cursor: 'pointer' }}

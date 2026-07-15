@@ -207,8 +207,8 @@ export default function PipelineSettingsPage() {
           )}
 
           <form onSubmit={addField} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input style={{ ...inputStyle, flex: 1 }} placeholder="Nome do campo..." value={newFieldName} onChange={e => setNewFieldName(e.target.value)} />
+            <div className="form-row-wrap" style={{ display: 'flex', gap: 8 }}>
+              <input style={{ ...inputStyle, flex: 1, minWidth: 140 }} placeholder="Nome do campo..." value={newFieldName} onChange={e => setNewFieldName(e.target.value)} />
               <select style={inputStyle} value={newFieldType} onChange={e => setNewFieldType(e.target.value)}>
                 {FIELD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
