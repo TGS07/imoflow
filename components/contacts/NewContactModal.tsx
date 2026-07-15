@@ -19,6 +19,8 @@ type Initial = Partial<{
   notes: string
 }>
 
+type Member = { id: string; name: string; avatar_initials: string }
+
 export function NewContactModal({ initial, onClose, onCreated }: {
   initial?: Initial
   onClose: () => void
@@ -32,6 +34,10 @@ export function NewContactModal({ initial, onClose, onCreated }: {
   const [source, setSource] = useState(initial?.source ?? '')
   const [details, setDetails] = useState<ContactDetails>(initial?.details ?? {})
   const [notes, setNotes] = useState(initial?.notes ?? '')
+  const [birthday, setBirthday] = useState('')
+  const [isRegular, setIsRegular] = useState(false)
+  const [assignedTo, setAssignedTo] = useState('')
+  const [members, setMembers] = useState<Member[]>([])
   const [saving, setSaving] = useState(false)
   const [mode, setMode] = useState<'manual' | 'audio'>('manual')
   const [existing, setExisting] = useState<Person[]>([])
@@ -41,6 +47,17 @@ export function NewContactModal({ initial, onClose, onCreated }: {
     fetch('/api/people')
       .then(r => r.ok ? r.json() : [])
       .then((data: Person[]) => setExisting(data))
+      .catch(() => {})
+  }, [])
+
+  // Carregar membros da agência e pré-selecionar o utilizador atual como responsável
+  useEffect(() => {
+    fetch('/api/team/members')
+      .then(r => r.ok ? r.json() : { members: [], current_user_id: '' })
+      .then((data: { members: Member[]; current_user_id: string }) => {
+        setMembers(data.members)
+        setAssignedTo(prev => prev || data.current_user_id)
+      })
       .catch(() => {})
   }, [])
 
@@ -68,6 +85,8 @@ export function NewContactModal({ initial, onClose, onCreated }: {
     setSource('audio')
     if (f.details && typeof f.details === 'object') setDetails(f.details as ContactDetails)
     if (typeof f.notes === 'string') setNotes(f.notes)
+    if (typeof f.birthday === 'string') setBirthday(f.birthday)
+    if (typeof f.is_regular === 'boolean') setIsRegular(f.is_regular)
     setMode('manual')
   }
 
@@ -82,6 +101,9 @@ export function NewContactModal({ initial, onClose, onCreated }: {
           name, email, phone, types,
           financial_capacity: (types.includes('comprador') || types.includes('investidor')) ? (capacity || null) : null,
           source, details, notes: notes || null,
+          birthday: birthday || null,
+          is_regular: isRegular,
+          assigned_to: assignedTo || null,
         }),
       })
       if (res.ok) { onCreated(); onClose() }
@@ -190,12 +212,6 @@ export function NewContactModal({ initial, onClose, onCreated }: {
               <div style={sectionLabel}>Procura</div>
               <input className="input" placeholder="O que procura" value={details.looking_for ?? ''} onChange={e => d('looking_for', e.target.value)} />
               <input className="input" placeholder="Zona" value={details.search_zone ?? ''} onChange={e => d('search_zone', e.target.value)} />
-              <select className="input" value={details.temperature ?? ''} onChange={e => d('temperature', e.target.value || undefined)}>
-                <option value="">Temperatura —</option>
-                <option value="quente">Quente</option>
-                <option value="morno">Morno</option>
-                <option value="frio">Frio</option>
-              </select>
               <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
                 <input type="checkbox" style={cb} checked={!!details.already_bought} onChange={e => d('already_bought', e.target.checked)} />
                 Já comprou connosco
@@ -246,6 +262,28 @@ export function NewContactModal({ initial, onClose, onCreated }: {
               <input className="input" placeholder="Zona de atuação" value={details.working_zone ?? ''} onChange={e => d('working_zone', e.target.value)} />
             </div>
           )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <div style={sectionLabel}>Responsável *</div>
+              <select className="input" value={assignedTo} onChange={e => setAssignedTo(e.target.value)} required>
+                <option value="" disabled>Escolher…</option>
+                {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={sectionLabel}>Nascimento</div>
+              <input className="input" type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
+            </div>
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+            <input type="checkbox" style={cb} checked={isRegular} onChange={e => setIsRegular(e.target.checked)} />
+            <span>
+              <span style={{ fontWeight: 600 }}>Contacto regular</span>
+              <span style={{ color: 'var(--muted)', marginLeft: 6 }}>— com follow-ups automáticos</span>
+            </span>
+          </label>
 
           <div>
             <div style={sectionLabel}>Notas</div>

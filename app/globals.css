@@ -735,5 +735,39 @@ textarea.input { resize: vertical; line-height: 1.6; }
   .btn {
     font-size: 13px !important;
   }
+
+  /* --- Páginas de definições (equipa, agência, config, formulários) --- */
+
+  /* Cabeçalho (título + botão de ação) empilha: o botão deixa de tapar o
+     subtítulo e fica numa linha própria, alinhado à esquerda */
+  .settings-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
+
+  /* Linhas de lista (membro/formulário): as ações (seletor + botões) passam
+     para uma linha própria por baixo, em vez de sobreporem o texto */
+  .settings-row {
+    flex-wrap: wrap;
+    gap: 10px 12px !important;
+  }
+  .settings-row-actions {
+    width: 100%;
+    justify-content: flex-start !important;
+    flex-wrap: wrap;
+  }
+  .settings-row-actions select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Linhas de formulário com vários campos lado a lado quebram para caber */
+  .form-row-wrap {
+    flex-wrap: wrap;
+  }
+  .form-row-wrap > * {
+    min-width: 0;
+  }
 }
 

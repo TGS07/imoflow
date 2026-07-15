@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('agencies')
-    .select('id, name, email, email_from_name, email_reply_to')
+    .select('id, name, email, email_from_name, email_reply_to, followup_first_days, followup_second_days')
     .eq('id', profile.agency_id)
     .single()
 
@@ -37,14 +37,19 @@ export async function PATCH(request: Request) {
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   if (profile.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  let body: { email_from_name?: string | null; email_reply_to?: string | null }
+  let body: {
+    email_from_name?: string | null
+    email_reply_to?: string | null
+    followup_first_days?: number
+    followup_second_days?: number
+  }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const updates: Record<string, string | null> = {}
+  const updates: Record<string, string | number | null> = {}
   if ('email_from_name' in body) {
     updates.email_from_name = body.email_from_name?.trim() || null
   }
@@ -55,6 +60,20 @@ export async function PATCH(request: Request) {
     }
     updates.email_reply_to = replyTo
   }
+  if ('followup_first_days' in body) {
+    const n = Number(body.followup_first_days)
+    if (!Number.isInteger(n) || n < 1 || n > 365) {
+      return NextResponse.json({ error: 'followup_first_days inválido (1–365)' }, { status: 400 })
+    }
+    updates.followup_first_days = n
+  }
+  if ('followup_second_days' in body) {
+    const n = Number(body.followup_second_days)
+    if (!Number.isInteger(n) || n < 1 || n > 365) {
+      return NextResponse.json({ error: 'followup_second_days inválido (1–365)' }, { status: 400 })
+    }
+    updates.followup_second_days = n
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
@@ -64,7 +83,7 @@ export async function PATCH(request: Request) {
     .from('agencies')
     .update(updates)
     .eq('id', profile.agency_id)
-    .select('id, name, email, email_from_name, email_reply_to')
+    .select('id, name, email, email_from_name, email_reply_to, followup_first_days, followup_second_days')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

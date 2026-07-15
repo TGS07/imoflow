@@ -4,8 +4,8 @@ import type { Person } from '@/types'
 
 export type ContactFilterState = {
   capacities: string[]
-  temperatures: string[]
   sources: string[]
+  onlyRegular: boolean
   hasGarage: boolean
   hasBalcony: boolean
   hasExclusivity: boolean
@@ -14,7 +14,7 @@ export type ContactFilterState = {
 }
 
 export const EMPTY_FILTERS: ContactFilterState = {
-  capacities: [], temperatures: [], sources: [],
+  capacities: [], sources: [], onlyRegular: false,
   hasGarage: false, hasBalcony: false, hasExclusivity: false,
   activeSeller: false, alreadyBought: false,
 }
@@ -22,8 +22,8 @@ export const EMPTY_FILTERS: ContactFilterState = {
 export function applyContactFilters(people: Person[], f: ContactFilterState): Person[] {
   return people.filter(p => {
     if (f.capacities.length && !f.capacities.includes(p.financial_capacity ?? '')) return false
-    if (f.temperatures.length && !f.temperatures.includes(p.details?.temperature ?? '')) return false
     if (f.sources.length && !f.sources.includes(p.source ?? '')) return false
+    if (f.onlyRegular && !p.is_regular) return false
     if (f.hasGarage && !p.details?.has_garage) return false
     if (f.hasBalcony && !p.details?.has_balcony) return false
     if (f.hasExclusivity && !p.details?.has_exclusivity) return false
@@ -38,7 +38,7 @@ export function ContactFilters({ value, onChange, onClose }: {
   onChange: (f: ContactFilterState) => void
   onClose: () => void
 }) {
-  const toggleArr = (key: 'capacities' | 'temperatures' | 'sources', v: string) => {
+  const toggleArr = (key: 'capacities' | 'sources', v: string) => {
     const arr = value[key].includes(v) ? value[key].filter(x => x !== v) : [...value[key], v]
     onChange({ ...value, [key]: arr })
   }
@@ -59,15 +59,11 @@ export function ContactFilters({ value, onChange, onClose }: {
         </div>
       </div>
       <div>
-        <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>Temperatura</div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {['quente','morno','frio'].map(t => (
-            <label key={t} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, cursor: 'pointer', textTransform: 'capitalize' }}>
-              <input type="checkbox" style={cb} checked={value.temperatures.includes(t)} onChange={() => toggleArr('temperatures', t)} />
-              {t}
-            </label>
-          ))}
-        </div>
+        <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>Acompanhamento</div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, cursor: 'pointer' }}>
+          <input type="checkbox" style={cb} checked={value.onlyRegular} onChange={() => toggleBool('onlyRegular')} />
+          Só contactos regulares
+        </label>
       </div>
       <div>
         <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6 }}>Imóvel / negócio</div>

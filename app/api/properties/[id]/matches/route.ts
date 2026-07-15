@@ -24,7 +24,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const { data: buyers } = await supabase
     .from('people')
-    .select('id, name, phone, email, types, financial_capacity, details')
+    .select('id, name, phone, email, types, financial_capacity, details, is_regular')
     .overlaps('types', ['comprador', 'investidor'])
 
   const propZones = [property.zone, property.city].filter(Boolean).map(z => norm(z as string))
@@ -60,10 +60,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       reasons.push('Procura compatível')
     }
 
-    // Temperatura quente vale pontos
-    if (details.temperature === 'quente') {
+    // Contacto regular (acompanhado de perto) vale pontos
+    if (person.is_regular) {
       score += 1
-      reasons.push('Cliente quente')
+      reasons.push('Contacto regular')
     }
 
     return { id: person.id, name: person.name, phone: person.phone, email: person.email, types: person.types, score, reasons }

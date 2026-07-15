@@ -90,7 +90,7 @@ export default function TeamPage() {
 
   return (
     <div className="page-pad" style={{ padding: '32px 40px', maxWidth: 900 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+      <div className="settings-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Equipa</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Membros da tua agência e os seus acessos.</p>
@@ -98,7 +98,7 @@ export default function TeamPage() {
         </div>
         <Link
           href="/settings/team/new"
-          style={{ background: 'var(--gold)', color: '#0D0D0F', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+          style={{ background: 'var(--gold)', color: '#0D0D0F', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}
         >
           + Adicionar membro
         </Link>
@@ -113,7 +113,7 @@ export default function TeamPage() {
           {members.map(member => {
             const isSelf = member.id === currentUserId
             return (
-              <div key={member.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div key={member.id} className="settings-row" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, color: '#0D0D0F', flexShrink: 0 }}>
                   {member.avatar_initials}
                 </div>
@@ -128,7 +128,7 @@ export default function TeamPage() {
                     {member.lead_count > 0 && ` · ${member.lead_count} lead${member.lead_count !== 1 ? 's' : ''}`}
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                <div className="settings-row-actions" style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                   {member.telegram_chat_id ? (
                     <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--green)', background: 'rgba(5,150,105,0.10)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: 20, padding: '4px 10px', whiteSpace: 'nowrap' }}>
                       ✓ Telegram ligado

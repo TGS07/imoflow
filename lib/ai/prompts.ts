@@ -123,15 +123,17 @@ export function buildContactExtractionPrompt(transcript: string): string {
     `Transcrição: """${transcript}"""`,
     `Devolve APENAS JSON válido com este formato (sem texto extra):`,
     `{"name": string, "phone": string|null, "email": string|null,`,
+    ` "birthday": string|null (data de nascimento no formato "YYYY-MM-DD", só se for dita),`,
+    ` "is_regular": boolean|null (true só se o agente disser explicitamente que é um contacto a acompanhar/contactar regularmente),`,
     ` "types": array de ("comprador"|"vendedor"|"investidor"|"consultor"|"servico"),`,
     ` "financial_capacity": ("muito_baixo"|"baixo"|"medio"|"medio_alto"|"alto"|"altissimo")|null,`,
-    ` "details": {"looking_for"?: string, "search_zone"?: string, "temperature"?: ("quente"|"morno"|"frio"),`,
+    ` "details": {"looking_for"?: string, "search_zone"?: string,`,
     `  "selling_property"?: string, "selling_zone"?: string, "selling_price"?: number, "typology"?: string,`,
     `  "has_garage"?: boolean, "has_balcony"?: boolean, "has_exclusivity"?: boolean, "is_active_seller"?: boolean,`,
     `  "agency_name"?: string, "working_zone"?: string, "service_type"?: string},`,
     ` ${NOTES_FIELD_INSTRUCTION}}`,
     `Nota: "consultor" é um consultor imobiliário de outra agência ("agency_name" é a agência dele). "servico" é um prestador de serviços ("service_type" é o que faz, ex: canalizador). "working_zone" é a zona onde o consultor ou prestador atua.`,
-    `Se um campo não for mencionado, omite-o (ou usa null para name/phone/email). Bandas: <250k muito_baixo; 250-500k baixo; 500k-1M medio; 1-2.5M medio_alto; 2.5-5M alto; 5M+ altissimo.`,
+    `Se um campo não for mencionado, omite-o (ou usa null para name/phone/email/birthday/is_regular). Bandas: <250k muito_baixo; 250-500k baixo; 500k-1M medio; 1-2.5M medio_alto; 2.5-5M alto; 5M+ altissimo.`,
   ].join('\n')
 }
 
@@ -164,7 +166,6 @@ export function buildSuggestContactActionPrompt(
   if (person.types?.includes('comprador') || person.types?.includes('investidor')) {
     detailLines.push(`- O que procura: ${d.looking_for ?? 'não definido'}`)
     detailLines.push(`- Zona de procura: ${d.search_zone ?? 'não definida'}`)
-    detailLines.push(`- Temperatura: ${d.temperature ?? 'não definida'}`)
     detailLines.push(`- Já comprou connosco: ${d.already_bought ? 'sim' : 'não'}`)
   }
   if (person.types?.includes('vendedor')) {

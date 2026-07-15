@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { PipelineStage, CustomField } from '@/types'
+import { PipelineStage, CustomField, Pipeline } from '@/types'
 
 const COLORS = ['#3B82F6', '#F59E0B', '#8B5CF6', '#F97316', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E']
 const FIELD_TYPES = [
@@ -13,6 +13,8 @@ const FIELD_TYPES = [
 ]
 
 export default function PipelineSettingsPage() {
+  const [pipelines, setPipelines] = useState<Pipeline[]>([])
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null)
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [customFields, setCustomFields] = useState<CustomField[]>([])
   const [newStageName, setNewStageName] = useState('')
@@ -25,18 +27,30 @@ export default function PipelineSettingsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/pipeline-stages').then(r => r.json()),
+      fetch('/api/pipelines').then(r => r.json()),
       fetch('/api/custom-fields').then(r => r.json()),
-    ]).then(([s, f]) => { setStages(s); setCustomFields(f) })
+    ]).then(([p, f]: [Pipeline[], CustomField[]]) => {
+      setPipelines(p)
+      setCustomFields(f)
+      setSelectedPipelineId(p[0]?.id ?? null)
+    })
   }, [])
+
+  // Carregar etapas da pipeline selecionada
+  useEffect(() => {
+    if (!selectedPipelineId) { setStages([]); return }
+    fetch(`/api/pipeline-stages?pipeline_id=${selectedPipelineId}`)
+      .then(r => r.json())
+      .then((s: PipelineStage[]) => setStages(s))
+  }, [selectedPipelineId])
 
   async function addStage(e: React.FormEvent) {
     e.preventDefault()
-    if (!newStageName.trim()) return
+    if (!newStageName.trim() || !selectedPipelineId) return
     const res = await fetch('/api/pipeline-stages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newStageName, color: COLORS[stages.length % COLORS.length] }),
+      body: JSON.stringify({ name: newStageName, color: COLORS[stages.length % COLORS.length], pipeline_id: selectedPipelineId }),
     })
     if (res.ok) {
       const stage = await res.json()
@@ -112,7 +126,14 @@ export default function PipelineSettingsPage() {
 
       <div className="page-pad" style={{ padding: '28px 32px', maxWidth: 720 }}>
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 22, marginBottom: 24 }}>
-          <div className="font-display" style={{ fontSize: 16, marginBottom: 16 }}>Etapas do Pipeline</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div className="font-display" style={{ fontSize: 16 }}>Etapas da Pipeline</div>
+            {pipelines.length > 0 && (
+              <select style={inputStyle} value={selectedPipelineId ?? ''} onChange={e => setSelectedPipelineId(e.target.value)}>
+                {pipelines.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            )}
+          </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
             {stages.map((stage, i) => (
@@ -186,8 +207,8 @@ export default function PipelineSettingsPage() {
           )}
 
           <form onSubmit={addField} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input style={{ ...inputStyle, flex: 1 }} placeholder="Nome do campo..." value={newFieldName} onChange={e => setNewFieldName(e.target.value)} />
+            <div className="form-row-wrap" style={{ display: 'flex', gap: 8 }}>
+              <input style={{ ...inputStyle, flex: 1, minWidth: 140 }} placeholder="Nome do campo..." value={newFieldName} onChange={e => setNewFieldName(e.target.value)} />
               <select style={inputStyle} value={newFieldType} onChange={e => setNewFieldType(e.target.value)}>
                 {FIELD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
