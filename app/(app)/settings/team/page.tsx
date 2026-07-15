@@ -10,7 +10,10 @@ type Member = {
   avatar_initials: string
   created_at: string
   lead_count: number
+  telegram_chat_id: string | null
 }
+
+const TELEGRAM_BOT_USERNAME = 'Imoflowbot'
 
 export default function TeamPage() {
   const [members, setMembers] = useState<Member[]>([])
@@ -91,6 +94,7 @@ export default function TeamPage() {
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Equipa</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Membros da tua agência e os seus acessos.</p>
+          <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>"Ligar Telegram" ativa os avisos automáticos de imóveis do Idealista que fazem match com os leads de cada consultor — cada pessoa tem de abrir o link na sua própria conta de Telegram.</p>
         </div>
         <Link
           href="/settings/team/new"
@@ -125,6 +129,21 @@ export default function TeamPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                  {member.telegram_chat_id ? (
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--green)', background: 'rgba(5,150,105,0.10)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: 20, padding: '4px 10px', whiteSpace: 'nowrap' }}>
+                      ✓ Telegram ligado
+                    </span>
+                  ) : (
+                    <a
+                      href={`https://t.me/${TELEGRAM_BOT_USERNAME}?start=${member.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={isSelf ? 'Abre o Telegram e carrega em Iniciar para ligares as tuas notificações' : `Envia este link ao(à) ${member.name.split(' ')[0]} para ele(a) ligar o Telegram (tem de ser aberto na conta de Telegram dele/dela)`}
+                      style={{ fontSize: 11, fontWeight: 600, color: 'var(--gold)', background: 'var(--gold-glow)', border: '1px solid rgba(176,125,46,0.25)', borderRadius: 20, padding: '4px 10px', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                    >
+                      Ligar Telegram
+                    </a>
+                  )}
                   <select
                     value={member.role}
                     disabled={isSelf || updatingRole === member.id}
