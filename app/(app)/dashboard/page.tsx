@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { HelpButton } from '@/components/help/HelpButton'
 import { redirect } from 'next/navigation'
 import { StatCard } from '@/components/dashboard/StatCard'
 import Link from 'next/link'
@@ -122,7 +123,7 @@ export default async function DashboardPage() {
     <>
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 20, fontWeight: 500 }}>{greeting}, {firstName}</h1>
+          <h1 className="font-display" style={{ fontSize: 20, fontWeight: 500 }}>{greeting}, {firstName} <HelpButton section="dashboard" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{activeLeads} leads ativos</p>
         </div>
         <Link href="/leads" className="btn btn-primary" style={{ textDecoration: 'none' }}>

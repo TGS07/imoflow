@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import { Icon } from '@/components/ui/Icon'
 
 type AgencyData = {
@@ -70,7 +71,7 @@ export default function AgencySettingsPage() {
 
   return (
     <div className="page-enter page-pad" style={{ padding: '32px 40px', maxWidth: 640 }}>
-      <h1 className="font-display" style={{ fontSize: 24, color: 'var(--text)', marginBottom: 6 }}>Agência</h1>
+      <h1 className="font-display" style={{ fontSize: 24, color: 'var(--text)', marginBottom: 6 }}>Agência <HelpButton section="agency" /></h1>
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 28 }}>
         Identidade de envio dos emails — manuais e automáticos.
       </p>

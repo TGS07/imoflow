@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Lead, PipelineStage } from '@/types'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
@@ -56,7 +57,7 @@ export default function LeadsPage() {
       {showModal && <NewLeadModal onClose={() => setShowModal(false)} onCreated={fetchLeads} />}
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 20 }}>Leads</h1>
+          <h1 className="font-display" style={{ fontSize: 20 }}>Leads <HelpButton section="leads" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{leads.length} leads</p>
         </div>
         <button onClick={() => setShowModal(true)} className="btn btn-primary">

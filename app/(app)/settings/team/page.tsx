@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import Link from 'next/link'
 
 type Member = {
@@ -92,7 +93,7 @@ export default function TeamPage() {
     <div className="page-pad" style={{ padding: '32px 40px', maxWidth: 900 }}>
       <div className="settings-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Equipa</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Equipa <HelpButton section="team" /></h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Membros da tua agência e os seus acessos.</p>
           <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>"Ligar Telegram" ativa os avisos automáticos de imóveis do Idealista que fazem match com os leads de cada consultor — cada pessoa tem de abrir o link na sua própria conta de Telegram.</p>
         </div>

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import { useRouter } from 'next/navigation'
 import { Organization } from '@/types'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -102,7 +103,7 @@ export default function OrganizationsPage() {
 
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 20 }}>Organizações</h1>
+          <h1 className="font-display" style={{ fontSize: 20 }}>Organizações <HelpButton section="organizations" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{orgs.length} organizações</p>
         </div>
         <button onClick={() => setShowForm(true)} className="btn btn-primary">+ Nova Organização</button>

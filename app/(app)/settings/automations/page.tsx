@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import { AutomationRule, AutomationLog } from '@/types'
 import { RuleFormModal } from '@/components/automations/RuleFormModal'
 import { Icon } from '@/components/ui/Icon'
@@ -92,7 +93,7 @@ export default function AutomationsPage() {
     <div className="page-enter page-pad" style={{ padding: '28px 32px', maxWidth: 800 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 24, marginBottom: 6, color: 'var(--text)' }}>Automações</h1>
+          <h1 className="font-display" style={{ fontSize: 24, marginBottom: 6, color: 'var(--text)' }}>Automações <HelpButton section="automations" /></h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>
             Regras que executam ações automaticamente — emails de follow-up, lembretes, WhatsApp e mais.
           </p>

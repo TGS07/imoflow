@@ -18,6 +18,7 @@ const navItems: { href: string; icon: IconName; label: string; section: string }
   { href: '/settings/templates', icon: 'mail', label: 'Templates', section: 'Sistema' },
   { href: '/settings/agency', icon: 'building', label: 'Agência', section: 'Sistema' },
   { href: '/settings/team', icon: 'team', label: 'Equipa', section: 'Sistema' },
+  { href: '/help', icon: 'help', label: 'Ajuda', section: 'Sistema' },
 ]
 
 type Props = {
