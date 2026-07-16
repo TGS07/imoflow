@@ -8,6 +8,7 @@ export type NotificationType =
   | 'lead_stage_changed'
   | 'email_received'
   | 'automation_rule_triggered'
+  | 'special_date'
 
 interface CreateNotificationParams {
   userId: string

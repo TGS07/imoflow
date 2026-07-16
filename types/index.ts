@@ -75,8 +75,14 @@ export type Person = {
   last_interaction_at: string | null
   details: import('./contact').ContactDetails
   is_regular: boolean
+  regular_interval_days: number | null
   assigned_to: string | null
   birthday: string | null
+  is_special: boolean
+  special_notify_christmas: boolean
+  special_notify_easter: boolean
+  special_notify_birthday: boolean
+  special_dates: import('./contact').ContactSpecialDate[]
   created_at: string
 }
 
@@ -147,6 +153,7 @@ export type Lead = {
   property_id: string | null
   pipeline_id: string | null
   is_regular: boolean
+  regular_interval_days: number | null
   created_at: string
   users?: User
   pipeline_stages?: PipelineStage
@@ -194,4 +201,4 @@ export type { ReportPeriod, ReportKpis, ReportFunnelEntry, ReportSourceEntry, Re
 export type { WebFormField, WebForm } from './web-form'
 export type { WhatsAppTemplate, WhatsAppMessage } from './whatsapp'
 export { WEB_FORM_FIELD_LABELS, OPTIONAL_FORM_FIELDS } from './web-form'
-export type { ContactDetails, ContactTemperature, ContactInteraction, ContactInteractionType } from './contact'
+export type { ContactDetails, ContactTemperature, ContactInteraction, ContactInteractionType, ContactSpecialDate } from './contact'

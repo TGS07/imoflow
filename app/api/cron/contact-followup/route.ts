@@ -1,18 +1,47 @@
 import { createServiceClient } from '@/lib/supabase/service'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createNotification } from '@/lib/notifications'
+import { daysSince, followupStatus } from '@/lib/contacts/followup'
+import { matchSpecialDatesToday } from '@/lib/contacts/special-dates'
 
 // Cron diário (ver vercel.json): para contactos e leads marcados como
-// "regulares", avisa o responsável quando passam demasiados dias sem contacto.
-// Cada agência define os prazos (followup_first_days / followup_second_days).
+// "regulares", avisa o responsável quando passam demasiados dias sem contacto
+// (prazos da agência OU, se definido, o intervalo próprio do contacto/lead);
+// e para contactos marcados como "especiais", avisa em datas importantes
+// (Natal, Páscoa, aniversário, datas personalizadas).
 //
-// Deduplicação: cada lembrete (1º / 2º) dispara uma vez por período de
-// silêncio. Guardamos uma marca em `notifications` (type + link) e não
-// repetimos dentro da janela de dias correspondente. Quando há novo contacto,
-// a referência de inatividade avança e o ciclo recomeça.
+// Deduplicação: cada lembrete dispara uma vez por período de silêncio.
+// Guardamos uma marca em `notifications` (type + link + frase) e não
+// repetimos dentro da janela correspondente.
 
 export async function GET(request: Request) { return handle(request) }
 export async function POST(request: Request) { return handle(request) }
+
+// Já foi enviada uma notificação com esta frase para este link nos últimos
+// `windowDays` dias? Usado tanto para follow-ups (janela = prazo) como para
+// datas especiais (janela = 1 dia, evita duplicar no mesmo dia).
+async function alreadyNotifiedRecently(
+  supabase: SupabaseClient,
+  userId: string,
+  link: string,
+  suffix: string,
+  windowDays: number,
+  now: number
+): Promise<boolean> {
+  const DAY = 24 * 60 * 60 * 1000
+  const cutoff = new Date(now - windowDays * DAY).toISOString()
+  const { data: recent } = await supabase
+    .from('notifications')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('link', link)
+    .like('body', `%${suffix}`)
+    .gte('created_at', cutoff)
+    .limit(1)
+    .maybeSingle()
+  return !!recent
+}
 
 async function handle(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -22,7 +51,6 @@ async function handle(request: Request) {
 
   const supabase = createServiceClient()
   const now = Date.now()
-  const DAY = 24 * 60 * 60 * 1000
 
   // Prazos por agência
   const { data: agencies } = await supabase
@@ -44,6 +72,7 @@ async function handle(request: Request) {
     name: string
     agency_id: string
     assigned_to: string | null
+    intervalDays: number | null
     ref: number // timestamp da última referência de atividade
   }
   const items: Item[] = []
@@ -51,11 +80,12 @@ async function handle(request: Request) {
   // Contactos regulares
   const { data: people } = await supabase
     .from('people')
-    .select('id, name, agency_id, assigned_to, last_interaction_at, created_at')
+    .select('id, name, agency_id, assigned_to, last_interaction_at, created_at, regular_interval_days')
     .eq('is_regular', true)
   for (const p of people ?? []) {
     items.push({
       kind: 'contacto', id: p.id, name: p.name, agency_id: p.agency_id, assigned_to: p.assigned_to,
+      intervalDays: p.regular_interval_days,
       ref: new Date(p.last_interaction_at ?? p.created_at).getTime(),
     })
   }
@@ -63,7 +93,7 @@ async function handle(request: Request) {
   // Leads regulares (não fechadas/perdidas) — inatividade pela última atividade
   const { data: leads } = await supabase
     .from('leads')
-    .select('id, name, agency_id, assigned_to, created_at, pipeline_stages!inner(is_won, is_lost)')
+    .select('id, name, agency_id, assigned_to, created_at, regular_interval_days, pipeline_stages!inner(is_won, is_lost)')
     .eq('is_regular', true)
     .eq('pipeline_stages.is_won', false)
     .eq('pipeline_stages.is_lost', false)
@@ -82,19 +112,19 @@ async function handle(request: Request) {
   for (const l of leads ?? []) {
     items.push({
       kind: 'lead', id: l.id, name: l.name, agency_id: l.agency_id, assigned_to: l.assigned_to,
+      intervalDays: l.regular_interval_days,
       ref: lastActivity.get(l.id) ?? new Date(l.created_at).getTime(),
     })
   }
 
   let processed = 0
+
+  // --- Follow-ups por inatividade (prazos da agência ou intervalo próprio) ---
   for (const it of items) {
     const p = prazos.get(it.agency_id) ?? { first: 7, second: 30 }
-    const daysSince = Math.floor((now - it.ref) / DAY)
-    // Qual lembrete se aplica? (o 2º tem prioridade sobre o 1º)
-    let tier: 1 | 2 | null = null
-    if (daysSince >= p.second) tier = 2
-    else if (daysSince >= p.first) tier = 1
-    if (!tier) continue
+    const days = daysSince(new Date(it.ref), new Date(now))
+    const status = followupStatus(days, it.intervalDays, p.first, p.second)
+    if (!status.due || !status.windowDays) continue
 
     const userId = it.assigned_to ?? adminByAgency.get(it.agency_id)
     if (!userId) continue
@@ -103,21 +133,13 @@ async function handle(request: Request) {
 
     // Cada tier tem uma frase própria (legível e única) usada também para
     // deduplicar: não repetimos o mesmo tier dentro da sua janela de dias.
-    const suffix = tier === 2
+    const suffix = status.tier === 2
       ? 'Prioridade: já passou bastante tempo, reativa este contacto.'
-      : 'Está na hora de um follow-up.'
-    const windowDays = tier === 2 ? p.second : p.first
-    const cutoff = new Date(now - windowDays * DAY).toISOString()
-    const { data: recent } = await supabase
-      .from('notifications')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('link', link)
-      .like('body', `%${suffix}`)
-      .gte('created_at', cutoff)
-      .limit(1)
-      .maybeSingle()
-    if (recent) continue
+      : status.tier === 'custom'
+        ? `Está na hora de um follow-up (intervalo definido: ${it.intervalDays} dias).`
+        : 'Está na hora de um follow-up.'
+
+    if (await alreadyNotifiedRecently(supabase, userId, link, suffix, status.windowDays, now)) continue
 
     const label = it.kind === 'lead' ? 'Lead' : 'Contacto'
     await createNotification({
@@ -125,10 +147,41 @@ async function handle(request: Request) {
       agencyId: it.agency_id,
       type: 'task_due',
       title: `${label} a precisar de contacto: ${it.name}`,
-      body: `Já não há contacto com ${it.name} há ${daysSince} dias. ${suffix}`,
+      body: `Já não há contacto com ${it.name} há ${status.daysSince} dias. ${suffix}`,
       link,
     }, supabase)
     processed++
+  }
+
+  // --- Datas especiais (Natal, Páscoa, aniversário, personalizadas) ---
+  const { data: specialPeople } = await supabase
+    .from('people')
+    .select('id, name, agency_id, assigned_to, birthday, special_notify_christmas, special_notify_easter, special_notify_birthday, special_dates')
+    .eq('is_special', true)
+
+  for (const sp of specialPeople ?? []) {
+    const matches = matchSpecialDatesToday(sp, new Date(now))
+    if (matches.length === 0) continue
+
+    const userId = sp.assigned_to ?? adminByAgency.get(sp.agency_id)
+    if (!userId) continue
+
+    const link = `/people/${sp.id}`
+    for (const match of matches) {
+      const suffix = `${match.label}: ${sp.name}.`
+      if (await alreadyNotifiedRecently(supabase, userId, link, suffix, 1, now)) continue
+
+      const icon = match.label === 'Natal' ? '🎄' : match.label === 'Páscoa' ? '🐣' : match.label === 'Aniversário' ? '🎂' : '✦'
+      await createNotification({
+        userId,
+        agencyId: sp.agency_id,
+        type: 'special_date',
+        title: `${icon} ${match.label} hoje: ${sp.name}`,
+        body: `Hoje é uma data especial para ${sp.name}. ${suffix}`,
+        link,
+      }, supabase)
+      processed++
+    }
   }
 
   return NextResponse.json({ processed })

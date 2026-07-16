@@ -3,12 +3,15 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Person } from '@/types'
-import type { ContactDetails } from '@/types'
+import type { ContactDetails, ContactSpecialDate } from '@/types'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { InteractionTimeline } from '@/components/contacts/InteractionTimeline'
 import { CONTACT_TYPES, CAPACITY_BANDS, capacityMeta, type ContactTypeKey } from '@/lib/contacts/constants'
 import { ContactAiSuggestion } from '@/components/contacts/ContactAiSuggestion'
 import { ContactIdealistaPreferences } from '@/components/contacts/ContactIdealistaPreferences'
+import { SellerProperties } from '@/components/contacts/SellerProperties'
+import { ConsultantProperties } from '@/components/contacts/ConsultantProperties'
+import { REGULAR_INTERVAL_PRESETS } from '@/lib/contacts/special-dates'
 
 type LeadSummary = {
   id: string
@@ -20,7 +23,13 @@ type LeadSummary = {
   pipeline_stages?: { name: string; color: string; is_won: boolean; is_lost: boolean }
 }
 
-type PersonDetail = Person & { leads?: LeadSummary[] }
+type PropertyRef = { id: string; title: string; status: string; price: number | null; reference: string | null }
+
+type PersonDetail = Person & {
+  leads?: LeadSummary[]
+  properties_as_seller?: PropertyRef[]
+  property_consultants?: { id: string; properties: PropertyRef }[]
+}
 
 export default function PersonPage() {
   const { id } = useParams<{ id: string }>()
@@ -29,6 +38,8 @@ export default function PersonPage() {
   const [editing, setEditing] = useState(false)
   const [members, setMembers] = useState<{ id: string; name: string }[]>([])
   const [pipelineBusy, setPipelineBusy] = useState(false)
+  const [customInterval, setCustomInterval] = useState('')
+  const [newSpecialDate, setNewSpecialDate] = useState({ label: '', month: '', day: '' })
   const [form, setForm] = useState<{
     name: string; email: string; phone: string; address: string; notes: string
     types: ContactTypeKey[]; financial_capacity: string; source: string; details: ContactDetails
@@ -86,6 +97,63 @@ export default function PersonPage() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_regular: next }),
+    })
+    fetchPerson()
+  }
+
+  // Frequência de follow-up própria deste contacto (substitui os prazos
+  // globais da agência quando definida). null = voltar a usar os prazos da agência.
+  async function setRegularInterval(days: number | null) {
+    await fetch(`/api/people/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ regular_interval_days: days }),
+    })
+    setCustomInterval('')
+    fetchPerson()
+  }
+
+  async function toggleSpecial() {
+    if (!person) return
+    await fetch(`/api/people/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_special: !person.is_special }),
+    })
+    fetchPerson()
+  }
+
+  async function updateSpecialFlag(key: 'special_notify_christmas' | 'special_notify_easter' | 'special_notify_birthday', value: boolean) {
+    await fetch(`/api/people/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [key]: value }),
+    })
+    fetchPerson()
+  }
+
+  async function addSpecialDate() {
+    if (!person) return
+    const month = Number(newSpecialDate.month)
+    const day = Number(newSpecialDate.day)
+    if (!newSpecialDate.label.trim() || !month || !day) return
+    const next: ContactSpecialDate[] = [...(person.special_dates ?? []), { label: newSpecialDate.label.trim(), month, day }]
+    await fetch(`/api/people/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ special_dates: next }),
+    })
+    setNewSpecialDate({ label: '', month: '', day: '' })
+    fetchPerson()
+  }
+
+  async function removeSpecialDate(index: number) {
+    if (!person) return
+    const next = (person.special_dates ?? []).filter((_, i) => i !== index)
+    await fetch(`/api/people/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ special_dates: next }),
     })
     fetchPerson()
   }
@@ -290,6 +358,68 @@ export default function PersonPage() {
                   <span style={{ fontWeight: 600 }}>{person.is_regular ? '✓ Contacto regular' : 'Marcar como regular'}</span>
                   <span style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.8 }}>{person.is_regular ? 'lembretes ativos' : 'sem lembretes'}</span>
                 </button>
+
+                {person.is_regular && (
+                  <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+                      Frequência: {person.regular_interval_days ? `a cada ${person.regular_interval_days} dias` : 'prazos da agência (padrão)'}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      <button type="button" onClick={() => setRegularInterval(null)} style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: person.regular_interval_days == null ? 'var(--gold-glow)' : 'var(--surface)', color: person.regular_interval_days == null ? 'var(--gold)' : 'var(--muted)', border: `1px solid ${person.regular_interval_days == null ? 'var(--gold)' : 'var(--border)'}` }}>Prazos da agência</button>
+                      {REGULAR_INTERVAL_PRESETS.map(d => (
+                        <button key={d} type="button" onClick={() => setRegularInterval(d)} style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: person.regular_interval_days === d ? 'var(--gold-glow)' : 'var(--surface)', color: person.regular_interval_days === d ? 'var(--gold)' : 'var(--muted)', border: `1px solid ${person.regular_interval_days === d ? 'var(--gold)' : 'var(--border)'}` }}>{d} dias</button>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input style={{ ...inputStyle, width: 90 }} type="number" min={1} placeholder="outro (dias)" value={customInterval} onChange={e => setCustomInterval(e.target.value)} />
+                      <button type="button" disabled={!customInterval} onClick={() => setRegularInterval(Number(customInterval))} style={{ fontSize: 11, fontWeight: 600, padding: '0 12px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)' }}>Aplicar</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Contacto especial (datas importantes) */}
+              <div>
+                <div style={labelStyle}>Datas importantes</div>
+                <button onClick={toggleSpecial} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, cursor: 'pointer', background: person.is_special ? 'var(--gold-glow)' : 'var(--surface)', border: `1px solid ${person.is_special ? 'var(--gold)' : 'var(--border)'}`, color: person.is_special ? 'var(--gold)' : 'var(--muted)', borderRadius: 8, padding: '7px 12px', fontFamily: 'Jost, sans-serif', width: '100%' }}>
+                  <span style={{ fontWeight: 600 }}>{person.is_special ? '✓ Contacto especial' : 'Marcar como especial'}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 11, opacity: 0.8 }}>{person.is_special ? 'datas ativas' : 'sem datas'}</span>
+                </button>
+
+                {person.is_special && (
+                  <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={person.special_notify_christmas} onChange={e => updateSpecialFlag('special_notify_christmas', e.target.checked)} />
+                        🎄 Natal
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={person.special_notify_easter} onChange={e => updateSpecialFlag('special_notify_easter', e.target.checked)} />
+                        🐣 Páscoa
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: person.birthday ? 'pointer' : 'not-allowed', opacity: person.birthday ? 1 : 0.5 }}>
+                        <input type="checkbox" disabled={!person.birthday} checked={person.special_notify_birthday} onChange={e => updateSpecialFlag('special_notify_birthday', e.target.checked)} />
+                        🎂 Aniversário
+                      </label>
+                    </div>
+                    {!person.birthday && <div style={{ fontSize: 10, color: 'var(--muted)' }}>Preenche a data de nascimento para ativar o aniversário.</div>}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {(person.special_dates ?? []).map((sd, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 10px' }}>
+                          <span style={{ flex: 1 }}>{sd.label} — {String(sd.day).padStart(2, '0')}/{String(sd.month).padStart(2, '0')}</span>
+                          <button type="button" onClick={() => removeSpecialDate(i)} style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: 11, cursor: 'pointer' }}>Remover</button>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input style={{ ...inputStyle, flex: 2 }} placeholder="Ex: Aniversário de casamento" value={newSpecialDate.label} onChange={e => setNewSpecialDate(p => ({ ...p, label: e.target.value }))} />
+                      <input style={{ ...inputStyle, width: 56 }} type="number" min={1} max={31} placeholder="Dia" value={newSpecialDate.day} onChange={e => setNewSpecialDate(p => ({ ...p, day: e.target.value }))} />
+                      <input style={{ ...inputStyle, width: 56 }} type="number" min={1} max={12} placeholder="Mês" value={newSpecialDate.month} onChange={e => setNewSpecialDate(p => ({ ...p, month: e.target.value }))} />
+                      <button type="button" onClick={addSpecialDate} style={{ fontSize: 11, fontWeight: 600, padding: '0 12px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)' }}>+ Adicionar</button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Secção específica por tipo */}
@@ -510,6 +640,18 @@ export default function PersonPage() {
 
           {showBuyer && (
             <ContactIdealistaPreferences personId={id} defaultZone={person.details?.search_zone} />
+          )}
+
+          {showSeller && (
+            <SellerProperties personId={id} properties={person.properties_as_seller ?? []} onChange={fetchPerson} />
+          )}
+
+          {showConsultant && (
+            <ConsultantProperties
+              personId={id}
+              associations={(person.property_consultants ?? []).map(pc => ({ id: pc.id, property: pc.properties }))}
+              onChange={fetchPerson}
+            />
           )}
         </div>
       </div>

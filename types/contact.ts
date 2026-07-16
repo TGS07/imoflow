@@ -26,6 +26,9 @@ export type ContactDetails = {
   service_type?: string
 }
 
+// Data personalizada de contacto especial (sem ano — repete todos os anos)
+export type ContactSpecialDate = { label: string; month: number; day: number }
+
 export type ContactInteractionType = 'chamada' | 'visita' | 'email' | 'whatsapp' | 'nota'
 
 export type ContactInteraction = {

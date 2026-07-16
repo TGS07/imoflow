@@ -9,7 +9,9 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const { data, error } = await supabase
     .from('people')
-    .select('*, leads(id, name, stage_id, deal_value, expected_close_date, created_at, pipeline_stages(name, color, is_won, is_lost))')
+    .select(`*, leads(id, name, stage_id, deal_value, expected_close_date, created_at, pipeline_stages(name, color, is_won, is_lost)),
+      properties_as_seller:properties!seller_id(id, title, status, price, reference),
+      property_consultants(id, properties(id, title, status, price, reference))`)
     .eq('id', id)
     .single()
 
@@ -27,7 +29,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const allowed = ['name', 'email', 'phone', 'address', 'notes', 'types', 'financial_capacity', 'source', 'details', 'assigned_to', 'is_regular', 'birthday'] as const
+  const allowed = [
+    'name', 'email', 'phone', 'address', 'notes', 'types', 'financial_capacity', 'source', 'details',
+    'assigned_to', 'is_regular', 'birthday', 'regular_interval_days',
+    'is_special', 'special_notify_christmas', 'special_notify_easter', 'special_notify_birthday', 'special_dates',
+  ] as const
   const update: Record<string, unknown> = {}
   for (const k of allowed) if (k in body) update[k] = body[k]
 

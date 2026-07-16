@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { StatCard } from '@/components/dashboard/StatCard'
 import Link from 'next/link'
+import { daysSince, followupStatus } from '@/lib/contacts/followup'
+import { matchSpecialDatesToday } from '@/lib/contacts/special-dates'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -11,14 +13,40 @@ export default async function DashboardPage() {
   const todayStart = new Date(new Date().setHours(0,0,0,0)).toISOString()
   const todayEnd = new Date(new Date().setHours(23,59,59,999)).toISOString()
 
-  const [{ data: profile }, { data: leads }, { data: todayActivities }, { count: pendingCount }, { data: stages }, { data: lastSyncRows }] = await Promise.all([
-    supabase.from('users').select('name').eq('id', user.id).single(),
+  const [{ data: profile }, { data: leads }, { data: todayActivities }, { count: pendingCount }, { data: stages }, { data: lastSyncRows }, { data: agendaPeople }] = await Promise.all([
+    supabase.from('users').select('name, agency_id, agencies(followup_first_days, followup_second_days)').eq('id', user.id).single(),
     supabase.from('leads').select('id, name, stage_id, typology, zone, budget, deal_value, expected_close_date, created_at, pipeline_stages(id, name, color, probability, is_won, is_lost)').order('created_at', { ascending: false }),
     supabase.from('activities').select('id, type, title, due_date, completed, leads(name), users:assigned_to(name)').gte('due_date', todayStart).lte('due_date', todayEnd).order('due_date', { ascending: true }),
     supabase.from('activities').select('id', { count: 'exact', head: true }).eq('completed', false),
     supabase.from('pipeline_stages').select('*').order('position', { ascending: true }),
     supabase.from('contacts_sync_runs').select('ran_at, contacts_processed').order('ran_at', { ascending: false }).limit(1),
+    supabase.from('people')
+      .select('id, name, is_regular, is_special, last_interaction_at, created_at, regular_interval_days, birthday, special_notify_christmas, special_notify_easter, special_notify_birthday, special_dates')
+      .or('is_regular.eq.true,is_special.eq.true')
+      .eq('assigned_to', user.id),
   ])
+
+  // Bloco "Hoje": contactos regulares atrasados + datas especiais de hoje,
+  // só os atribuídos a este utilizador (mesma lógica do cron diário).
+  const agencyRow = profile?.agencies as unknown as { followup_first_days: number; followup_second_days: number } | null
+  const agencyFirst = agencyRow?.followup_first_days ?? 7
+  const agencySecond = agencyRow?.followup_second_days ?? 30
+  const specialIcons: Record<string, string> = { Natal: '🎄', Páscoa: '🐣', Aniversário: '🎂' }
+
+  type AgendaItem = { id: string; name: string; reason: string }
+  const todayAgenda: AgendaItem[] = []
+  for (const p of agendaPeople ?? []) {
+    if (p.is_regular) {
+      const days = daysSince(new Date(p.last_interaction_at ?? p.created_at))
+      const status = followupStatus(days, p.regular_interval_days, agencyFirst, agencySecond)
+      if (status.due) todayAgenda.push({ id: p.id, name: p.name, reason: `Follow-up atrasado ${status.daysSince} dias` })
+    }
+    if (p.is_special) {
+      for (const match of matchSpecialDatesToday(p)) {
+        todayAgenda.push({ id: p.id, name: p.name, reason: `${specialIcons[match.label] ?? '✦'} ${match.label} hoje` })
+      }
+    }
+  }
 
   const lastSync = lastSyncRows?.[0] ?? null
   const lastSyncHoursAgo = lastSync ? (Date.now() - new Date(lastSync.ran_at).getTime()) / 3_600_000 : null
@@ -212,6 +240,20 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {todayAgenda.length > 0 && (
+          <div className="card" style={{ padding: 22, marginBottom: 20 }}>
+            <div className="font-display" style={{ fontSize: 15, marginBottom: 14 }}>✦ Agenda de hoje</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {todayAgenda.map((item, i) => (
+                <Link key={`${item.id}-${i}`} href={`/people/${item.id}`} className="table-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, textDecoration: 'none', color: 'var(--text)' }}>
+                  <span style={{ fontWeight: 500 }}>{item.name}</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>{item.reason}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   )
