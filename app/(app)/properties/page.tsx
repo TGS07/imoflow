@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import { useRouter } from 'next/navigation'
 import { Property, PropertyType, PropertyStatus, PropertyCondition } from '@/types'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -215,7 +216,7 @@ export default function PropertiesPage() {
 
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 20 }}>Imóveis</h1>
+          <h1 className="font-display" style={{ fontSize: 20 }}>Imóveis <HelpButton section="properties" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{properties.length} imóveis</p>
         </div>
         <button onClick={() => setShowForm(true)} className="btn btn-primary">+ Novo Imóvel</button>

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import { Activity, ActivityType } from '@/types'
 import Link from 'next/link'
 import { CalendarTimeGrid } from '@/components/activities/CalendarTimeGrid'
@@ -392,7 +393,7 @@ export default function ActivitiesPage() {
       {/* Header */}
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 8 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 20, fontWeight: 500, marginBottom: 2 }}>Atividades</h1>
+          <h1 className="font-display" style={{ fontSize: 20, fontWeight: 500, marginBottom: 2 }}>Atividades <HelpButton section="activities" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>{pending.length} pendentes</p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import Link from 'next/link'
 import type { WebForm, WebFormField } from '@/types'
 import { WEB_FORM_FIELD_LABELS } from '@/types/web-form'
@@ -48,7 +49,7 @@ export default function FormsPage() {
     <div className="page-pad" style={{ padding: '32px 40px', maxWidth: 900 }}>
       <div className="settings-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 'var(--fs-xl)', marginBottom: 4 }}>Formulários Web</h1>
+          <h1 className="font-display" style={{ fontSize: 'var(--fs-xl)', marginBottom: 4 }}>Formulários Web <HelpButton section="forms" /></h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Formulários para capturar leads no seu site via iframe.</p>
         </div>
         <Link

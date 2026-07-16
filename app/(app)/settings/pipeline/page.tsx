@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import { PipelineStage, CustomField, Pipeline } from '@/types'
 
 const COLORS = ['#3B82F6', '#F59E0B', '#8B5CF6', '#F97316', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E']
@@ -120,7 +121,7 @@ export default function PipelineSettingsPage() {
   return (
     <>
       <div className="page-pad" style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <h1 className="font-display" style={{ fontSize: 20 }}>Configurações do Pipeline</h1>
+        <h1 className="font-display" style={{ fontSize: 20 }}>Configurações do Pipeline <HelpButton section="settings-pipeline" /></h1>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Personaliza as etapas e campos do teu CRM</p>
       </div>
 

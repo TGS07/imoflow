@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
@@ -67,7 +68,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 22, marginBottom: 4 }}>Relatórios</h1>
+          <h1 className="font-display" style={{ fontSize: 22, marginBottom: 4 }}>Relatórios <HelpButton section="reports" /></h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Métricas de performance do pipeline</p>
         </div>
         <select

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import { useRouter } from 'next/navigation'
 import type { Person } from '@/types'
 import { CONTACT_TYPES, capacityMeta, type ContactTypeKey } from '@/lib/contacts/constants'
@@ -130,7 +131,7 @@ export default function PeoplePage() {
 
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 20 }}>Contactos</h1>
+          <h1 className="font-display" style={{ fontSize: 20 }}>Contactos <HelpButton section="people" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{visible.length} contactos</p>
         </div>
         <button onClick={() => setShowModal(true)} className="btn btn-primary">+ Novo Contacto</button>

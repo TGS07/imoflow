@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import { Lead, PipelineStage, Pipeline } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
@@ -85,7 +86,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
 
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <h1 className="font-display" style={{ fontSize: 20, marginRight: 4 }}>Pipeline</h1>
+          <h1 className="font-display" style={{ fontSize: 20, marginRight: 4 }}>Pipeline <HelpButton section="pipeline" /></h1>
           {/* Seletor de pipelines */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {pipelines.map(p => (

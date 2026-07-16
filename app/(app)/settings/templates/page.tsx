@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { HelpButton } from '@/components/help/HelpButton'
 import Link from 'next/link'
 import { WhatsAppTemplate } from '@/types'
 import { Icon } from '@/components/ui/Icon'
@@ -80,7 +81,7 @@ export default function TemplatesPage() {
     <div className="page-enter" style={{ padding: '32px 40px', maxWidth: 900 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 24, color: 'var(--text)', marginBottom: 4 }}>Templates</h1>
+          <h1 className="font-display" style={{ fontSize: 24, color: 'var(--text)', marginBottom: 4 }}>Templates <HelpButton section="templates" /></h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>
             Mensagens reutilizáveis para email e WhatsApp. Usa variáveis: {AVAILABLE_VARIABLES.map(v => `{{${v}}}`).join(' ')}
           </p>

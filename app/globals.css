@@ -679,6 +679,17 @@ textarea.input { resize: vertical; line-height: 1.6; }
     grid-template-columns: 1fr !important;
   }
 
+  /* Página de Ajuda: índice + conteúdo colapsam para 1 coluna; o índice
+     deixa de ser sticky para não tapar o conteúdo */
+  .help-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .help-grid > * {
+    position: static !important;
+    min-width: 0;
+    max-width: 100%;
+  }
+
   /* Filhos da grelha podem encolher — sem isto, um elemento interior largo
      (ex.: linha de botões) rebenta a coluna e os cartões saem do ecrã à direita */
   .two-col-grid > *,
