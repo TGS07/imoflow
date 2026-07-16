@@ -84,7 +84,7 @@ export default function TeamPage() {
   const inputStyle: React.CSSProperties = {
     background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7,
     padding: '6px 10px', fontSize: 12, color: 'var(--text)', outline: 'none',
-    fontFamily: 'Jost, sans-serif',
+    fontFamily: 'var(--font-body)',
   }
 
   const otherMembers = members.filter(m => m.id !== removeTarget?.id)
@@ -93,13 +93,13 @@ export default function TeamPage() {
     <div className="page-pad" style={{ padding: '32px 40px', maxWidth: 900 }}>
       <div className="settings-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Equipa <HelpButton section="team" /></h1>
+          <h1 className="font-display" style={{ fontSize: 'var(--fs-xl)', marginBottom: 4 }}>Equipa <HelpButton section="team" /></h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Membros da tua agência e os seus acessos.</p>
           <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>"Ligar Telegram" ativa os avisos automáticos de imóveis do Idealista que fazem match com os leads de cada consultor — cada pessoa tem de abrir o link na sua própria conta de Telegram.</p>
         </div>
         <Link
           href="/settings/team/new"
-          style={{ background: 'var(--gold)', color: '#0D0D0F', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}
+          className="btn btn-primary"
         >
           + Adicionar membro
         </Link>
@@ -203,14 +203,14 @@ export default function TeamPage() {
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setRemoveTarget(null)}
-                style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 16px', fontSize: 13, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}
+                className="btn btn-ghost"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmRemove}
                 disabled={removing}
-                style={{ background: '#EF4444', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, color: '#fff', cursor: removing ? 'not-allowed' : 'pointer', opacity: removing ? 0.7 : 1, fontFamily: 'Jost, sans-serif' }}
+                className="btn btn-danger"
               >
                 {removing ? 'A remover...' : 'Confirmar remoção'}
               </button>

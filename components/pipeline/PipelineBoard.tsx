@@ -67,7 +67,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
-  const tabBase = { height: 32, padding: '0 14px', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' as const, border: '1px solid var(--border)' }
+  const tabBase = { height: 32, padding: '0 14px', borderRadius: 8 }
 
   return (
     <>
@@ -93,19 +93,14 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
               <button
                 key={p.id}
                 onClick={() => setSelectedId(p.id)}
-                style={{
-                  ...tabBase,
-                  background: p.id === selectedId ? 'var(--gold-glow)' : 'var(--card)',
-                  color: p.id === selectedId ? 'var(--gold)' : 'var(--muted)',
-                  borderColor: p.id === selectedId ? 'var(--gold)' : 'var(--border)',
-                  fontWeight: p.id === selectedId ? 600 : 400,
-                }}
+className={`chip${p.id === selectedId ? ' active' : ''}`}
+                style={tabBase}
               >
                 {p.name}
               </button>
             ))}
             {isAdmin && (
-              <button onClick={createPipeline} title="Nova pipeline" style={{ ...tabBase, background: 'var(--card)', color: 'var(--muted)' }}>+ Pipeline</button>
+              <button onClick={createPipeline} title="Nova pipeline" className="chip" style={tabBase}>+ Pipeline</button>
             )}
           </div>
         </div>

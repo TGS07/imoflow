@@ -126,7 +126,7 @@ export function WhatsAppModal({ leadId, leadName, leadPhone, leadEmail, agentNam
                 style={{
                   display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '4px 10px',
                   borderRadius: 6, border: '1px solid rgba(176,125,46,0.3)', background: 'rgba(176,125,46,0.07)',
-                  color: 'var(--gold)', cursor: aiDrafting ? 'not-allowed' : 'pointer', fontFamily: 'Inter, sans-serif',
+                  color: 'var(--gold)', cursor: aiDrafting ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-body)',
                   opacity: aiDrafting ? 0.6 : 1,
                 }}
               >

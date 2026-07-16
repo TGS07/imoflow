@@ -141,12 +141,8 @@ export default function PeoplePage() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
           <button
             onClick={() => setActiveTypes([])}
-            style={{
-              fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
-              background: activeTypes.length === 0 ? 'var(--gold-glow)' : 'var(--surface)',
-              color: activeTypes.length === 0 ? 'var(--gold)' : 'var(--muted)',
-              border: activeTypes.length === 0 ? '1px solid var(--gold)' : '1px solid var(--border)',
-            }}
+            className={`chip${activeTypes.length === 0 ? ' active' : ''}`}
+            style={{ padding: '6px 14px' }}
           >
             Todos
           </button>
@@ -156,12 +152,8 @@ export default function PeoplePage() {
               <button
                 key={meta.key}
                 onClick={() => toggleType(meta.key)}
-                style={{
-                  fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
-                  background: active ? `${meta.color}18` : 'var(--surface)',
-                  color: active ? meta.color : 'var(--muted)',
-                  border: active ? `1px solid ${meta.color}55` : '1px solid var(--border)',
-                }}
+                className="chip"
+                style={{ padding: '6px 14px', ...(active ? { background: `${meta.color}18`, color: meta.color, borderColor: `${meta.color}66` } : {}) }}
               >
                 {meta.plural}
               </button>

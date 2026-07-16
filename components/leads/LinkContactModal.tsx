@@ -39,7 +39,7 @@ export function LinkContactModal({ leadId, onClose, onLinked }: Props) {
     }
   }
 
-  const inputStyle = { width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Inter, sans-serif' }
+  const inputStyle = { width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)' }
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -64,7 +64,7 @@ export function LinkContactModal({ leadId, onClose, onLinked }: Props) {
               key={p.id}
               onClick={() => link(p.id)}
               disabled={saving}
-              style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+              style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
             >
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{p.name}</div>
               <div style={{ fontSize: 11, color: 'var(--muted)' }}>{p.email ?? p.phone ?? ''}</div>

@@ -153,7 +153,7 @@ export default function PropertyPage() {
 
   if (!property) return <div style={{ padding: 40, color: 'var(--muted)', fontSize: 13 }}>A carregar...</div>
 
-  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif', width: '100%' }
+  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)', width: '100%' }
   const labelStyle = { fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 4, fontWeight: 500 }
   const statusColor = STATUS_COLORS[property.status]
   const totalDeals = property.leads?.length ?? 0
@@ -178,17 +178,17 @@ export default function PropertyPage() {
         </div>
         <div className="header-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {!editing && property.status === 'vendido' && (
-            <button onClick={generateClosingEmail} disabled={closingLoading} style={{ background: 'var(--gold-glow)', border: '1px solid var(--gold)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--gold)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>{closingLoading ? 'A gerar...' : '✉ Email de fecho'}</button>
+            <button onClick={generateClosingEmail} disabled={closingLoading} className="btn btn-soft">{closingLoading ? 'A gerar...' : '✉ Email de fecho'}</button>
           )}
           {!editing ? (
-            <button onClick={() => setEditing(true)} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--text)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Editar</button>
+            <button onClick={() => setEditing(true)} className="btn btn-ghost">Editar</button>
           ) : (
             <>
-              <button onClick={() => setEditing(false)} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Cancelar</button>
-              <button onClick={save} style={{ background: 'var(--gold)', border: 'none', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, fontWeight: 600, color: '#0D0D0F', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Guardar</button>
+              <button onClick={() => setEditing(false)} className="btn btn-ghost">Cancelar</button>
+              <button onClick={save} className="btn btn-primary">Guardar</button>
             </>
           )}
-          <button onClick={deleteProperty} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: '#EF4444', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Eliminar</button>
+          <button onClick={deleteProperty} className="btn btn-danger">Eliminar</button>
         </div>
       </div>
 
