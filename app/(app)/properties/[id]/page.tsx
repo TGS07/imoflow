@@ -7,6 +7,7 @@ import { PropertySeller } from '@/components/properties/PropertySeller'
 import { PropertyVisits } from '@/components/properties/PropertyVisits'
 import { SuggestedBuyers } from '@/components/properties/SuggestedBuyers'
 import { NearbyConsultants } from '@/components/properties/NearbyConsultants'
+import { PropertyConsultants } from '@/components/properties/PropertyConsultants'
 import { SendEmailModal } from '@/components/leads/SendEmailModal'
 
 const TYPES: { value: PropertyType; label: string }[] = [
@@ -52,7 +53,8 @@ type LeadSummary = {
 }
 
 type SellerSummary = { id: string; name: string; phone: string | null; email: string | null }
-type PropertyDetail = Property & { leads?: LeadSummary[]; seller?: SellerSummary | null }
+type ConsultantAssoc = { id: string; person_id: string; people: { id: string; name: string; phone: string | null; email: string | null } }
+type PropertyDetail = Property & { leads?: LeadSummary[]; seller?: SellerSummary | null; property_consultants?: ConsultantAssoc[] }
 
 export default function PropertyPage() {
   const { id } = useParams<{ id: string }>()
@@ -310,6 +312,7 @@ export default function PropertyPage() {
         {/* Right: Seller, Visits, Deals */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <PropertySeller propertyId={id} seller={property.seller ?? null} onChange={fetchProperty} />
+          <PropertyConsultants propertyId={id} consultants={property.property_consultants ?? []} onChange={fetchProperty} />
           <SuggestedBuyers propertyId={id} propertyTitle={property.title} propertyPrice={property.price} />
           <NearbyConsultants propertyId={id} propertyTitle={property.title} />
           <PropertyVisits propertyId={id} />

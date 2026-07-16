@@ -7,6 +7,7 @@ import { SendEmailModal } from '@/components/leads/SendEmailModal'
 import { WhatsAppModal } from '@/components/leads/WhatsAppModal'
 import { LinkContactModal } from '@/components/leads/LinkContactModal'
 import { Icon } from '@/components/ui/Icon'
+import { REGULAR_INTERVAL_PRESETS } from '@/lib/contacts/special-dates'
 
 const EXTRAS_SUGERIDOS = ['vista mar', 'garagem', 'piscina', 'jardim', 'varanda', 'elevador', 'ar condicionado', 'lareira']
 const TIPOLOGIAS = ['T0', 'T1', 'T2', 'T3', 'T4', 'T5+']
@@ -69,6 +70,7 @@ export default function LeadPage() {
   const [aiSuggestion, setAiSuggestion] = useState<{ action: string; reason: string; urgency: string } | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [members, setMembers] = useState<{ id: string; name: string }[]>([])
+  const [customInterval, setCustomInterval] = useState('')
 
   useEffect(() => {
     fetch('/api/team/members')
@@ -148,6 +150,12 @@ export default function LeadPage() {
     const next = !lead.is_regular
     setLead(prev => prev ? { ...prev, is_regular: next } : prev)
     await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_regular: next }) })
+  }
+
+  async function setRegularInterval(days: number | null) {
+    setLead(prev => prev ? { ...prev, regular_interval_days: days } : prev)
+    await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ regular_interval_days: days }) })
+    setCustomInterval('')
   }
 
   async function updateAssignee(userId: string) {
@@ -345,6 +353,23 @@ export default function LeadPage() {
             </div>
           ))}
         </div>
+
+        {/* Frequência de follow-up própria (só quando "Regular" está ativo) */}
+        {lead.is_regular && (
+          <div className="card" style={{ padding: '12px 16px', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+              Frequência de follow-up: {lead.regular_interval_days ? `a cada ${lead.regular_interval_days} dias` : 'prazos da agência (padrão)'}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
+              <button type="button" onClick={() => setRegularInterval(null)} style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: lead.regular_interval_days == null ? 'var(--gold-glow)' : 'var(--surface)', color: lead.regular_interval_days == null ? 'var(--gold)' : 'var(--muted)', border: `1px solid ${lead.regular_interval_days == null ? 'var(--gold)' : 'var(--border)'}` }}>Prazos da agência</button>
+              {REGULAR_INTERVAL_PRESETS.map(d => (
+                <button key={d} type="button" onClick={() => setRegularInterval(d)} style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: lead.regular_interval_days === d ? 'var(--gold-glow)' : 'var(--surface)', color: lead.regular_interval_days === d ? 'var(--gold)' : 'var(--muted)', border: `1px solid ${lead.regular_interval_days === d ? 'var(--gold)' : 'var(--border)'}` }}>{d} dias</button>
+              ))}
+              <input style={{ ...inputStyle, width: 90, padding: '4px 10px' }} type="number" min={1} placeholder="outro (dias)" value={customInterval} onChange={e => setCustomInterval(e.target.value)} />
+              <button type="button" disabled={!customInterval} onClick={() => setRegularInterval(Number(customInterval))} style={{ fontSize: 11, fontWeight: 600, padding: '4px 12px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)' }}>Aplicar</button>
+            </div>
+          </div>
+        )}
 
         {/* AI Suggestion Card */}
         <div className="card" style={{ overflow: 'hidden', marginBottom: 20, border: '1px solid rgba(176,125,46,0.25)' }}>
