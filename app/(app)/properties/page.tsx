@@ -148,11 +148,9 @@ export default function PropertiesPage() {
                   key={m}
                   type="button"
                   onClick={() => setMode(m)}
+                  className={`chip${mode === m ? ' active' : ''}`}
                   style={{
-                    flex: 1, padding: '8px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                    background: mode === m ? 'var(--gold-glow)' : 'var(--surface)',
-                    color: mode === m ? 'var(--gold)' : 'var(--muted)',
-                    border: mode === m ? '1px solid var(--gold)' : '1px solid var(--border)',
+                    flex: 1, padding: '8px', borderRadius: 8, justifyContent: 'center',
                   }}
                 >
                   {m === 'manual' ? '✍ Manual' : '🎙 Áudio'}

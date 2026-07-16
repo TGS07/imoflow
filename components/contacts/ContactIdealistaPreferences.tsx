@@ -14,7 +14,7 @@ interface ContactPreference {
   is_active: boolean
 }
 
-const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
+const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)' }
 
 export function ContactIdealistaPreferences({ personId, defaultZone }: { personId: string; defaultZone?: string | null }) {
   const [pref, setPref] = useState<ContactPreference>({ zonas: [], tipologia_min: null, preco_max: null, extras: [], is_active: true })
@@ -106,7 +106,7 @@ export function ContactIdealistaPreferences({ personId, defaultZone }: { personI
                 <button
                   key={t}
                   onClick={() => setPref(p => ({ ...p, tipologia_min: p.tipologia_min === t ? null : t }))}
-                  style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.tipologia_min === t ? 'var(--gold)' : 'var(--border)'}`, background: pref.tipologia_min === t ? 'rgba(176,125,46,0.10)' : 'transparent', color: pref.tipologia_min === t ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: pref.tipologia_min === t ? 600 : 400, transition: 'all 0.15s ease' }}
+                  className={`chip${pref.tipologia_min === t ? ' active' : ''}`}
                 >
                   {t}
                 </button>
@@ -132,7 +132,7 @@ export function ContactIdealistaPreferences({ personId, defaultZone }: { personI
               <button
                 key={e}
                 onClick={() => toggleExtra(e)}
-                style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.extras.includes(e) ? 'var(--gold)' : 'var(--border)'}`, background: pref.extras.includes(e) ? 'rgba(176,125,46,0.10)' : 'transparent', color: pref.extras.includes(e) ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', transition: 'all 0.15s ease' }}
+                className={`chip${pref.extras.includes(e) ? ' active' : ''}`}
               >
                 {e}
               </button>

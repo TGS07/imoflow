@@ -48,14 +48,14 @@ export function SellerProperties({ personId, properties, onChange }: {
   }
 
   const labelStyle = { fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 4, fontWeight: 500 }
-  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif', width: '100%' }
+  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)', width: '100%' }
 
   return (
     <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div className="font-display" style={{ fontSize: 15 }}>Imóveis deste vendedor</div>
         {!picking && (
-          <button onClick={() => setPicking(true)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 12px', fontSize: 11, color: 'var(--text)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+          <button onClick={() => setPicking(true)} className="btn btn-soft btn-sm">
             Associar imóvel
           </button>
         )}
@@ -69,7 +69,7 @@ export function SellerProperties({ personId, properties, onChange }: {
                 <Link href={`/properties/${p.id}`} style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', textDecoration: 'none' }}>
                   {p.reference ? `${p.reference} — ` : ''}{p.title}
                 </Link>
-                <button onClick={() => remove(p.id)} style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: 11, cursor: 'pointer' }}>Remover</button>
+                <button onClick={() => remove(p.id)} className="btn btn-danger btn-sm" style={{ padding: '2px 8px' }}>Remover</button>
               </div>
             ))}
           </div>
@@ -86,7 +86,7 @@ export function SellerProperties({ personId, properties, onChange }: {
             {loading && <div style={{ fontSize: 12, color: 'var(--muted)' }}>A procurar...</div>}
             {!loading && search.trim().length >= 2 && results.length === 0 && <div style={{ fontSize: 12, color: 'var(--muted)' }}>Nenhum imóvel encontrado.</div>}
             {results.map(p => (
-              <button key={p.id} onClick={() => associate(p.id)} style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+              <button key={p.id} onClick={() => associate(p.id)} className="table-row" style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.reference ? `${p.reference} — ` : ''}{p.title}</div>
               </button>
             ))}
