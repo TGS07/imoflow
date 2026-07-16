@@ -48,12 +48,12 @@ export default function FormsPage() {
     <div className="page-pad" style={{ padding: '32px 40px', maxWidth: 900 }}>
       <div className="settings-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Formulários Web</h1>
+          <h1 className="font-display" style={{ fontSize: 'var(--fs-xl)', marginBottom: 4 }}>Formulários Web</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Formulários para capturar leads no seu site via iframe.</p>
         </div>
         <Link
           href="/settings/forms/new"
-          style={{ background: 'var(--gold)', color: '#0D0D0F', borderRadius: 8, padding: '9px 18px', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}
+          className="btn btn-primary"
         >
           + Novo formulário
         </Link>

@@ -73,14 +73,14 @@ export function PropertyVisits({ propertyId }: { propertyId: string }) {
   }
 
   const labelStyle = { fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 4, fontWeight: 500 }
-  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif', width: '100%' }
+  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)', width: '100%' }
 
   return (
     <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <div className="font-display" style={{ fontSize: 15 }}>Visitas</div>
         {!adding && (
-          <button onClick={() => setAdding(true)} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '4px 12px', fontSize: 11, color: 'var(--text)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>+ Registar</button>
+          <button onClick={() => setAdding(true)} className="btn btn-soft btn-sm">+ Registar</button>
         )}
       </div>
 
@@ -119,7 +119,7 @@ export function PropertyVisits({ propertyId }: { propertyId: string }) {
                 {results.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4, maxHeight: 160, overflowY: 'auto' }}>
                     {results.map(p => (
-                      <button key={p.id} onClick={() => { setSelected(p); setResults([]); setSearch('') }} style={{ textAlign: 'left', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                      <button key={p.id} onClick={() => { setSelected(p); setResults([]); setSearch('') }} style={{ textAlign: 'left', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
                         <div style={{ fontSize: 12, fontWeight: 600 }}>{p.name}</div>
                         <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.phone || p.email || ''}</div>
                       </button>

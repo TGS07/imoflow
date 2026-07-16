@@ -58,7 +58,7 @@ export default function OrganizationPage() {
 
   if (!org) return <div style={{ padding: 40, color: 'var(--muted)', fontSize: 13 }}>A carregar...</div>
 
-  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif', width: '100%' }
+  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)', width: '100%' }
   const totalDeals = org.leads?.length ?? 0
   const totalValue = org.leads?.reduce((sum, l) => sum + (l.deal_value ?? 0), 0) ?? 0
 
@@ -72,14 +72,14 @@ export default function OrganizationPage() {
         </div>
         <div className="header-actions" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           {!editing ? (
-            <button onClick={() => setEditing(true)} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--text)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Editar</button>
+            <button onClick={() => setEditing(true)} className="btn btn-ghost">Editar</button>
           ) : (
             <>
-              <button onClick={() => setEditing(false)} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Cancelar</button>
-              <button onClick={save} style={{ background: 'var(--gold)', border: 'none', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, fontWeight: 600, color: '#0D0D0F', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Guardar</button>
+              <button onClick={() => setEditing(false)} className="btn btn-ghost">Cancelar</button>
+              <button onClick={save} className="btn btn-primary">Guardar</button>
             </>
           )}
-          <button onClick={deleteOrg} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '0 14px', height: 32, fontSize: 12, color: '#EF4444', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Eliminar</button>
+          <button onClick={deleteOrg} className="btn btn-danger">Eliminar</button>
         </div>
       </div>
 

@@ -39,7 +39,7 @@ export default function AdminPage() {
     setCreating(false)
   }
 
-  const inputStyle = { width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
+  const inputStyle = { width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)' }
   const labelStyle = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: 'var(--muted)', display: 'block', marginBottom: 6 }
 
   return (
@@ -57,7 +57,7 @@ export default function AdminPage() {
             <div><label style={labelStyle}>Email de Acesso</label><input type="email" style={inputStyle} value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} required /></div>
             <div><label style={labelStyle}>Password Inicial</label><input type="password" style={inputStyle} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} required minLength={6} /></div>
             {message && <div style={{ fontSize: 12, color: message.startsWith('✓') ? 'var(--green)' : 'var(--red)' }}>{message}</div>}
-            <button type="submit" disabled={creating} style={{ background: 'var(--gold)', color: '#0D0D0F', border: 'none', borderRadius: 8, padding: 12, fontSize: 13, fontWeight: 600, cursor: creating ? 'not-allowed' : 'pointer', opacity: creating ? 0.7 : 1, fontFamily: 'Jost, sans-serif' }}>
+            <button type="submit" disabled={creating} style={{ background: 'var(--gold)', color: '#0D0D0F', border: 'none', borderRadius: 8, padding: 12, fontSize: 13, fontWeight: 600, cursor: creating ? 'not-allowed' : 'pointer', opacity: creating ? 0.7 : 1, fontFamily: 'var(--font-body)' }}>
               {creating ? 'A criar...' : 'Criar Agência'}
             </button>
           </form>

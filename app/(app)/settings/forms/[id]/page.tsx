@@ -19,7 +19,7 @@ export default function EditFormPage() {
   const [copied, setCopied] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
-  const inputStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif', width: '100%', boxSizing: 'border-box' }
+  const inputStyle: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 13, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)', width: '100%', boxSizing: 'border-box' }
 
   useEffect(() => {
     Promise.all([
@@ -73,7 +73,7 @@ export default function EditFormPage() {
 
   return (
     <div style={{ padding: '32px 40px', maxWidth: 600 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', marginBottom: 28 }}>Editar Formulário</h1>
+      <h1 className="font-display" style={{ fontSize: 'var(--fs-xl)', marginBottom: 28 }}>Editar Formulário</h1>
 
       {/* Link directo + snippet */}
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px', marginBottom: 28 }}>
@@ -83,7 +83,7 @@ export default function EditFormPage() {
         </p>
         <button
           onClick={copySnippet}
-          style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 12px', fontSize: 12, color: copied ? '#10B981' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}
+          className="btn btn-ghost btn-sm" style={{ color: copied ? 'var(--green)' : undefined }}
         >
           {copied ? 'Copiado!' : 'Copiar snippet iframe'}
         </button>
@@ -139,14 +139,14 @@ export default function EditFormPage() {
           <button
             type="submit"
             disabled={saving}
-            style={{ background: 'var(--gold)', color: '#0D0D0F', border: 'none', borderRadius: 8, padding: '10px 24px', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'Jost, sans-serif' }}
+            className="btn btn-primary"
           >
             {saving ? 'A guardar...' : 'Guardar'}
           </button>
           <button
             type="button"
             onClick={() => router.push('/settings/forms')}
-            style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 18px', fontSize: 13, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}
+            className="btn btn-ghost"
           >
             Cancelar
           </button>

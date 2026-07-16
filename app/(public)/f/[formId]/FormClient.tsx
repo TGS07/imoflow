@@ -20,7 +20,7 @@ export function FormClient({ form }: { form: WebForm }) {
     fontSize: 13,
     color: 'var(--text)',
     outline: 'none',
-    fontFamily: 'Jost, sans-serif',
+    fontFamily: 'var(--font-body)',
     boxSizing: 'border-box',
   }
 
@@ -230,7 +230,7 @@ export function FormClient({ form }: { form: WebForm }) {
             cursor: submitting ? 'not-allowed' : 'pointer',
             opacity: submitting ? 0.7 : 1,
             marginTop: 8,
-            fontFamily: 'Jost, sans-serif',
+            fontFamily: 'var(--font-body)',
           }}
         >
           {submitting ? 'A enviar...' : 'Enviar'}

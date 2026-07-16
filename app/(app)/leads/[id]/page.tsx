@@ -208,7 +208,7 @@ export default function LeadPage() {
   const stageName = currentStage?.name ?? '—'
   const visibleStages = stages.filter(s => !s.is_lost)
   const initials = lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')
-  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Inter, sans-serif' }
+  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)' }
 
   const pendingActivities = activities.filter(a => !a.completed)
   const completedActivities = activities.filter(a => a.completed)
@@ -239,11 +239,11 @@ export default function LeadPage() {
           <span style={{ color: 'var(--text)', fontWeight: 500 }}>{lead.name}</span>
         </div>
         <div className="header-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <select value={lead.assigned_to ?? ''} onChange={e => updateAssignee(e.target.value)} title="Responsável" style={{ height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 12, padding: '0 8px', fontFamily: 'Jost, sans-serif', cursor: 'pointer' }}>
+          <select value={lead.assigned_to ?? ''} onChange={e => updateAssignee(e.target.value)} title="Responsável" style={{ height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 12, padding: '0 8px', fontFamily: 'var(--font-body)', cursor: 'pointer' }}>
             <option value="">Sem responsável</option>
             {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
-          <button onClick={toggleRegular} title="Follow-ups automáticos" style={{ height: 30, borderRadius: 8, border: `1px solid ${lead.is_regular ? 'var(--gold)' : 'var(--border)'}`, background: lead.is_regular ? 'var(--gold-glow)' : 'var(--card)', color: lead.is_regular ? 'var(--gold)' : 'var(--muted)', fontSize: 12, padding: '0 12px', fontFamily: 'Jost, sans-serif', cursor: 'pointer', fontWeight: 600 }}>
+          <button onClick={toggleRegular} title="Follow-ups automáticos" className={`chip${lead.is_regular ? ' active' : ''}`} style={{ height: 30 }}>
             {lead.is_regular ? '✓ Regular' : 'Regular'}
           </button>
           {lead.phone && (
@@ -264,7 +264,7 @@ export default function LeadPage() {
         {/* Hero Card */}
         <div className="card" style={{ padding: 24, marginBottom: 20 }}>
           <div style={{ display: 'flex', gap: 20, alignItems: 'start', marginBottom: 0, flexWrap: 'wrap' }}>
-          <div style={{ width: 60, height: 60, borderRadius: '50%', background: `linear-gradient(135deg, ${stageColor}, ${stageColor}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Playfair Display, serif', fontSize: 20, color: '#fff', flexShrink: 0 }}>
+          <div style={{ width: 60, height: 60, borderRadius: '50%', background: `linear-gradient(135deg, ${stageColor}, ${stageColor}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 20, color: '#fff', flexShrink: 0 }}>
             {initials}
           </div>
           <div>
@@ -319,7 +319,7 @@ export default function LeadPage() {
             </div>
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {visibleStages.map(s => (
-                <button key={s.id} onClick={() => updateStage(s.id)} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 4, border: `1px solid ${lead.stage_id === s.id ? s.color : 'var(--border)'}`, background: lead.stage_id === s.id ? `${s.color}22` : 'transparent', color: lead.stage_id === s.id ? s.color : 'var(--muted)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 600, transition: 'all 0.15s ease' }}>
+                <button key={s.id} onClick={() => updateStage(s.id)} className="chip" style={lead.stage_id === s.id ? { background: `${s.color}1A`, color: s.color, borderColor: `${s.color}66` } : undefined}>
                   {s.name}
                 </button>
               ))}
@@ -361,12 +361,12 @@ export default function LeadPage() {
               Frequência de follow-up: {lead.regular_interval_days ? `a cada ${lead.regular_interval_days} dias` : 'prazos da agência (padrão)'}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
-              <button type="button" onClick={() => setRegularInterval(null)} style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: lead.regular_interval_days == null ? 'var(--gold-glow)' : 'var(--surface)', color: lead.regular_interval_days == null ? 'var(--gold)' : 'var(--muted)', border: `1px solid ${lead.regular_interval_days == null ? 'var(--gold)' : 'var(--border)'}` }}>Prazos da agência</button>
+              <button type="button" onClick={() => setRegularInterval(null)} className={`chip${lead.regular_interval_days == null ? ' active' : ''}`}>Prazos da agência</button>
               {REGULAR_INTERVAL_PRESETS.map(d => (
-                <button key={d} type="button" onClick={() => setRegularInterval(d)} style={{ fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: lead.regular_interval_days === d ? 'var(--gold-glow)' : 'var(--surface)', color: lead.regular_interval_days === d ? 'var(--gold)' : 'var(--muted)', border: `1px solid ${lead.regular_interval_days === d ? 'var(--gold)' : 'var(--border)'}` }}>{d} dias</button>
+                <button key={d} type="button" onClick={() => setRegularInterval(d)} className={`chip${lead.regular_interval_days === d ? ' active' : ''}`}>{d} dias</button>
               ))}
               <input style={{ ...inputStyle, width: 90, padding: '4px 10px' }} type="number" min={1} placeholder="outro (dias)" value={customInterval} onChange={e => setCustomInterval(e.target.value)} />
-              <button type="button" disabled={!customInterval} onClick={() => setRegularInterval(Number(customInterval))} style={{ fontSize: 11, fontWeight: 600, padding: '4px 12px', borderRadius: 6, cursor: 'pointer', fontFamily: 'Jost, sans-serif', background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)' }}>Aplicar</button>
+              <button type="button" disabled={!customInterval} onClick={() => setRegularInterval(Number(customInterval))} className="btn btn-ghost btn-sm">Aplicar</button>
             </div>
           </div>
         )}
@@ -418,14 +418,14 @@ export default function LeadPage() {
 
           {/* Type Filter Tabs */}
           <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
-            <button onClick={() => setActivityFilter('')} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === '' ? 600 : 400, color: activityFilter === '' ? 'var(--gold)' : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === '' ? '2px solid var(--gold)' : '2px solid transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap' }}>
+            <button onClick={() => setActivityFilter('')} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === '' ? 600 : 400, color: activityFilter === '' ? 'var(--gold)' : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === '' ? '2px solid var(--gold)' : '2px solid transparent', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
               Todas ({activities.length})
             </button>
             {(Object.entries(ACTIVITY_LABELS) as [ActivityType, string][]).map(([type, label]) => {
               const count = activities.filter(a => a.type === type).length
               if (count === 0 && activityFilter !== type) return null
               return (
-                <button key={type} onClick={() => setActivityFilter(activityFilter === type ? '' : type)} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === type ? 600 : 400, color: activityFilter === type ? ACTIVITY_COLORS[type] : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === type ? `2px solid ${ACTIVITY_COLORS[type]}` : '2px solid transparent', cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap' }}>
+                <button key={type} onClick={() => setActivityFilter(activityFilter === type ? '' : type)} style={{ padding: '10px 16px', fontSize: 11, fontWeight: activityFilter === type ? 600 : 400, color: activityFilter === type ? ACTIVITY_COLORS[type] : 'var(--muted)', background: 'transparent', border: 'none', borderBottom: activityFilter === type ? `2px solid ${ACTIVITY_COLORS[type]}` : '2px solid transparent', cursor: 'pointer', fontFamily: 'var(--font-body)', whiteSpace: 'nowrap' }}>
                   {ACTIVITY_ICONS[type]} {label} ({count})
                 </button>
               )
@@ -574,7 +574,7 @@ export default function LeadPage() {
                       <button
                         key={t}
                         onClick={() => setPref(p => ({ ...p, tipologia_min: p.tipologia_min === t ? null : t }))}
-                        style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.tipologia_min === t ? 'var(--gold)' : 'var(--border)'}`, background: pref.tipologia_min === t ? 'rgba(176,125,46,0.10)' : 'transparent', color: pref.tipologia_min === t ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: pref.tipologia_min === t ? 600 : 400, transition: 'all 0.15s ease' }}
+                        className={`chip${pref.tipologia_min === t ? ' active' : ''}`}
                       >
                         {t}
                       </button>
@@ -601,7 +601,7 @@ export default function LeadPage() {
                     <button
                       key={e}
                       onClick={() => toggleExtra(e)}
-                      style={{ fontSize: 11, padding: '5px 10px', borderRadius: 5, border: `1px solid ${pref.extras.includes(e) ? 'var(--gold)' : 'var(--border)'}`, background: pref.extras.includes(e) ? 'rgba(176,125,46,0.10)' : 'transparent', color: pref.extras.includes(e) ? 'var(--gold)' : 'var(--muted)', cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'all 0.15s ease' }}
+                      className={`chip${pref.extras.includes(e) ? ' active' : ''}`}
                     >
                       {e}
                     </button>

@@ -23,7 +23,7 @@ export default function PipelineSettingsPage() {
   const [newFieldOptions, setNewFieldOptions] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
 
-  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'Jost, sans-serif' }
+  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)' }
 
   useEffect(() => {
     Promise.all([

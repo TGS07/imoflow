@@ -118,142 +118,182 @@ export default async function DashboardPage() {
   const nowTs = new Date().getTime()
   const nextActivity = (todayActivities ?? []).find(a => !a.completed && a.due_date && new Date(a.due_date).getTime() >= nowTs)
 
+  // Funil: valor em pipeline por etapa (para as barras da dashboard)
+  const stageValues: Record<string, number> = {}
+  for (const lead of allLeads) {
+    stageValues[lead.stage_id] = (stageValues[lead.stage_id] ?? 0) + (lead.deal_value ?? lead.budget ?? 0)
+  }
+  // Só etapas relevantes: com leads, ou as primeiras por posição quando está tudo vazio (máx. 8 barras)
+  const nonLostStages = allStages.filter(s => !s.is_lost)
+  const withLeads = nonLostStages.filter(s => (stageCounts[s.id] ?? 0) > 0)
+  const funnelStages = (withLeads.length > 0 ? withLeads : nonLostStages).slice(0, 8)
+  const maxStageCount = Math.max(1, ...funnelStages.map(s => stageCounts[s.id] ?? 0))
+
+  const todayLabelRaw = new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })
+  const todayLabel = todayLabelRaw.charAt(0).toUpperCase() + todayLabelRaw.slice(1)
+
   return (
     <>
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 20, fontWeight: 500 }}>{greeting}, {firstName}</h1>
-          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{activeLeads} leads ativos</p>
+          <h1 className="font-display" style={{ fontSize: 'var(--fs-xl)' }}>{greeting}, {firstName}</h1>
+          <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 2 }}>{todayLabel}</p>
         </div>
-        <Link href="/leads" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+        <Link href="/leads" className="btn btn-primary">
           + Novo Lead
         </Link>
       </div>
 
       <div className="page-enter page-pad" style={{ padding: '28px 32px', flex: 1 }}>
         {lastSync && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', marginBottom: 20, fontSize: 12, color: 'var(--muted)', flexWrap: 'wrap' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: lastSyncHoursAgo != null && lastSyncHoursAgo > 8 ? '#EF4444' : '#10B981' }} />
-            <span>Sincronização de Contactos (iPhone): <strong style={{ color: 'var(--text)' }}>{relativeSync(lastSync.ran_at)}</strong>{lastSync.contacts_processed > 0 && ` · ${lastSync.contacts_processed} atualizado${lastSync.contacts_processed !== 1 ? 's' : ''}`}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', borderRadius: 999, background: 'var(--surface)', border: '1px solid var(--border)', marginBottom: 22, fontSize: 'var(--fs-sm)', color: 'var(--muted)', flexWrap: 'wrap', width: 'fit-content', boxShadow: 'var(--shadow-sm)' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: lastSyncHoursAgo != null && lastSyncHoursAgo > 8 ? 'var(--red)' : 'var(--green)', boxShadow: lastSyncHoursAgo != null && lastSyncHoursAgo > 8 ? '0 0 0 3px rgba(220,38,38,0.12)' : '0 0 0 3px rgba(5,150,105,0.12)' }} />
+            <span>Sincronização de Contactos (iPhone): <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{relativeSync(lastSync.ran_at)}</strong>{lastSync.contacts_processed > 0 && ` · ${lastSync.contacts_processed} atualizado${lastSync.contacts_processed !== 1 ? 's' : ''}`}</span>
           </div>
         )}
         <div className="stagger stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
-          <StatCard label="Leads Ativos" value={activeLeads} icon="leads" />
-          <StatCard label="Pipeline Total" value={formatValue(pipelineTotal)} icon="chart" />
-          <StatCard label="Pipeline Ponderado" value={formatValue(pipelineWeighted)} icon="pipeline" />
-          <StatCard label="Fechados (mes)" value={closedThisMonth} icon="check" />
-          <StatCard label="Atividades Pendentes" value={pendingCount ?? 0} icon="calendar" />
+          <StatCard label="Leads Ativos" value={activeLeads} icon="leads" hint="em negociação" />
+          <StatCard label="Pipeline Total" value={formatValue(pipelineTotal)} icon="chart" hint="valor em aberto" />
+          <StatCard label="Pipeline Ponderado" value={formatValue(pipelineWeighted)} icon="pipeline" hint="por probabilidade" />
+          <StatCard label="Fechados (mês)" value={closedThisMonth} icon="check" hint="negócios ganhos" />
+          <StatCard label="Atividades Pendentes" value={pendingCount ?? 0} icon="calendar" hint="por concluir" />
         </div>
 
         <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
-          <div className="card" style={{ padding: 22 }}>
-            <div className="font-display" style={{ fontSize: 15, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              Pipeline de Vendas
-              <Link href="/pipeline" style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: 'var(--gold)', fontWeight: 500, textDecoration: 'none' }}>Ver tudo →</Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+            <div className="card" style={{ padding: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
+                <div className="font-display" style={{ fontSize: 'var(--fs-md)' }}>Funil de Vendas</div>
+                <Link href="/pipeline" style={{ fontSize: 'var(--fs-xs)', color: 'var(--gold)', fontWeight: 600, textDecoration: 'none' }}>Ver pipeline →</Link>
+              </div>
+              {allLeads.length === 0 ? (
+                <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', padding: '12px 0' }}>Ainda sem leads no pipeline. Cria o primeiro lead para veres o funil.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {funnelStages.map(stage => {
+                    const count = stageCounts[stage.id] ?? 0
+                    const value = stageValues[stage.id] ?? 0
+                    return (
+                      <div key={stage.id} style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', alignItems: 'center', gap: 12 }}>
+                        <div style={{ fontSize: 'var(--fs-xs)', fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: 3, background: stage.color, flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stage.name}</span>
+                        </div>
+                        <div style={{ height: 22, borderRadius: 6, background: 'var(--bg)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${Math.max(count > 0 ? 6 : 0, (count / maxStageCount) * 100)}%`, borderRadius: 5, background: `linear-gradient(90deg, ${stage.color}55, ${stage.color}AA)`, borderRight: count > 0 ? `2px solid ${stage.color}` : 'none', transition: 'width 0.6s var(--ease)' }} />
+                        </div>
+                        <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)', whiteSpace: 'nowrap', textAlign: 'right', minWidth: 90 }}>
+                          <strong style={{ color: 'var(--text)', fontWeight: 700 }}>{count}</strong> · {formatValue(value)}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-            <div style={{ display: 'flex', gap: 2, height: 6, borderRadius: 4, overflow: 'hidden', marginBottom: 16, background: 'var(--border)' }}>
-              {allLeads.length > 0 && allStages.filter(s => !s.is_lost).map(stage => {
-                const count = stageCounts[stage.id] ?? 0
-                if (count === 0) return null
-                return <div key={stage.id} style={{ background: stage.color, width: `${(count / total) * 100}%` }} />
-              })}
-            </div>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
-              {allStages.filter(s => !s.is_lost).map(stage => {
-                const count = stageCounts[stage.id] ?? 0
-                return (
-                  <div key={stage.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--muted)' }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: stage.color }} />
-                    {stage.name} ({count})
-                  </div>
-                )
-              })}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {recentLeads.map(lead => {
-                const leadStage = (lead.pipeline_stages as unknown as { name: string; color: string } | null)
-                const color = leadStage?.color ?? '#666'
-                const label = leadStage?.name ?? '—'
-                return (
-                  <Link key={lead.id} href={`/leads/${lead.id}`} className="table-row" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, textDecoration: 'none' }}>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#0D0D0F' }}>
-                      {lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 500, color: 'var(--text)' }}>{lead.name}</div>
-                      <div style={{ fontSize: 10, color: 'var(--muted)' }}>{lead.typology ?? ''}{lead.zone ? ` · ${lead.zone}` : ''}</div>
-                    </div>
-                    <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13, whiteSpace: 'nowrap' }}>
-                      {lead.deal_value ? `${(lead.deal_value / 1000).toFixed(0)}K€` : lead.budget ? `${(lead.budget / 1000).toFixed(0)}K€` : '—'}
-                    </div>
-                    <div style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: `${color}22`, color }}>
-                      {label}
-                    </div>
-                  </Link>
-                )
-              })}
+
+            <div className="card" style={{ padding: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+                <div className="font-display" style={{ fontSize: 'var(--fs-md)' }}>Leads Recentes</div>
+                <Link href="/leads" style={{ fontSize: 'var(--fs-xs)', color: 'var(--gold)', fontWeight: 600, textDecoration: 'none' }}>Ver todos →</Link>
+              </div>
+              {recentLeads.length === 0 ? (
+                <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', padding: '12px 0' }}>Sem leads registados.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {recentLeads.map(lead => {
+                    const leadStage = (lead.pipeline_stages as unknown as { name: string; color: string } | null)
+                    const color = leadStage?.color ?? '#666'
+                    const label = leadStage?.name ?? '—'
+                    return (
+                      <Link key={lead.id} href={`/leads/${lead.id}`} className="card card-hover" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto auto', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, fontSize: 'var(--fs-sm)', textDecoration: 'none', boxShadow: 'none' }}>
+                        <div style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg, ${color}, ${color}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--fs-xs)', fontWeight: 700, color: '#fff', textShadow: '0 1px 1px rgba(0,0,0,0.2)' }}>
+                          {lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.name}</div>
+                          <div style={{ fontSize: 'var(--fs-2xs)', color: 'var(--muted)', marginTop: 1 }}>{lead.typology ?? ''}{lead.zone ? ` · ${lead.zone}` : ''}</div>
+                        </div>
+                        <div style={{ fontWeight: 700, color: 'var(--text)', fontSize: 'var(--fs-base)', whiteSpace: 'nowrap' }}>
+                          {lead.deal_value ? `${(lead.deal_value / 1000).toFixed(0)}K€` : lead.budget ? `${(lead.budget / 1000).toFixed(0)}K€` : '—'}
+                        </div>
+                        <div style={{ fontSize: 'var(--fs-2xs)', fontWeight: 700, padding: '3px 9px', borderRadius: 999, background: `${color}1A`, border: `1px solid ${color}40`, color }}>
+                          {label}
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="card" style={{ padding: 22 }}>
-            <div className="font-display" style={{ fontSize: 15, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              Atividades de Hoje
-              <Link href="/activities" style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: 'var(--gold)', fontWeight: 500, textDecoration: 'none' }}>Ver tudo →</Link>
-            </div>
-            {nextActivity && (
-              <Link href="/activities" style={{ display: 'block', textDecoration: 'none', background: 'var(--gold-glow)', border: '1px solid var(--gold)', borderRadius: 10, padding: '10px 14px', marginBottom: 12 }}>
-                <div style={{ fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', fontWeight: 700, marginBottom: 3 }}>A seguir</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
-                  {typeIcons[nextActivity.type] ?? '📝'} {nextActivity.title}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
-                  {nextActivity.due_date && new Date(nextActivity.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                  {nextActivity.leads?.[0]?.name && ` · ${nextActivity.leads[0].name}`}
-                </div>
-              </Link>
-            )}
-            <div>
-              {(todayActivities ?? []).map((a: { id: string; type: string; title: string; due_date: string | null; completed: boolean; leads: { name: string }[] | null; users: { name: string }[] | null }, i: number) => {
-                const color = typeColors[a.type] ?? '#6B7280'
-                return (
-                  <div key={a.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < (todayActivities?.length ?? 0) - 1 ? '1px solid var(--border)' : 'none', fontSize: 12, opacity: a.completed ? 0.5 : 1 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 4 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                      {i < (todayActivities?.length ?? 0) - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 4, minHeight: 20 }} />}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ color: 'var(--text)', lineHeight: 1.5, textDecoration: a.completed ? 'line-through' : 'none' }}>
-                        {typeIcons[a.type] ?? '📝'} {a.title}
-                        {a.leads?.[0]?.name && (
-                          <span> — <strong style={{ color: 'var(--gold)', fontWeight: 500 }}>{a.leads[0].name}</strong></span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>
-                        {a.due_date ? new Date(a.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : ''}
-                        {a.users?.[0]?.name && ` · ${a.users[0].name}`}
-                      </div>
-                    </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+            <div className="card" style={{ padding: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+                <div className="font-display" style={{ fontSize: 'var(--fs-md)' }}>Atividades de Hoje</div>
+                <Link href="/activities" style={{ fontSize: 'var(--fs-xs)', color: 'var(--gold)', fontWeight: 600, textDecoration: 'none' }}>Ver tudo →</Link>
+              </div>
+              {nextActivity && (
+                <Link href="/activities" className="card-hover" style={{ display: 'block', textDecoration: 'none', background: 'var(--gold-glow)', border: '1px solid rgba(176,125,46,0.45)', borderRadius: 10, padding: '12px 14px', marginBottom: 14, transition: 'border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), transform 0.2s var(--ease)' }}>
+                  <div className="section-label" style={{ color: 'var(--gold)', marginBottom: 4 }}>A seguir</div>
+                  <div style={{ fontSize: 'var(--fs-base)', fontWeight: 600, color: 'var(--text)' }}>
+                    {typeIcons[nextActivity.type] ?? '📝'} {nextActivity.title}
                   </div>
-                )
-              })}
-              {(todayActivities ?? []).length === 0 && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Sem atividades para hoje.</p>}
+                  <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)', marginTop: 2 }}>
+                    {nextActivity.due_date && new Date(nextActivity.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                    {nextActivity.leads?.[0]?.name && ` · ${nextActivity.leads[0].name}`}
+                  </div>
+                </Link>
+              )}
+              <div>
+                {(todayActivities ?? []).map((a: { id: string; type: string; title: string; due_date: string | null; completed: boolean; leads: { name: string }[] | null; users: { name: string }[] | null }, i: number) => {
+                  const color = typeColors[a.type] ?? '#6B7280'
+                  return (
+                    <div key={a.id} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < (todayActivities?.length ?? 0) - 1 ? '1px solid var(--border)' : 'none', fontSize: 'var(--fs-sm)', opacity: a.completed ? 0.5 : 1 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 4 }}>
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: color, flexShrink: 0, boxShadow: `0 0 0 3px ${color}22` }} />
+                        {i < (todayActivities?.length ?? 0) - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 6, minHeight: 20 }} />}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: 'var(--text)', lineHeight: 1.5, textDecoration: a.completed ? 'line-through' : 'none' }}>
+                          {typeIcons[a.type] ?? '📝'} {a.title}
+                          {a.leads?.[0]?.name && (
+                            <span> — <strong style={{ color: 'var(--gold)', fontWeight: 600 }}>{a.leads[0].name}</strong></span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 'var(--fs-2xs)', color: 'var(--muted)', marginTop: 2 }}>
+                          {a.due_date ? new Date(a.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) : ''}
+                          {a.users?.[0]?.name && ` · ${a.users[0].name}`}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+                {(todayActivities ?? []).length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--muted)' }}>
+                    <div style={{ fontSize: 22, marginBottom: 6 }}>☀️</div>
+                    <p style={{ fontSize: 'var(--fs-sm)', margin: 0 }}>Dia livre — sem atividades agendadas.</p>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {todayAgenda.length > 0 && (
+              <div className="card" style={{ padding: 24 }}>
+                <div className="font-display" style={{ fontSize: 'var(--fs-md)', marginBottom: 14 }}>✦ Contactos a não esquecer</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {todayAgenda.map((item, i) => (
+                    <Link key={`${item.id}-${i}`} href={`/people/${item.id}`} className="card card-hover" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, fontSize: 'var(--fs-sm)', textDecoration: 'none', color: 'var(--text)', boxShadow: 'none' }}>
+                      <span style={{ fontWeight: 600 }}>{item.name}</span>
+                      <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)', textAlign: 'right' }}>{item.reason}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {todayAgenda.length > 0 && (
-          <div className="card" style={{ padding: 22, marginBottom: 20 }}>
-            <div className="font-display" style={{ fontSize: 15, marginBottom: 14 }}>✦ Agenda de hoje</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {todayAgenda.map((item, i) => (
-                <Link key={`${item.id}-${i}`} href={`/people/${item.id}`} className="table-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, textDecoration: 'none', color: 'var(--text)' }}>
-                  <span style={{ fontWeight: 500 }}>{item.name}</span>
-                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>{item.reason}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </>
   )
