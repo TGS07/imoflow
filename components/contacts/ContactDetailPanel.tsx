@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Person } from '@/types'
@@ -51,6 +51,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
   const [pipelines, setPipelines] = useState<{ id: string; name: string }[]>([])
   const [stagesByPipeline, setStagesByPipeline] = useState<Record<string, { id: string; name: string; is_won: boolean; is_lost: boolean }[]>>({})
   const [pipelineMenuOpen, setPipelineMenuOpen] = useState(false)
+  const pipelineMenuRef = useRef<HTMLDivElement>(null)
   const [customInterval, setCustomInterval] = useState('')
   const [newSpecialDate, setNewSpecialDate] = useState({ label: '', month: '', day: '' })
   const [form, setForm] = useState<{
@@ -94,6 +95,17 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
         .catch(() => {})
     })
   }, [person, stagesByPipeline])
+
+  // Fechar o menu "+ Pipeline" ao clicar fora (padrão do NotificationBell)
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (pipelineMenuRef.current && !pipelineMenuRef.current.contains(e.target as Node)) {
+        setPipelineMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   async function save() {
     const res = await fetch(`/api/people/${id}`, {
@@ -315,7 +327,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
         </div>
         <div className="header-actions" style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
           {!editing && missingPipelines.length > 0 && (
-            <div style={{ position: 'relative' }}>
+            <div ref={pipelineMenuRef} style={{ position: 'relative' }}>
               <button onClick={() => setPipelineMenuOpen(o => !o)} disabled={pipelineBusy} className="btn btn-soft">
                 {pipelineBusy ? 'A adicionar…' : '+ Pipeline'}
               </button>
