@@ -69,6 +69,36 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
+  async function renamePipeline(p: Pipeline) {
+    const name = prompt('Novo nome da pipeline:', p.name)
+    if (!name || !name.trim() || name.trim() === p.name) return
+    const res = await fetch(`/api/pipelines/${p.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim() }),
+    })
+    if (res.ok) {
+      const updated: Pipeline = await res.json()
+      setPipelines(prev => prev.map(x => x.id === p.id ? updated : x))
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error ?? 'Erro ao renomear pipeline.')
+    }
+  }
+
+  async function deletePipeline(p: Pipeline) {
+    if (!confirm(`Eliminar a pipeline "${p.name}"? As etapas são apagadas.`)) return
+    const res = await fetch(`/api/pipelines/${p.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setPipelines(prev => prev.filter(x => x.id !== p.id))
+      if (selectedId === p.id) setSelectedId(null) // loadPipelines escolhe a 1ª
+      loadPipelines()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error ?? 'Erro ao eliminar pipeline.')
+    }
+  }
+
   const tabBase = { height: 32, padding: '0 14px', borderRadius: 8 }
 
   return (
@@ -100,14 +130,21 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           {/* Seletor de pipelines */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {pipelines.map(p => (
-              <button
-                key={p.id}
-                onClick={() => setSelectedId(p.id)}
-className={`chip${p.id === selectedId ? ' active' : ''}`}
-                style={tabBase}
-              >
-                {p.name}
-              </button>
+              <span key={p.id} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <button
+                  onClick={() => setSelectedId(p.id)}
+                  className={`chip${p.id === selectedId ? ' active' : ''}`}
+                  style={isAdmin && p.id === selectedId ? { ...tabBase, borderTopRightRadius: 0, borderBottomRightRadius: 0 } : tabBase}
+                >
+                  {p.name}
+                </button>
+                {isAdmin && p.id === selectedId && (
+                  <>
+                    <button onClick={() => renamePipeline(p)} title="Renomear pipeline" className="chip active" style={{ ...tabBase, padding: '0 8px', borderRadius: 0, borderLeft: 'none' }}>✏️</button>
+                    <button onClick={() => deletePipeline(p)} title="Eliminar pipeline" className="chip active" style={{ ...tabBase, padding: '0 8px', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' }}>🗑️</button>
+                  </>
+                )}
+              </span>
             ))}
             {isAdmin && (
               <button onClick={createPipeline} title="Nova pipeline" className="chip" style={tabBase}>+ Pipeline</button>
