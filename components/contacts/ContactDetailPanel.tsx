@@ -17,10 +17,12 @@ export type LeadSummary = {
   id: string
   name: string
   stage_id: string
+  pipeline_id: string | null
   deal_value: number | null
   expected_close_date: string | null
   created_at: string
   pipeline_stages?: { name: string; color: string; is_won: boolean; is_lost: boolean }
+  pipelines?: { name: string } | null
 }
 
 type PropertyRef = { id: string; title: string; status: string; price: number | null; reference: string | null }
@@ -41,12 +43,14 @@ export type ContactDetailPanelProps = {
 
 export function ContactDetailPanel({ personId, embedded = false, onClose, onChanged, highlightLeadId }: ContactDetailPanelProps) {
   const id = personId
-  void highlightLeadId // usado na Task 3 (realce em Negócios)
   const router = useRouter()
   const [person, setPerson] = useState<PersonDetail | null>(null)
   const [editing, setEditing] = useState(false)
   const [members, setMembers] = useState<{ id: string; name: string }[]>([])
   const [pipelineBusy, setPipelineBusy] = useState(false)
+  const [pipelines, setPipelines] = useState<{ id: string; name: string }[]>([])
+  const [stagesByPipeline, setStagesByPipeline] = useState<Record<string, { id: string; name: string; is_won: boolean; is_lost: boolean }[]>>({})
+  const [pipelineMenuOpen, setPipelineMenuOpen] = useState(false)
   const [customInterval, setCustomInterval] = useState('')
   const [newSpecialDate, setNewSpecialDate] = useState({ label: '', month: '', day: '' })
   const [form, setForm] = useState<{
@@ -75,6 +79,21 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
       .then((d: { members: { id: string; name: string }[] }) => setMembers(d.members))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    fetch('/api/pipelines').then(r => r.ok ? r.json() : []).then(setPipelines).catch(() => {})
+  }, [])
+
+  // Etapas de cada pipeline com lead ativa (para o seletor inline de etapa)
+  useEffect(() => {
+    const ids = [...new Set((person?.leads ?? []).map(l => l.pipeline_id).filter((p): p is string => !!p))]
+    ids.filter(pid => !stagesByPipeline[pid]).forEach(pid => {
+      fetch(`/api/pipeline-stages?pipeline_id=${pid}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(s => setStagesByPipeline(prev => ({ ...prev, [pid]: s })))
+        .catch(() => {})
+    })
+  }, [person, stagesByPipeline])
 
   async function save() {
     const res = await fetch(`/api/people/${id}`, {
@@ -173,25 +192,39 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     onChanged?.()
   }
 
-  async function addToPipeline() {
+  async function addToPipeline(pipelineId: string) {
     setPipelineBusy(true)
+    setPipelineMenuOpen(false)
     try {
-      const res = await fetch(`/api/people/${id}/pipeline`, { method: 'POST' })
+      const res = await fetch(`/api/people/${id}/pipeline`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pipeline_id: pipelineId }),
+      })
       if (res.ok) { fetchPerson(); onChanged?.() }
     } finally {
       setPipelineBusy(false)
     }
   }
 
-  async function removeFromPipeline() {
-    if (!confirm('Remover do pipeline? A lead ativa é apagada; o contacto e o histórico ficam.')) return
+  async function removeFromPipeline(leadId: string) {
+    if (!confirm('Remover desta pipeline? A lead é apagada; o contacto e o histórico ficam.')) return
     setPipelineBusy(true)
     try {
-      const res = await fetch(`/api/people/${id}/pipeline`, { method: 'DELETE' })
+      const res = await fetch(`/api/people/${id}/pipeline?lead_id=${leadId}`, { method: 'DELETE' })
       if (res.ok) { fetchPerson(); onChanged?.() }
     } finally {
       setPipelineBusy(false)
     }
+  }
+
+  async function changeLeadStage(leadId: string, stageId: string) {
+    await fetch(`/api/leads/${leadId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage_id: stageId }),
+    })
+    fetchPerson(); onChanged?.()
   }
 
   async function deletePerson() {
@@ -228,9 +261,9 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
   const setDetail = <K extends keyof ContactDetails>(k: K, v: ContactDetails[K]) =>
     setForm(p => ({ ...p, details: { ...p.details, [k]: v } }))
 
-  // Lead "ativa" = ligada a este contacto e numa etapa que não é fechada/perdida
-  const activeLead = person.leads?.find(l => l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost) ?? null
-  const stageColor = activeLead?.pipeline_stages?.color ?? 'var(--gold)'
+  // Leads "ativas" = etapa não fechada/perdida; pode haver uma por pipeline
+  const activeLeads = (person.leads ?? []).filter(l => l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost)
+  const missingPipelines = pipelines.filter(p => !activeLeads.some(l => l.pipeline_id === p.id))
   const age = person.birthday ? Math.floor((Date.now() - new Date(person.birthday).getTime()) / (365.25 * 24 * 3600 * 1000)) : null
 
   const activeTypes = person.types ?? []
@@ -281,18 +314,19 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
           <span style={{ fontSize: 'var(--fs-base)', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{person.name}</span>
         </div>
         <div className="header-actions" style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-          {!editing && (
-            activeLead ? (
-              <>
-                <Link href="/pipeline" className="btn btn-sm" style={{ background: `${stageColor}14`, borderColor: `${stageColor}55`, color: stageColor, height: 34 }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: stageColor }} />
-                  No pipeline · {activeLead.pipeline_stages?.name ?? 'Lead'}
-                </Link>
-                <button onClick={removeFromPipeline} disabled={pipelineBusy} className="btn btn-ghost btn-sm" style={{ height: 34 }}>Remover</button>
-              </>
-            ) : (
-              <button onClick={addToPipeline} disabled={pipelineBusy} className="btn btn-soft">{pipelineBusy ? 'A adicionar…' : '+ Pipeline'}</button>
-            )
+          {!editing && missingPipelines.length > 0 && (
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setPipelineMenuOpen(o => !o)} disabled={pipelineBusy} className="btn btn-soft">
+                {pipelineBusy ? 'A adicionar…' : '+ Pipeline'}
+              </button>
+              {pipelineMenuOpen && (
+                <div className="card" style={{ position: 'absolute', top: '110%', right: 0, zIndex: 30, minWidth: 180, padding: 6, display: 'flex', flexDirection: 'column', gap: 2, boxShadow: 'var(--shadow-md)' }}>
+                  {missingPipelines.map(p => (
+                    <button key={p.id} onClick={() => addToPipeline(p.id)} className="btn btn-ghost btn-sm" style={{ justifyContent: 'flex-start' }}>{p.name}</button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           {!editing ? (
             <button onClick={() => setEditing(true)} className="btn btn-ghost">Editar</button>
@@ -326,7 +360,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
               {[
                 { label: 'Negócios', value: String(totalDeals) },
                 { label: 'Valor total', value: totalValue > 0 ? `€${totalValue.toLocaleString('pt-PT')}` : '—' },
-                { label: 'Pipeline', value: activeLead ? (activeLead.pipeline_stages?.name ?? 'Ativo') : 'Fora' },
+                { label: 'Pipeline', value: activeLeads.length > 0 ? `${activeLeads.length} ativa${activeLeads.length > 1 ? 's' : ''}` : 'Fora' },
               ].map((s, i) => (
                 <div key={s.label} style={{ padding: '4px 20px', borderLeft: i > 0 ? '1px solid var(--border)' : 'none', textAlign: 'center' }}>
                   <div className="font-display" style={{ fontSize: 'var(--fs-lg)', color: 'var(--text)', whiteSpace: 'nowrap' }}>{s.value}</div>
@@ -550,7 +584,28 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {person.leads.map(lead => {
+                  {activeLeads.map(lead => {
+                    const stages = lead.pipeline_id ? (stagesByPipeline[lead.pipeline_id] ?? []) : []
+                    const highlight = lead.id === highlightLeadId
+                    return (
+                      <div key={lead.id} className="card" style={{ borderRadius: 10, padding: '12px 14px', boxShadow: 'none', border: highlight ? '1px solid var(--gold)' : undefined }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                          <div style={{ fontSize: 'var(--fs-base)', fontWeight: 600, color: 'var(--text)' }}>{lead.pipelines?.name ?? 'Pipeline'}</div>
+                          {lead.deal_value != null && lead.deal_value > 0 && (
+                            <div className="font-display" style={{ fontSize: 'var(--fs-md)', color: 'var(--gold)' }}>€{lead.deal_value.toLocaleString('pt-PT')}</div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                          <select className="input" style={{ width: 'auto', minWidth: 140 }} value={lead.stage_id} onChange={e => changeLeadStage(lead.id, e.target.value)}>
+                            {stages.filter(s => !s.is_lost).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                          <Link href={`/leads/${lead.id}`} style={{ fontSize: 'var(--fs-xs)', color: 'var(--gold)', fontWeight: 600, textDecoration: 'none' }}>Ver negócio completo →</Link>
+                          <button onClick={() => removeFromPipeline(lead.id)} disabled={pipelineBusy} className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }}>Remover</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {(person.leads ?? []).filter(l => !activeLeads.includes(l)).map(lead => {
                     const stage = lead.pipeline_stages
                     return (
                       <Link key={lead.id} href={`/leads/${lead.id}`} className="card card-hover" style={{ textDecoration: 'none', color: 'inherit', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, boxShadow: 'none' }}>

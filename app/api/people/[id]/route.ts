@@ -9,7 +9,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const { data, error } = await supabase
     .from('people')
-    .select(`*, leads(id, name, stage_id, deal_value, expected_close_date, created_at, pipeline_stages(name, color, is_won, is_lost)),
+    .select(`*, leads(id, name, stage_id, pipeline_id, deal_value, expected_close_date, created_at, pipeline_stages(name, color, is_won, is_lost), pipelines(name)),
       properties_as_seller:properties!seller_id(id, title, status, price, reference),
       property_consultants(id, properties(id, title, status, price, reference))`)
     .eq('id', id)
