@@ -239,13 +239,21 @@ export default function LeadPage() {
           <span style={{ color: 'var(--text)', fontWeight: 500 }}>{lead.name}</span>
         </div>
         <div className="header-actions" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <select value={lead.assigned_to ?? ''} onChange={e => updateAssignee(e.target.value)} title="Responsável" style={{ height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 12, padding: '0 8px', fontFamily: 'var(--font-body)', cursor: 'pointer' }}>
-            <option value="">Sem responsável</option>
-            {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-          </select>
-          <button onClick={toggleRegular} title="Follow-ups automáticos" className={`chip${lead.is_regular ? ' active' : ''}`} style={{ height: 30 }}>
-            {lead.is_regular ? '✓ Regular' : 'Regular'}
-          </button>
+          {lead.people ? (
+            <Link href={`/people/${lead.people.id}`} title="Gerido na ficha do contacto" className="chip" style={{ height: 30, textDecoration: 'none' }}>
+              {lead.people.is_regular ? '✓ Regular' : 'Não regular'} · {members.find(m => m.id === lead.people?.assigned_to)?.name ?? 'Sem responsável'} ↗
+            </Link>
+          ) : (
+            <>
+              <select value={lead.assigned_to ?? ''} onChange={e => updateAssignee(e.target.value)} title="Responsável" style={{ height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 12, padding: '0 8px', fontFamily: 'var(--font-body)', cursor: 'pointer' }}>
+                <option value="">Sem responsável</option>
+                {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+              <button onClick={toggleRegular} title="Follow-ups automáticos" className={`chip${lead.is_regular ? ' active' : ''}`} style={{ height: 30 }}>
+                {lead.is_regular ? '✓ Regular' : 'Regular'}
+              </button>
+            </>
+          )}
           {lead.phone && (
             <button onClick={() => setShowWhatsApp(true)} className="btn btn-whatsapp btn-sm">
               <Icon name="whatsapp" size={13} /> WhatsApp
@@ -354,8 +362,8 @@ export default function LeadPage() {
           ))}
         </div>
 
-        {/* Frequência de follow-up própria (só quando "Regular" está ativo) */}
-        {lead.is_regular && (
+        {/* Frequência de follow-up própria (só quando "Regular" está ativo e não há contacto associado) */}
+        {!lead.people && lead.is_regular && (
           <div className="card" style={{ padding: '12px 16px', marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ fontSize: 10, color: 'var(--muted)' }}>
               Frequência de follow-up: {lead.regular_interval_days ? `a cada ${lead.regular_interval_days} dias` : 'prazos da agência (padrão)'}
