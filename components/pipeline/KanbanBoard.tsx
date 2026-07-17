@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Lead, PipelineStage } from '@/types'
 import { useRouter } from 'next/navigation'
 
-function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
+function LeadCard({ lead, isDragging, onOpenContact }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void }) {
   const router = useRouter()
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lead.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
@@ -15,7 +15,10 @@ function LeadCard({ lead, isDragging }: { lead: Lead; isDragging?: boolean }) {
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <div
-        onClick={() => router.push(`/leads/${lead.id}`)}
+        onClick={() => {
+          if (lead.person_id && onOpenContact) onOpenContact(lead.person_id, lead.id)
+          else router.push(`/leads/${lead.id}`)
+        }}
         className="card card-hover"
         style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 14px', cursor: 'grab', marginBottom: 8, boxShadow: isDragging ? 'var(--shadow-md)' : undefined }}
       >
@@ -67,9 +70,10 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
 type Props = {
   initialLeads: Lead[]
   stages: PipelineStage[]
+  onOpenContact?: (personId: string, leadId: string) => void
 }
 
-export function KanbanBoard({ initialLeads, stages }: Props) {
+export function KanbanBoard({ initialLeads, stages, onOpenContact }: Props) {
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -140,7 +144,7 @@ export function KanbanBoard({ initialLeads, stages }: Props) {
               <SortableContext items={stageLeads.map(l => l.id)} strategy={verticalListSortingStrategy}>
                 <DroppableColumn id={stage.id}>
                   {stageLeads.map(lead => (
-                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} />
+                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} onOpenContact={onOpenContact} />
                   ))}
                 </DroppableColumn>
               </SortableContext>
@@ -149,7 +153,7 @@ export function KanbanBoard({ initialLeads, stages }: Props) {
         })}
       </div>
       <DragOverlay>
-        {activeLead && <LeadCard lead={activeLead} />}
+        {activeLead && <LeadCard lead={activeLead} onOpenContact={onOpenContact} />}
       </DragOverlay>
     </DndContext>
   )

@@ -5,6 +5,7 @@ import { Lead, PipelineStage, Pipeline } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { ContactPickerModal } from '@/components/pipeline/ContactPickerModal'
+import { ContactSlideOver } from '@/components/pipeline/ContactSlideOver'
 
 export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
@@ -14,6 +15,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
   const [loading, setLoading] = useState(true)
   const [showNewLead, setShowNewLead] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+  const [openContact, setOpenContact] = useState<{ personId: string; leadId: string } | null>(null)
 
   const loadPipelines = useCallback(async () => {
     const res = await fetch('/api/pipelines')
@@ -83,6 +85,14 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           onAdded={() => selectedId && loadBoard(selectedId)}
         />
       )}
+      {openContact && (
+        <ContactSlideOver
+          personId={openContact.personId}
+          highlightLeadId={openContact.leadId}
+          onClose={() => setOpenContact(null)}
+          onChanged={() => selectedId && loadBoard(selectedId)}
+        />
+      )}
 
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -118,7 +128,7 @@ className={`chip${p.id === selectedId ? ' active' : ''}`}
             Esta pipeline ainda não tem etapas.{isAdmin && <> Cria-as em <a href="/settings/pipeline" style={{ color: 'var(--gold)' }}>Definições → Pipeline</a>.</>}
           </div>
         ) : (
-          <KanbanBoard key={selectedId} initialLeads={leads} stages={stages} />
+          <KanbanBoard key={selectedId} initialLeads={leads} stages={stages} onOpenContact={(personId, leadId) => setOpenContact({ personId, leadId })} />
         )}
       </div>
     </>
