@@ -28,7 +28,7 @@ function PreviewLine({ p }: { p: Person }) {
   const t = p.types ?? []
   const dim: React.CSSProperties = { fontSize: 12, color: 'var(--muted)', marginTop: 4 }
 
-  if (t.includes('vendedor')) {
+  if (t.includes('vendedor') || (t.includes('investidor') && (p.details?.selling_property || p.details?.selling_zone))) {
     const stale = p.details?.is_active_seller && (() => { const d = daysSince(p.last_interaction_at); return d == null || d > 10 })()
     return (
       <div style={{ ...dim, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
