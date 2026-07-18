@@ -3,16 +3,38 @@ import { useState, useEffect } from 'react'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Lead, PipelineStage } from '@/types'
+import { Lead, PipelineStage, PipelineCardField } from '@/types'
 import { useRouter } from 'next/navigation'
 import { contactTypeMeta } from '@/lib/contacts/constants'
 
-function LeadCard({ lead, isDragging, onOpenContact }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void }) {
+export type PipelineCardFields = { primary: PipelineCardField; secondary: PipelineCardField }
+
+// Valor de um campo configurável do card; null quando o lead não o tem.
+function cardFieldValue(lead: Lead, field: PipelineCardField): string | null {
+  switch (field) {
+    case 'name': return lead.name
+    case 'zone': return lead.zone
+    case 'typology': return lead.typology
+    case 'property': return lead.properties ? (lead.properties.reference ?? lead.properties.title) : null
+    case 'value': {
+      const v = lead.deal_value ?? lead.budget
+      return v ? `${(v / 1000).toFixed(0)}K€` : null
+    }
+  }
+}
+
+function LeadCard({ lead, isDragging, onOpenContact, cardFields }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields }) {
   const router = useRouter()
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lead.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
   const initials = lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')
   const typeMeta = lead.people?.types?.length ? contactTypeMeta(lead.people.types[0]) : null
+  const primaryText = cardFieldValue(lead, cardFields.primary) ?? lead.name
+  const secondaryText = cardFieldValue(lead, cardFields.secondary)
+  // Campos já mostrados em cima não se repetem nas linhas fixas. Se o
+  // primário caiu no fallback (nome), o nome conta como promovido na mesma.
+  const promoted = new Set<PipelineCardField>([cardFields.primary, cardFields.secondary])
+  if (primaryText === lead.name) promoted.add('name')
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
@@ -28,30 +50,37 @@ function LeadCard({ lead, isDragging, onOpenContact }: { lead: Lead; isDragging?
           <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#0D0D0F', flexShrink: 0 }}>
             {initials}
           </div>
-          <div style={{ fontWeight: 500, fontSize: 13, color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.name}</div>
+          <div style={{ fontWeight: 500, fontSize: 13, color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{primaryText}</div>
           {typeMeta && (
             <span title={typeMeta.label} style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: `${typeMeta.color}18`, color: typeMeta.color, border: `1px solid ${typeMeta.color}40`, flexShrink: 0 }}>
               {typeMeta.label.split(' ')[0]}
             </span>
           )}
         </div>
-        {lead.people?.name && lead.people.name !== lead.name && (
+        {secondaryText && (
+          <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{secondaryText}</div>
+        )}
+        {lead.people?.name && lead.people.name !== lead.name && lead.people.name !== primaryText && (
           <div style={{ fontSize: 10, color: 'var(--gold)', marginBottom: 4, opacity: 0.8 }}>👤 {lead.people.name}</div>
         )}
-        {lead.properties && (
+        {!promoted.has('property') && lead.properties && (
           <div style={{ fontSize: 10, color: '#10B981', marginBottom: 4, opacity: 0.8 }}>🏠 {lead.properties.reference ?? lead.properties.title}</div>
         )}
-        {(lead.typology || lead.zone) && (
-          <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4 }}>
-            {[lead.typology, lead.zone].filter(Boolean).join(' · ')}
-          </div>
-        )}
+        {(() => {
+          const parts = [
+            !promoted.has('typology') ? lead.typology : null,
+            !promoted.has('zone') ? lead.zone : null,
+          ].filter(Boolean)
+          return parts.length > 0 ? (
+            <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4 }}>{parts.join(' · ')}</div>
+          ) : null
+        })()}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {lead.deal_value ? (
+          {!promoted.has('value') && lead.deal_value ? (
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
               {(lead.deal_value / 1000).toFixed(0)}K€
             </div>
-          ) : lead.budget ? (
+          ) : !promoted.has('value') && lead.budget ? (
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
               {(lead.budget / 1000).toFixed(0)}K€
             </div>
@@ -78,9 +107,10 @@ type Props = {
   initialLeads: Lead[]
   stages: PipelineStage[]
   onOpenContact?: (personId: string, leadId: string) => void
+  cardFields: PipelineCardFields
 }
 
-export function KanbanBoard({ initialLeads, stages, onOpenContact }: Props) {
+export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields }: Props) {
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -151,7 +181,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact }: Props) {
               <SortableContext items={stageLeads.map(l => l.id)} strategy={verticalListSortingStrategy}>
                 <DroppableColumn id={stage.id}>
                   {stageLeads.map(lead => (
-                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} onOpenContact={onOpenContact} />
+                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} onOpenContact={onOpenContact} cardFields={cardFields} />
                   ))}
                 </DroppableColumn>
               </SortableContext>
@@ -160,7 +190,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact }: Props) {
         })}
       </div>
       <DragOverlay>
-        {activeLead && <LeadCard lead={activeLead} onOpenContact={onOpenContact} />}
+        {activeLead && <LeadCard lead={activeLead} onOpenContact={onOpenContact} cardFields={cardFields} />}
       </DragOverlay>
     </DndContext>
   )

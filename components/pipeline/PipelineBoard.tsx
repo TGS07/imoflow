@@ -146,7 +146,13 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
             Esta pipeline ainda não tem etapas.{isAdmin && <> Cria-as em <a href="/settings/pipeline" style={{ color: 'var(--gold)' }}>Definições → Pipeline</a>.</>}
           </div>
         ) : (
-          <KanbanBoard key={selectedId} initialLeads={leads} stages={stages} onOpenContact={(personId, leadId) => setOpenContact({ personId, leadId })} />
+          <KanbanBoard
+            key={selectedId}
+            initialLeads={leads}
+            stages={stages}
+            onOpenContact={(personId, leadId) => setOpenContact({ personId, leadId })}
+            cardFields={{ primary: selected?.card_primary_field ?? 'name', secondary: selected?.card_secondary_field ?? 'zone' }}
+          />
         )}
       </div>
     </>
