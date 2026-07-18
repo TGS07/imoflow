@@ -10,3 +10,7 @@ alter table public.pipelines
 update public.pipelines
   set card_primary_field = 'zone', card_secondary_field = 'name'
   where name = 'Vendedores';
+
+-- Nunca permitir principal igual à secundária (a API valida, isto é a garantia final)
+alter table public.pipelines
+  add constraint pipelines_card_fields_distinct check (card_primary_field <> card_secondary_field);
