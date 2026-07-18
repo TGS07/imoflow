@@ -5,6 +5,19 @@ import { Icon, IconName } from '@/components/ui/Icon'
 
 type NavItem = { label: string; href: string; icon: IconName; keywords?: string }
 type LeadHit = { id: string; name: string; phone: string | null; email: string | null }
+type PersonHit = {
+  id: string
+  name: string
+  phone: string | null
+  email: string | null
+  address?: string | null
+  details?: { search_zone?: string; selling_zone?: string; working_zone?: string }
+}
+
+// Linha secundária do resultado: zona do perfil, senão morada/telefone/email
+function personHint(p: PersonHit) {
+  return p.details?.search_zone || p.details?.selling_zone || p.details?.working_zone || p.address || p.phone || p.email || ''
+}
 
 const NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: 'dashboard', keywords: 'inicio home painel' },
@@ -32,6 +45,7 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [leads, setLeads] = useState<LeadHit[]>([])
+  const [people, setPeople] = useState<PersonHit[]>([])
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -58,22 +72,27 @@ export function CommandPalette() {
     if (open) {
       setQuery('')
       setLeads([])
+      setPeople([])
       setActive(0)
       setTimeout(() => inputRef.current?.focus(), 30)
     }
   }, [open])
 
-  // Pesquisa de leads (debounce)
+  // Pesquisa de leads + contactos (debounce). Contactos incluem zona/morada
+  // do lado da API (details->>*_zone).
   useEffect(() => {
-    if (!open || query.trim().length < 2) { setLeads([]); return }
+    if (!open || query.trim().length < 2) { setLeads([]); setPeople([]); return }
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/leads?search=${encodeURIComponent(query)}`)
-        if (res.ok) {
-          const data = await res.json()
-          setLeads((Array.isArray(data) ? data : []).slice(0, 6).map((l: LeadHit) => ({ id: l.id, name: l.name, phone: l.phone, email: l.email })))
-        }
-      } catch { setLeads([]) }
+        const [lr, pr] = await Promise.all([
+          fetch(`/api/leads?search=${encodeURIComponent(query)}`),
+          fetch(`/api/people?search=${encodeURIComponent(query)}`),
+        ])
+        const ldata = lr.ok ? await lr.json() : []
+        const pdata = pr.ok ? await pr.json() : []
+        setLeads((Array.isArray(ldata) ? ldata : []).slice(0, 6).map((l: LeadHit) => ({ id: l.id, name: l.name, phone: l.phone, email: l.email })))
+        setPeople((Array.isArray(pdata) ? pdata : []).slice(0, 5))
+      } catch { setLeads([]); setPeople([]) }
     }, 220)
     return () => clearTimeout(t)
   }, [query, open])
@@ -82,19 +101,21 @@ export function CommandPalette() {
     ? NAV.filter(n => norm(n.label + ' ' + (n.keywords ?? '')).includes(norm(query)))
     : NAV
 
-  type Row = { type: 'nav'; item: NavItem } | { type: 'lead'; item: LeadHit }
+  type Row = { type: 'nav'; item: NavItem } | { type: 'lead'; item: LeadHit } | { type: 'person'; item: PersonHit }
   const rows: Row[] = [
     ...filteredNav.map(item => ({ type: 'nav' as const, item })),
     ...leads.map(item => ({ type: 'lead' as const, item })),
+    ...people.map(item => ({ type: 'person' as const, item })),
   ]
 
   const go = useCallback((row: Row) => {
     setOpen(false)
     if (row.type === 'nav') router.push(row.item.href)
-    else router.push(`/leads/${row.item.id}`)
+    else if (row.type === 'lead') router.push(`/leads/${row.item.id}`)
+    else router.push(`/people/${row.item.id}`)
   }, [router])
 
-  useEffect(() => { setActive(0) }, [query, leads.length])
+  useEffect(() => { setActive(0) }, [query, leads.length, people.length])
 
   if (!open) return null
 
@@ -111,7 +132,7 @@ export function CommandPalette() {
           <input
             ref={inputRef}
             className="cmdk-input"
-            placeholder="Pesquisar páginas, leads…"
+            placeholder="Pesquisar páginas, leads, contactos, zonas…"
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
@@ -133,6 +154,21 @@ export function CommandPalette() {
                   <Icon name={row.item.icon} size={15} style={{ flexShrink: 0, opacity: 0.7 }} />
                   <span>{row.item.label}</span>
                 </button>
+              )
+            }
+            if (row.type === 'person') {
+              const prev = rows[i - 1]
+              const showHeader = !prev || prev.type !== 'person'
+              return (
+                <div key={'p' + row.item.id}>
+                  {showHeader && <div className="cmdk-section">Contactos</div>}
+                  <button className={`cmdk-row${isActive ? ' active' : ''}`}
+                    onMouseEnter={() => setActive(i)} onClick={() => go(row)}>
+                    <Icon name="people" size={15} style={{ flexShrink: 0, opacity: 0.7 }} />
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.item.name}</span>
+                    <span className="cmdk-hint">{personHint(row.item)}</span>
+                  </button>
+                </div>
               )
             }
             // primeiro lead: mostra cabeçalho de secção
