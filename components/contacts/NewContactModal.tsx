@@ -219,10 +219,10 @@ export function NewContactModal({ initial, onClose, onCreated }: {
             </div>
           )}
 
-          {has('vendedor') && (
+          {(has('vendedor') || has('investidor')) && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
               <div style={sectionLabel}>Venda</div>
-              <input className="input" placeholder="O que vende" value={details.selling_property ?? ''} onChange={e => d('selling_property', e.target.value)} />
+              <input className="input" placeholder={has('vendedor') ? 'O que vende' : 'O que oferece'} value={details.selling_property ?? ''} onChange={e => d('selling_property', e.target.value)} />
               <input className="input" placeholder="Onde vende" value={details.selling_zone ?? ''} onChange={e => d('selling_zone', e.target.value)} />
               <input className="input" type="number" placeholder="Preço (€)" value={details.selling_price ?? ''} onChange={e => d('selling_price', Number(e.target.value) || undefined)} />
               <input className="input" placeholder="Tipologia" value={details.typology ?? ''} onChange={e => d('typology', e.target.value)} />
