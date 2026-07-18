@@ -112,7 +112,11 @@ export default function PeoplePage() {
       list = list.filter(p =>
         p.name.toLowerCase().includes(q) ||
         (p.phone ?? '').toLowerCase().includes(q) ||
-        (p.email ?? '').toLowerCase().includes(q)
+        (p.email ?? '').toLowerCase().includes(q) ||
+        (p.address ?? '').toLowerCase().includes(q) ||
+        (p.details?.search_zone ?? '').toLowerCase().includes(q) ||
+        (p.details?.selling_zone ?? '').toLowerCase().includes(q) ||
+        (p.details?.working_zone ?? '').toLowerCase().includes(q)
       )
     }
     return list
@@ -164,7 +168,7 @@ export default function PeoplePage() {
         <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
           <input
             className="input"
-            placeholder="Pesquisar por nome, telefone ou email..."
+            placeholder="Pesquisar por nome, telefone, zona…"
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ flex: 1 }}
