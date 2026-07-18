@@ -134,14 +134,14 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
                 <button
                   onClick={() => setSelectedId(p.id)}
                   className={`chip${p.id === selectedId ? ' active' : ''}`}
-                  style={isAdmin && p.id === selectedId ? { ...tabBase, borderTopRightRadius: 0, borderBottomRightRadius: 0 } : tabBase}
+                  style={isAdmin && p.id === selectedId ? { ...tabBase, borderRadius: '8px 0 0 8px' } : tabBase}
                 >
                   {p.name}
                 </button>
                 {isAdmin && p.id === selectedId && (
                   <>
                     <button onClick={() => renamePipeline(p)} title="Renomear pipeline" className="chip active" style={{ ...tabBase, padding: '0 8px', borderRadius: 0, borderLeft: 'none' }}>✏️</button>
-                    <button onClick={() => deletePipeline(p)} title="Eliminar pipeline" className="chip active" style={{ ...tabBase, padding: '0 8px', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none' }}>🗑️</button>
+                    <button onClick={() => deletePipeline(p)} title="Eliminar pipeline" className="chip active" style={{ ...tabBase, padding: '0 8px', borderRadius: '0 8px 8px 0', borderLeft: 'none' }}>🗑️</button>
                   </>
                 )}
               </span>
