@@ -4,6 +4,8 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Property, PropertyType, PropertyStatus, PropertyCondition } from '@/types'
 import { PropertySeller } from '@/components/properties/PropertySeller'
+import { PropertyBuyer } from '@/components/properties/PropertyBuyer'
+import { PropertyNegotiations } from '@/components/properties/PropertyNegotiations'
 import { PropertyVisits } from '@/components/properties/PropertyVisits'
 import { SuggestedBuyers } from '@/components/properties/SuggestedBuyers'
 import { NearbyConsultants } from '@/components/properties/NearbyConsultants'
@@ -312,6 +314,8 @@ export default function PropertyPage() {
         {/* Right: Seller, Visits, Deals */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <PropertySeller propertyId={id} seller={property.seller ?? null} onChange={fetchProperty} />
+          <PropertyBuyer propertyId={id} buyer={property.buyer ?? null} status={property.status} onChange={fetchProperty} />
+          <PropertyNegotiations propertyId={id} hasBuyer={!!property.buyer_id} onChange={fetchProperty} />
           <PropertyConsultants propertyId={id} consultants={property.property_consultants ?? []} onChange={fetchProperty} />
           <SuggestedBuyers propertyId={id} propertyTitle={property.title} propertyPrice={property.price} />
           <NearbyConsultants propertyId={id} propertyTitle={property.title} />
