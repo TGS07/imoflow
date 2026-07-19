@@ -39,11 +39,20 @@ export async function triggerAutomations(event: AutomationEvent, client?: Supaba
 
   if (!lead) return
 
+  // Regras de inatividade podem ser limitadas a uma etapa específica
+  // (trigger_config.stage_id) — só disparam se a lead estiver nessa etapa.
+  const stageFilteredRules = matchingRules.filter((rule: AutomationRule) => {
+    if (rule.trigger_type !== 'lead_inactive') return true
+    const cfgStage = (rule.trigger_config as Record<string, unknown>).stage_id
+    return !cfgStage || cfgStage === lead.stage_id
+  })
+  if (stageFilteredRules.length === 0) return
+
   const assignedTo = lead.assigned_to ?? event.userId
   const agencyId = lead.agency_id ?? event.agencyId
 
   // 4. Executar cada regra
-  for (const rule of matchingRules) {
+  for (const rule of stageFilteredRules) {
     // Deduplicação: regras normais não repetem na mesma hora; regras de
     // inatividade não repetem dentro do próprio período de inatividade
     // (senão o cron diário enviava follow-ups todos os dias à mesma lead).
