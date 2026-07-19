@@ -51,6 +51,14 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     .update({ stage_id: firstStage.id })
     .eq('stage_id', id)
 
+  // Limpar regras de automação ligadas a esta etapa (avisos do editor 🔔 e
+  // quaisquer regras manuais que a referenciem) — sem FK possível no jsonb.
+  const { error: rulesError } = await supabase
+    .from('automation_rules')
+    .delete()
+    .or(`trigger_config->>to_stage_id.eq.${id},trigger_config->>stage_id.eq.${id}`)
+  if (rulesError) return NextResponse.json({ error: rulesError.message }, { status: 500 })
+
   const { error } = await supabase.from('pipeline_stages').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
