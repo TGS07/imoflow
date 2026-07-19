@@ -56,21 +56,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // Dados dos contactos a adicionar
   const { data: people } = await supabase
     .from('people')
-    .select('id, name, email, phone, assigned_to')
+    .select('id, name, email, phone, assigned_to, details')
     .eq('agency_id', profile.agency_id)
     .in('id', toAdd)
 
-  const rows = (people ?? []).map(p => ({
-    agency_id: profile.agency_id,
-    name: p.name,
-    email: p.email,
-    phone: p.phone,
-    stage_id: firstStage.id,
-    pipeline_id: pipelineId,
-    person_id: p.id,
-    assigned_to: p.assigned_to ?? user.id,
-    source: 'outro',
-  }))
+  const rows = (people ?? []).map(p => {
+    // Copiar zona/tipologia do perfil, como na adição individual
+    // (/api/people/[id]/pipeline) — os cards da pipeline dependem disto.
+    const details = (p.details ?? {}) as Record<string, unknown>
+    return {
+      agency_id: profile.agency_id,
+      name: p.name,
+      email: p.email,
+      phone: p.phone,
+      stage_id: firstStage.id,
+      pipeline_id: pipelineId,
+      person_id: p.id,
+      assigned_to: p.assigned_to ?? user.id,
+      zone: (details.search_zone ?? details.selling_zone ?? null) as string | null,
+      typology: (details.typology ?? null) as string | null,
+      source: 'outro',
+    }
+  })
   if (rows.length === 0) return NextResponse.json({ added: 0 })
 
   const { error } = await supabase.from('leads').insert(rows)
