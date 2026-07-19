@@ -107,12 +107,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       is_active: true,
     }
     if (staleRuleIds.length === 0) {
+      // Sem pipeline_id: o cron lead-inactive não envia meta.pipelineId, e o
+      // gate por pipeline do motor descartaria a regra (nunca dispararia).
+      // O filtro por stage_id já a limita à etapa — e a etapa implica a pipeline.
       const { error } = await supabase.from('automation_rules').insert({
         agency_id: agencyId,
         description: 'Criado pelo editor de notificações da etapa',
         trigger_type: 'lead_inactive',
         action_type: 'send_notification',
-        pipeline_id: stage.pipeline_id,
         ...row,
       })
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -56,6 +56,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   const { error: rulesError } = await supabase
     .from('automation_rules')
     .delete()
+    .eq('agency_id', stage.agency_id)
     .or(`trigger_config->>to_stage_id.eq.${id},trigger_config->>stage_id.eq.${id}`)
   if (rulesError) return NextResponse.json({ error: rulesError.message }, { status: 500 })
 
