@@ -72,20 +72,28 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { enterRuleIds, staleRuleIds } = await readState(supabase, agencyId, id)
 
   // Sincronizar "ao entrar"
-  if (onEnter && enterRuleIds.length === 0) {
-    const { error } = await supabase.from('automation_rules').insert({
-      agency_id: agencyId,
+  if (onEnter) {
+    const row = {
       name: `Etapa ${stage.name}: aviso de entrada`,
-      description: 'Criado pelo editor de notificações da etapa',
-      trigger_type: 'stage_changed',
       trigger_config: { to_stage_id: id },
-      action_type: 'send_notification',
       action_config: { message: `Um contacto entrou na etapa "${stage.name}".` },
-      pipeline_id: stage.pipeline_id,
       is_active: true,
-    })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  } else if (!onEnter && enterRuleIds.length > 0) {
+    }
+    if (enterRuleIds.length === 0) {
+      const { error } = await supabase.from('automation_rules').insert({
+        agency_id: agencyId,
+        description: 'Criado pelo editor de notificações da etapa',
+        trigger_type: 'stage_changed',
+        action_type: 'send_notification',
+        pipeline_id: stage.pipeline_id,
+        ...row,
+      })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    } else {
+      const { error } = await supabase.from('automation_rules').update(row).in('id', enterRuleIds)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+  } else if (enterRuleIds.length > 0) {
     const { error } = await supabase.from('automation_rules').delete().in('id', enterRuleIds)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
