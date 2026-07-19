@@ -57,7 +57,7 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields }: { lead: Lead;
             </span>
           )}
         </div>
-        {secondaryText && (
+        {secondaryText && secondaryText !== primaryText && (
           <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{secondaryText}</div>
         )}
         {lead.people?.name && lead.people.name !== lead.name && lead.people.name !== primaryText && (
