@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { HelpButton } from '@/components/help/HelpButton'
+import { StageNotificationsModal } from '@/components/pipeline/StageNotificationsModal'
 import { PipelineStage, CustomField, Pipeline } from '@/types'
 
 const COLORS = ['#3B82F6', '#F59E0B', '#8B5CF6', '#F97316', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E']
@@ -23,6 +24,9 @@ export default function PipelineSettingsPage() {
   const [newFieldType, setNewFieldType] = useState('text')
   const [newFieldOptions, setNewFieldOptions] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
+  const [notifStage, setNotifStage] = useState<PipelineStage | null>(null)
+  // etapas com avisos ativos (para o 🔔 dourado) — derivado das regras da agência
+  const [notifiedStageIds, setNotifiedStageIds] = useState<Set<string>>(new Set())
 
   const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)' }
 
@@ -44,6 +48,24 @@ export default function PipelineSettingsPage() {
       .then(r => r.json())
       .then((s: PipelineStage[]) => setStages(s))
   }, [selectedPipelineId])
+
+  // Deriva das regras de automação quais etapas têm avisos ativos
+  async function loadNotifiedStages() {
+    try {
+      const res = await fetch('/api/automations')
+      if (!res.ok) return
+      const rules: { is_active: boolean; trigger_type: string; trigger_config: Record<string, unknown> }[] = await res.json()
+      const ids = new Set<string>()
+      for (const r of rules) {
+        if (!r.is_active) continue
+        if (r.trigger_type === 'stage_changed' && typeof r.trigger_config?.to_stage_id === 'string') ids.add(r.trigger_config.to_stage_id as string)
+        if (r.trigger_type === 'lead_inactive' && typeof r.trigger_config?.stage_id === 'string') ids.add(r.trigger_config.stage_id as string)
+      }
+      setNotifiedStageIds(ids)
+    } catch { /* badge é decorativo */ }
+  }
+
+  useEffect(() => { loadNotifiedStages() }, [])
 
   async function addStage(e: React.FormEvent) {
     e.preventDefault()
@@ -120,6 +142,14 @@ export default function PipelineSettingsPage() {
 
   return (
     <>
+      {notifStage && (
+        <StageNotificationsModal
+          stageId={notifStage.id}
+          stageName={notifStage.name}
+          onClose={() => setNotifStage(null)}
+          onSaved={loadNotifiedStages}
+        />
+      )}
       <div className="page-pad" style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <h1 className="font-display" style={{ fontSize: 20 }}>Configurações do Pipeline <HelpButton section="settings-pipeline" /></h1>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Personaliza as etapas e campos do teu CRM</p>
@@ -169,6 +199,13 @@ export default function PipelineSettingsPage() {
                   {stage.is_won && <span style={{ padding: '2px 6px', borderRadius: 3, background: '#10B98122', color: '#10B981', fontWeight: 600 }}>WON</span>}
                   {stage.is_lost && <span style={{ padding: '2px 6px', borderRadius: 3, background: '#EF444422', color: '#EF4444', fontWeight: 600 }}>LOST</span>}
                 </div>
+                <button
+                  onClick={() => setNotifStage(stage)}
+                  title="Notificações desta etapa"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: '0 4px', filter: notifiedStageIds.has(stage.id) ? 'none' : 'grayscale(1) opacity(0.45)' }}
+                >
+                  🔔
+                </button>
                 <button
                   onClick={() => deleteStage(stage.id)}
                   disabled={stages.length <= 1 || saving === stage.id}
