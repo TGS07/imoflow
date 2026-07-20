@@ -23,7 +23,12 @@ export async function GET(request: Request) {
 
   if (search) {
     const term = search.replace(/[%_\\]/g, '\\$&')
-    query = query.or(`name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`)
+    // Inclui morada e as zonas do perfil (jsonb details) — permite pesquisar
+    // por zona ("Parede", "Cascais") além de nome/email/telefone.
+    query = query.or(
+      `name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,address.ilike.%${term}%,` +
+      `details->>search_zone.ilike.%${term}%,details->>selling_zone.ilike.%${term}%,details->>working_zone.ilike.%${term}%`
+    )
   }
 
   const { data, error } = await query

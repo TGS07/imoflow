@@ -53,7 +53,7 @@ export function SellerProperties({ personId, properties, onChange }: {
   return (
     <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div className="font-display" style={{ fontSize: 15 }}>Imóveis deste vendedor</div>
+        <div className="font-display" style={{ fontSize: 15 }}>Imóveis deste contacto</div>
         {!picking && (
           <button onClick={() => setPicking(true)} className="btn btn-soft btn-sm">
             Associar imóvel

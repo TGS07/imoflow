@@ -28,7 +28,7 @@ function PreviewLine({ p }: { p: Person }) {
   const t = p.types ?? []
   const dim: React.CSSProperties = { fontSize: 12, color: 'var(--muted)', marginTop: 4 }
 
-  if (t.includes('vendedor')) {
+  if (t.includes('vendedor') || (t.includes('investidor') && (p.details?.selling_property || p.details?.selling_zone))) {
     const stale = p.details?.is_active_seller && (() => { const d = daysSince(p.last_interaction_at); return d == null || d > 10 })()
     return (
       <div style={{ ...dim, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -112,7 +112,11 @@ export default function PeoplePage() {
       list = list.filter(p =>
         p.name.toLowerCase().includes(q) ||
         (p.phone ?? '').toLowerCase().includes(q) ||
-        (p.email ?? '').toLowerCase().includes(q)
+        (p.email ?? '').toLowerCase().includes(q) ||
+        (p.address ?? '').toLowerCase().includes(q) ||
+        (p.details?.search_zone ?? '').toLowerCase().includes(q) ||
+        (p.details?.selling_zone ?? '').toLowerCase().includes(q) ||
+        (p.details?.working_zone ?? '').toLowerCase().includes(q)
       )
     }
     return list
@@ -164,7 +168,7 @@ export default function PeoplePage() {
         <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
           <input
             className="input"
-            placeholder="Pesquisar por nome, telefone ou email..."
+            placeholder="Pesquisar por nome, telefone, zona…"
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ flex: 1 }}

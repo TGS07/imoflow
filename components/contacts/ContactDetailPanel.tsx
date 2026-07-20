@@ -280,7 +280,10 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
 
   const activeTypes = person.types ?? []
   const showBuyer = activeTypes.includes('comprador') || activeTypes.includes('investidor')
-  const showSeller = activeTypes.includes('vendedor')
+  // Investidores também podem vender: mostram o bloco de venda. Sem o tipo
+  // "vendedor", o campo principal chama-se "O que oferece".
+  const showSeller = activeTypes.includes('vendedor') || activeTypes.includes('investidor')
+  const sellingLabel = activeTypes.includes('vendedor') ? 'O que vende' : 'O que oferece'
   const showConsultant = activeTypes.includes('consultor')
   const showService = activeTypes.includes('servico')
 
@@ -543,7 +546,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                   )}
                   {showSeller && (
                     <>
-                      {field('O que vende', fieldValue(d.selling_property), <input className="input" value={d.selling_property ?? ''} onChange={e => setDetail('selling_property', e.target.value)} />)}
+                      {field(sellingLabel, fieldValue(d.selling_property), <input className="input" value={d.selling_property ?? ''} onChange={e => setDetail('selling_property', e.target.value)} />)}
                       {field('Onde vende', fieldValue(d.selling_zone), <input className="input" value={d.selling_zone ?? ''} onChange={e => setDetail('selling_zone', e.target.value)} />)}
                       {field('Preço €', fieldValue(d.selling_price != null ? `€${d.selling_price.toLocaleString('pt-PT')}` : null), <input className="input" type="number" value={d.selling_price ?? ''} onChange={e => setDetail('selling_price', Number(e.target.value) || undefined)} />)}
                       {field('Tipologia', fieldValue(d.typology), <input className="input" value={d.typology ?? ''} onChange={e => setDetail('typology', e.target.value)} />)}

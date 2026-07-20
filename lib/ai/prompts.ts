@@ -168,7 +168,7 @@ export function buildSuggestContactActionPrompt(
     detailLines.push(`- Zona de procura: ${d.search_zone ?? 'não definida'}`)
     detailLines.push(`- Já comprou connosco: ${d.already_bought ? 'sim' : 'não'}`)
   }
-  if (person.types?.includes('vendedor')) {
+  if (person.types?.includes('vendedor') || person.types?.includes('investidor')) {
     detailLines.push(`- O que vende: ${d.selling_property ?? 'não definido'}`)
     detailLines.push(`- Zona de venda: ${d.selling_zone ?? 'não definida'}`)
     detailLines.push(`- Preço pedido: ${d.selling_price ? `${d.selling_price}€` : 'não definido'}`)
