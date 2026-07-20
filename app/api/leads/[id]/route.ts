@@ -18,7 +18,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   let leadQuery = supabase
     .from('leads')
-    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), custom_field_values(id, field_id, value_text, value_number, value_date, value_json), people(id, name, email, phone), organizations(id, name), properties(id, reference, title, price, type, status, zone, typology, area_m2)')
+    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), custom_field_values(id, field_id, value_text, value_number, value_date, value_json), people(id, name, email, phone, is_regular, assigned_to), organizations(id, name), properties(id, reference, title, price, type, status, zone, typology, area_m2)')
     .eq('id', id)
     .eq('agency_id', profile.agency_id)
   if (profile.role === 'agent') leadQuery = leadQuery.eq('assigned_to', user.id)

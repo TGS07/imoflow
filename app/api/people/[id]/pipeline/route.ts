@@ -1,15 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-// Adicionar/remover um contacto do pipeline.
+// Adicionar/remover um contacto de uma pipeline específica.
 //
-// POST  → cria uma lead na 1ª etapa do pipeline, ligada a este contacto
-//         (person_id). O trigger `leads_ensure_contact` não cria contacto
-//         duplicado porque person_id já vem preenchido.
-// DELETE → remove a lead ATIVA (não fechada/perdida) ligada a este contacto.
+// POST  → cria uma lead na 1ª etapa de uma pipeline, ligada a este contacto
+//         (person_id). Aceita pipeline_id no body; sem ele, usa a 1ª pipeline
+//         da agência (retrocompatível). O trigger `leads_ensure_contact` não
+//         cria contacto duplicado porque person_id já vem preenchido.
+// DELETE → remove leads ativas (não fechadas/perdidas) ligadas a este contacto.
+//          Aceita ?lead_id= ou ?pipeline_id=; sem filtros, remove de todas.
 //          O contacto e o histórico ficam intactos.
 
-export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -30,25 +32,42 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
     .single()
   if (!person) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Já existe uma lead ativa para este contacto?
+  const body = await request.json().catch(() => ({}))
+  let pipelineId: string | null = typeof body.pipeline_id === 'string' ? body.pipeline_id : null
+
+  // Sem pipeline_id → 1ª pipeline da agência (retrocompatível com chamadas antigas)
+  if (!pipelineId) {
+    const { data: firstPipeline } = await supabase
+      .from('pipelines')
+      .select('id')
+      .eq('agency_id', profile.agency_id)
+      .order('position', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    pipelineId = firstPipeline?.id ?? null
+  }
+  if (!pipelineId) return NextResponse.json({ error: 'Agência sem pipelines' }, { status: 400 })
+
+  // Já existe uma lead ativa deste contacto NESTA pipeline?
   const { data: activeLeads } = await supabase
     .from('leads')
     .select('id, pipeline_stages!inner(is_won, is_lost)')
     .eq('person_id', id)
+    .eq('pipeline_id', pipelineId)
     .eq('pipeline_stages.is_won', false)
     .eq('pipeline_stages.is_lost', false)
     .limit(1)
   if (activeLeads && activeLeads.length > 0) {
-    return NextResponse.json({ error: 'Contacto já está no pipeline', lead_id: activeLeads[0].id }, { status: 409 })
+    return NextResponse.json({ error: 'Contacto já está nesta pipeline', lead_id: activeLeads[0].id }, { status: 409 })
   }
 
   const { data: firstStage } = await supabase
     .from('pipeline_stages')
     .select('id')
-    .eq('agency_id', profile.agency_id)
+    .eq('pipeline_id', pipelineId)
     .order('position', { ascending: true })
     .limit(1)
-    .single()
+    .maybeSingle()
   if (!firstStage) return NextResponse.json({ error: 'Pipeline sem etapas' }, { status: 400 })
 
   const details = (person.details ?? {}) as Record<string, unknown>
@@ -56,6 +75,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
     .from('leads')
     .insert({
       agency_id: profile.agency_id,
+      pipeline_id: pipelineId,
       name: person.name,
       email: person.email,
       phone: person.phone,
@@ -73,7 +93,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   return NextResponse.json({ lead_id: lead.id }, { status: 201 })
 }
 
-export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -86,15 +106,22 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     .single()
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
-  // Apagar as leads ativas (não fechadas/perdidas) ligadas a este contacto.
-  const { data: activeLeads } = await supabase
+  const { searchParams } = new URL(request.url)
+  const leadId = searchParams.get('lead_id')
+  const pipelineId = searchParams.get('pipeline_id')
+
+  let query = supabase
     .from('leads')
     .select('id, pipeline_stages!inner(is_won, is_lost)')
     .eq('person_id', id)
     .eq('agency_id', profile.agency_id)
     .eq('pipeline_stages.is_won', false)
     .eq('pipeline_stages.is_lost', false)
+  if (leadId) query = query.eq('id', leadId)
+  else if (pipelineId) query = query.eq('pipeline_id', pipelineId)
+  // sem filtro → remove de todas (comportamento antigo, retrocompatível)
 
+  const { data: activeLeads } = await query
   const ids = (activeLeads ?? []).map(l => l.id)
   if (ids.length > 0) {
     const { error } = await supabase.from('leads').delete().in('id', ids)

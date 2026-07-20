@@ -5,6 +5,7 @@ import { Lead, PipelineStage, Pipeline } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { ContactPickerModal } from '@/components/pipeline/ContactPickerModal'
+import { ContactSlideOver } from '@/components/pipeline/ContactSlideOver'
 
 export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
@@ -14,6 +15,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
   const [loading, setLoading] = useState(true)
   const [showNewLead, setShowNewLead] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+  const [openContact, setOpenContact] = useState<{ personId: string; leadId: string } | null>(null)
 
   const loadPipelines = useCallback(async () => {
     const res = await fetch('/api/pipelines')
@@ -67,6 +69,36 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
+  async function renamePipeline(p: Pipeline) {
+    const name = prompt('Novo nome da pipeline:', p.name)
+    if (!name || !name.trim() || name.trim() === p.name) return
+    const res = await fetch(`/api/pipelines/${p.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim() }),
+    })
+    if (res.ok) {
+      const updated: Pipeline = await res.json()
+      setPipelines(prev => prev.map(x => x.id === p.id ? updated : x))
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error ?? 'Erro ao renomear pipeline.')
+    }
+  }
+
+  async function deletePipeline(p: Pipeline) {
+    if (!confirm(`Eliminar a pipeline "${p.name}"? As etapas são apagadas.`)) return
+    const res = await fetch(`/api/pipelines/${p.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setPipelines(prev => prev.filter(x => x.id !== p.id))
+      if (selectedId === p.id) setSelectedId(null) // loadPipelines escolhe a 1ª
+      loadPipelines()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error ?? 'Erro ao eliminar pipeline.')
+    }
+  }
+
   const tabBase = { height: 32, padding: '0 14px', borderRadius: 8 }
 
   return (
@@ -83,6 +115,14 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           onAdded={() => selectedId && loadBoard(selectedId)}
         />
       )}
+      {openContact && (
+        <ContactSlideOver
+          personId={openContact.personId}
+          highlightLeadId={openContact.leadId}
+          onClose={() => setOpenContact(null)}
+          onChanged={() => selectedId && loadBoard(selectedId)}
+        />
+      )}
 
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -90,14 +130,21 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           {/* Seletor de pipelines */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {pipelines.map(p => (
-              <button
-                key={p.id}
-                onClick={() => setSelectedId(p.id)}
-className={`chip${p.id === selectedId ? ' active' : ''}`}
-                style={tabBase}
-              >
-                {p.name}
-              </button>
+              <span key={p.id} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <button
+                  onClick={() => setSelectedId(p.id)}
+                  className={`chip${p.id === selectedId ? ' active' : ''}`}
+                  style={isAdmin && p.id === selectedId ? { ...tabBase, borderRadius: '8px 0 0 8px' } : tabBase}
+                >
+                  {p.name}
+                </button>
+                {isAdmin && p.id === selectedId && (
+                  <>
+                    <button onClick={() => renamePipeline(p)} title="Renomear pipeline" className="chip active" style={{ ...tabBase, padding: '0 8px', borderRadius: 0, borderLeft: 'none' }}>✏️</button>
+                    <button onClick={() => deletePipeline(p)} title="Eliminar pipeline" className="chip active" style={{ ...tabBase, padding: '0 8px', borderRadius: '0 8px 8px 0', borderLeft: 'none' }}>🗑️</button>
+                  </>
+                )}
+              </span>
             ))}
             {isAdmin && (
               <button onClick={createPipeline} title="Nova pipeline" className="chip" style={tabBase}>+ Pipeline</button>
@@ -118,7 +165,7 @@ className={`chip${p.id === selectedId ? ' active' : ''}`}
             Esta pipeline ainda não tem etapas.{isAdmin && <> Cria-as em <a href="/settings/pipeline" style={{ color: 'var(--gold)' }}>Definições → Pipeline</a>.</>}
           </div>
         ) : (
-          <KanbanBoard key={selectedId} initialLeads={leads} stages={stages} />
+          <KanbanBoard key={selectedId} initialLeads={leads} stages={stages} onOpenContact={(personId, leadId) => setOpenContact({ personId, leadId })} />
         )}
       </div>
     </>

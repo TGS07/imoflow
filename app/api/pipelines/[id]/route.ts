@@ -52,6 +52,16 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     .eq('agency_id', profile.agency_id)
   if ((count ?? 0) <= 1) return NextResponse.json({ error: 'Tem de existir pelo menos uma pipeline' }, { status: 400 })
 
+  // Recusar se a pipeline tiver leads — o delete em cascata das etapas
+  // falharia na FK de leads.stage_id com um erro críptico do Postgres.
+  const { count: leadCount } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true })
+    .eq('pipeline_id', id)
+  if ((leadCount ?? 0) > 0) {
+    return NextResponse.json({ error: `Esta pipeline tem ${leadCount} contacto(s) — move-os ou remove-os primeiro.` }, { status: 400 })
+  }
+
   const { error } = await supabase
     .from('pipelines')
     .delete()
