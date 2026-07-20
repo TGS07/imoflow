@@ -1,6 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+const CARD_FIELDS = ['name', 'zone', 'property', 'typology', 'value'] as const
+function parseCardField(v: unknown): string | undefined {
+  return typeof v === 'string' && (CARD_FIELDS as readonly string[]).includes(v) ? v : undefined
+}
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
@@ -18,6 +23,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const update: Record<string, unknown> = {}
   if (typeof body.name === 'string' && body.name.trim()) update.name = body.name.trim()
   if (typeof body.position === 'number') update.position = body.position
+  const cardPrimary = parseCardField(body.card_primary_field)
+  const cardSecondary = parseCardField(body.card_secondary_field)
+  if (cardPrimary && cardSecondary && cardPrimary === cardSecondary) {
+    return NextResponse.json({ error: 'Info principal e secundária não podem ser iguais' }, { status: 400 })
+  }
+  if (cardPrimary) update.card_primary_field = cardPrimary
+  if (cardSecondary) update.card_secondary_field = cardSecondary
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'Nada a atualizar' }, { status: 400 })
 
   const { data, error } = await supabase

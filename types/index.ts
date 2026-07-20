@@ -18,11 +18,15 @@ export type User = {
   avatar_initials: string
 }
 
+export type PipelineCardField = 'name' | 'zone' | 'property' | 'typology' | 'value'
+
 export type Pipeline = {
   id: string
   agency_id: string
   name: string
   position: number
+  card_primary_field: PipelineCardField
+  card_secondary_field: PipelineCardField
   created_at: string
 }
 
