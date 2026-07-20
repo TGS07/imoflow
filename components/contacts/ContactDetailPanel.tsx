@@ -30,6 +30,7 @@ type PropertyRef = { id: string; title: string; status: string; price: number | 
 type PersonDetail = Person & {
   leads?: LeadSummary[]
   properties_as_seller?: PropertyRef[]
+  properties_as_buyer?: PropertyRef[]
   property_consultants?: { id: string; properties: PropertyRef }[]
 }
 
@@ -649,6 +650,24 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
 
             {showSeller && (
               <SellerProperties personId={id} properties={person.properties_as_seller ?? []} onChange={fetchPerson} />
+            )}
+
+            {(person.properties_as_buyer ?? []).length > 0 && (
+              <div className="card" style={{ padding: 24 }}>
+                {cardTitle('Imóveis comprados')}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {(person.properties_as_buyer ?? []).map(p => (
+                    <Link key={p.id} href={`/properties/${p.id}`} className="card card-hover" style={{ textDecoration: 'none', color: 'inherit', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, boxShadow: 'none' }}>
+                      <div style={{ fontSize: 'var(--fs-base)', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.reference ? `${p.reference} — ` : ''}{p.title}
+                      </div>
+                      {p.price != null && (
+                        <div className="font-display" style={{ fontSize: 'var(--fs-md)', color: 'var(--gold)', whiteSpace: 'nowrap' }}>€{p.price.toLocaleString('pt-PT')}</div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             )}
 
             {showConsultant && (

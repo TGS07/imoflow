@@ -20,10 +20,11 @@ export async function GET(request: Request) {
   const search = searchParams.get('search')
   const personId = searchParams.get('person_id')
   const pipelineId = searchParams.get('pipeline_id')
+  const propertyId = searchParams.get('property_id')
 
   let query = supabase
     .from('leads')
-    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), people(id, name, email, phone, types), organizations(id, name), properties(id, reference, title, price, type)')
+    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), pipelines(name), people(id, name, email, phone, types), organizations(id, name), properties(id, reference, title, price, type)')
     .eq('agency_id', profile.agency_id)
     .order('created_at', { ascending: false })
 
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
   if (stageId) query = query.eq('stage_id', stageId)
   if (personId) query = query.eq('person_id', personId)
   if (pipelineId) query = query.eq('pipeline_id', pipelineId)
+  if (propertyId) query = query.eq('property_id', propertyId)
   if (search) {
     const term = search.replace(/[%_\\]/g, '\\$&')
     query = query.or(`name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%`)

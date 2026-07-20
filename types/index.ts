@@ -131,6 +131,8 @@ export type Property = {
   photos: string[]
   notes: string | null
   seller_id: string | null
+  buyer_id?: string | null
+  buyer?: { id: string; name: string; phone: string | null; email: string | null } | null
   created_at: string
 }
 
@@ -165,6 +167,7 @@ export type Lead = {
   people?: Person
   organizations?: Organization
   properties?: Property
+  pipelines?: { name: string } | null
 }
 
 export type Contact = {
