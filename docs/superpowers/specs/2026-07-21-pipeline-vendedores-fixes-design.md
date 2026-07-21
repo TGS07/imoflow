@@ -180,34 +180,31 @@ estendem `StageNotificationsState` com `days_after_entry: number | null` e
 e `stage_recurring` da mesma forma que já faz para `stage_changed`/
 `lead_inactive`.
 
-## D. Integração Telegram
+## D. Integração Telegram (envio apenas)
+
+**Descoberta durante a investigação:** a ligação Telegram já está
+parcialmente construída por uma sessão/projeto anterior — a coluna
+`public.users.telegram_chat_id` já existe na base de dados partilhada
+(criada pela migration `20260613230751_idealista_bot_schema`, aplicada
+pelo projeto separado `idealista-bot`, e não replicada nos ficheiros locais
+deste repo), e `app/(app)/settings/team/page.tsx` já tem um botão "Ligar
+Telegram" funcional (`t.me/Imoflowbot?start={user.id}`) e o badge "✓
+Telegram ligado". O que falta é só quem **recebe** o `/start` e grava o
+`chat_id` de volta — isso não existe em lado nenhum ainda.
+
+**Decisão confirmada com o utilizador:** o ImoFlow (este repo) não deve
+construir esse recetor. O `idealista-bot` (Python, `python-telegram-bot`)
+é o candidato natural a possuir a receção deste bot (precisa de receber
+updates de qualquer forma para os botões Enviar/Editar/Ignorar dos seus
+cartões) — um webhook novo aqui entraria em conflito com isso. Esta secção
+fica então limitada a **enviar** mensagens usando o `telegram_chat_id` que
+já existe, sem tocar em nada relacionado com receção.
 
 ### Modelo de dados
 
-```sql
-ALTER TABLE public.users ADD COLUMN telegram_chat_id TEXT;
-ALTER TABLE public.users ADD COLUMN telegram_link_code TEXT;
-CREATE UNIQUE INDEX users_telegram_chat_id_idx ON public.users(telegram_chat_id) WHERE telegram_chat_id IS NOT NULL;
-```
-
-`telegram_link_code`: código curto de uso único gerado quando o utilizador
-inicia o processo de ligação (nas Definições), consumido pelo webhook ao
-receber `/start <código>`.
-
-### Fluxo de ligação (cada utilizador liga a sua conta)
-
-1. Definições → Notificações: botão "Ligar Telegram" gera um código (ex.
-   6 carateres) e mostra `t.me/<bot_username>?start=<código>` (link e/ou
-   QR), guardando o código em `users.telegram_link_code`.
-2. Utilizador abre o link, o Telegram envia `/start <código>` ao bot.
-3. `POST /api/telegram/webhook` (endpoint novo, configurado como webhook do
-   bot via `setWebhook` — passo manual único, documentado abaixo) recebe o
-   update, procura o `users` com esse `telegram_link_code`, grava
-   `telegram_chat_id = update.message.chat.id`, limpa
-   `telegram_link_code`, e responde no chat "Conta ImoFlow ligada com
-   sucesso." via `sendMessage`.
-4. Definições mostra o estado "Telegram ligado ✓" com opção de desligar
-   (limpa `telegram_chat_id`).
+Nenhuma migration nova é necessária — `users.telegram_chat_id` já existe
+na base de dados partilhada. Só é preciso confirmar isso na migration de
+verificação do Passo inicial da secção C (ver "Migrations" mais abaixo).
 
 ### Envio
 
@@ -242,11 +239,15 @@ já passam por `createNotification`, sem precisar de um `action_type`
 ### Passos manuais (fora do alcance do código)
 
 - Confirmar `TELEGRAM_BOT_TOKEN` do bot existente (o mesmo do Idealista
-  Bot) e adicioná-lo às env vars do Vercel.
-- Depois do deploy, chamar uma vez
-  `https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://app.imoflow.pt/api/telegram/webhook`
-  para apontar o bot para o novo endpoint. Vou documentar isto em
-  `docs/TELEGRAM_SETUP.md`, espelhando `docs/WHATSAPP_SETUP.md`.
+  Bot, username `Imoflowbot`) e adicioná-lo às env vars do Vercel deste
+  projeto. Não é preciso chamar `setWebhook` nem nada relacionado com
+  receção — `sendMessage` funciona com qualquer processo que tenha o
+  token, independentemente de quem (se alguém) estiver a consumir updates.
+- Até o `idealista-bot` (ou outro processo) implementar a receção do
+  `/start`, o botão "Ligar Telegram" da página Equipa continua sem efeito
+  prático (o `chat_id` nunca fica preenchido) — isso é uma limitação
+  conhecida, fora do alcance deste plano.
+- Vou documentar isto em `docs/TELEGRAM_SETUP.md`.
 
 ## Nota sobre o AGENTS.md
 
@@ -255,9 +256,22 @@ Este repositório usa uma versão modificada do Next.js
 está instalado nesta worktree, por isso `node_modules/next/dist/docs/` não
 pôde ser consultado durante esta investigação. Antes de implementar
 qualquer mudança em `app/api/**/route.ts` (novos endpoints
-`add-properties`, `telegram/webhook`, `stage-notifications`) é necessário
-correr `npm install` e ler esses docs locais para confirmar convenções
-específicas deste fork (assinaturas de handlers, etc.).
+`add-properties`, `stage-notifications`) é necessário correr `npm install`
+e ler esses docs locais para confirmar convenções específicas deste fork
+(assinaturas de handlers, etc.).
+
+## Nota sobre migrations
+
+Esta worktree não tem stack local do Supabase (`node_modules` não
+instalado), e foi confirmado durante a investigação que os ficheiros em
+`supabase/migrations/` **não refletem** todas as migrations já aplicadas à
+base de dados partilhada (ex. `20260613230751_idealista_bot_schema`, do
+projeto `idealista-bot`, não tem ficheiro local equivalente). As novas
+migrations desta implementação (extensão de `automation_rules.trigger_type`
+e `leads.stage_entered_at`) devem ser aplicadas diretamente ao projeto
+Supabase (`sxenhpowxhexcggkepen`) via MCP `apply_migration`, e o ficheiro
+`.sql` correspondente deve ser mantido em `supabase/migrations/` para
+histórico, mesmo sabendo que essa pasta já está incompleta.
 
 ## Testes / verificação
 
@@ -269,6 +283,6 @@ específicas deste fork (assinaturas de handlers, etc.).
 - Notificações de etapa: testar os 4 tipos de aviso combinados numa
   mesma etapa, confirmar deduplicação (não notifica repetidamente antes da
   janela).
-- Telegram: fluxo de ligação ponta-a-ponta num ambiente com bot de teste;
-  confirmar que uma notificação normal (ex. nova lead) chega tanto por
-  email como por Telegram quando ambos estão ligados.
+- Telegram: com um `telegram_chat_id` de teste inserido manualmente na BD
+  (simulando uma conta já ligada), confirmar que uma notificação normal
+  (ex. nova lead) chega tanto por email como por Telegram.
