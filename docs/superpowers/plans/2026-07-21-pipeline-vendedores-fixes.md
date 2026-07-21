@@ -253,6 +253,8 @@ git add app/api/leads/[id]/route.ts
 git commit -m "feat: track stage_entered_at on stage change"
 ```
 
+**Addendum (revisão pós-review):** A abordagem acima foi substituída por um trigger de base de dados (`BEFORE UPDATE` em `public.leads`, migration `20260721230836_leads_stage_entered_at_trigger.sql`) que define `stage_entered_at = now()` sempre que `stage_id` muda, independentemente do caminho de escrita. A lógica manual em `app/api/leads/[id]/route.ts` foi revertida para a forma original, porque uma revisão de qualidade identificou que essa lógica só cobria o PATCH manual e deixava desatualizado o `stage_entered_at` em dois outros caminhos que também escrevem `stage_id` diretamente — a ação de automação `move_stage` (`lib/automations/engine.ts`) e a reatribuição de leads ao apagar uma etapa do pipeline (`app/api/pipeline-stages/[id]/route.ts`) — além de ter um risco de TOCTOU (comparação com uma linha `before` pré-lida, sem lock/transação). O trigger cobre todos os caminhos atomicamente e elimina o TOCTOU por operar sobre os valores OLD/NEW reais no momento da escrita.
+
 ---
 
 ### Task 5: Cron novo — `stage-notifications`
