@@ -8,6 +8,32 @@ import { triggerAutomations } from '@/lib/automations/engine'
 export async function GET(request: Request) { return handleCron(request) }
 export async function POST(request: Request) { return handleCron(request) }
 
+type StageRule = {
+  id: string
+  agency_id: string
+  trigger_type: 'stage_days_after_entry' | 'stage_recurring'
+  trigger_config: Record<string, unknown>
+}
+
+// Pré-verificação barata: replica (de forma simplificada) a lógica de
+// matchesTriggerConfig em lib/automations/engine.ts, só para decidir se vale
+// a pena chamar triggerAutomations (que faz a query real e é a fonte de
+// verdade). Evita uma chamada+query por lead/tipo quando nenhuma regra da
+// agência pode sequer corresponder.
+function ruleMatchesLead(rule: StageRule, stageId: string | null, daysSinceStageEntry: number): boolean {
+  const cfgStageId = rule.trigger_config.stage_id
+  if (cfgStageId && cfgStageId !== stageId) return false
+
+  if (rule.trigger_type === 'stage_days_after_entry') {
+    const days = Number(rule.trigger_config.days ?? 0)
+    return days > 0 && days === daysSinceStageEntry
+  }
+
+  // stage_recurring
+  const intervalDays = Number(rule.trigger_config.interval_days ?? 0)
+  return intervalDays > 0 && daysSinceStageEntry > 0 && daysSinceStageEntry % intervalDays === 0
+}
+
 async function handleCron(request: Request) {
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -18,15 +44,23 @@ async function handleCron(request: Request) {
 
   const { data: rules } = await supabase
     .from('automation_rules')
-    .select('id')
+    .select('id, agency_id, trigger_type, trigger_config')
     .in('trigger_type', ['stage_days_after_entry', 'stage_recurring'])
     .eq('is_active', true)
 
   if (!rules || rules.length === 0) return NextResponse.json({ processed: 0 })
 
+  // Agrupar regras por agência para lookup barato por lead.
+  const rulesByAgency = new Map<string, StageRule[]>()
+  for (const rule of rules as StageRule[]) {
+    const agencyRules = rulesByAgency.get(rule.agency_id) ?? []
+    agencyRules.push(rule)
+    rulesByAgency.set(rule.agency_id, agencyRules)
+  }
+
   const { data: leads } = await supabase
     .from('leads')
-    .select('id, assigned_to, agency_id, stage_entered_at, pipeline_stages!inner(is_won, is_lost)')
+    .select('id, assigned_to, agency_id, stage_id, stage_entered_at, pipeline_stages!inner(is_won, is_lost)')
     .eq('pipeline_stages.is_won', false)
     .eq('pipeline_stages.is_lost', false)
 
@@ -38,11 +72,19 @@ async function handleCron(request: Request) {
   for (const lead of leads) {
     if (!lead.assigned_to || !lead.agency_id) continue
 
+    const agencyRules = rulesByAgency.get(lead.agency_id)
+    if (!agencyRules || agencyRules.length === 0) continue
+
     const enteredAt = new Date(lead.stage_entered_at).getTime()
     const daysSinceStageEntry = Math.floor((now - enteredAt) / (24 * 60 * 60 * 1000))
     if (daysSinceStageEntry <= 0) continue
 
     for (const type of ['stage_days_after_entry', 'stage_recurring'] as const) {
+      const hasPlausibleMatch = agencyRules.some(
+        rule => rule.trigger_type === type && ruleMatchesLead(rule, lead.stage_id, daysSinceStageEntry)
+      )
+      if (!hasPlausibleMatch) continue
+
       await triggerAutomations({
         type,
         leadId: lead.id,
