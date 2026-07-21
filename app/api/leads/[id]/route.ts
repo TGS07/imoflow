@@ -58,9 +58,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { data: before } = await beforeQuery.single()
   if (!before) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  const updateData = leadData.stage_id && leadData.stage_id !== before.stage_id
+    ? { ...leadData, stage_entered_at: new Date().toISOString() }
+    : leadData
+
   let updateQuery = supabase
     .from('leads')
-    .update(leadData)
+    .update(updateData)
     .eq('id', id)
     .eq('agency_id', profile.agency_id)
   if (profile.role === 'agent') updateQuery = updateQuery.eq('assigned_to', user.id)
