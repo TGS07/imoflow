@@ -72,6 +72,28 @@ async function readState(supabase: Awaited<ReturnType<typeof createClient>>, age
   }
 }
 
+async function syncRule(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  ruleIds: string[],
+  value: number | boolean | null,
+  insertPayload: Record<string, unknown>,
+  updateRow: Record<string, unknown>
+): Promise<{ error: string } | null> {
+  if (value) {
+    if (ruleIds.length === 0) {
+      const { error } = await supabase.from('automation_rules').insert(insertPayload)
+      if (error) return { error: error.message }
+    } else {
+      const { error } = await supabase.from('automation_rules').update(updateRow).in('id', ruleIds)
+      if (error) return { error: error.message }
+    }
+  } else if (ruleIds.length > 0) {
+    const { error } = await supabase.from('automation_rules').delete().in('id', ruleIds)
+    if (error) return { error: error.message }
+  }
+  return null
+}
+
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
@@ -106,113 +128,85 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { enterRuleIds, staleRuleIds, daysAfterRuleIds, recurringRuleIds } = await readState(supabase, agencyId, id)
 
   // Sincronizar "ao entrar"
-  if (onEnter) {
+  {
     const row = {
       name: `Etapa ${stage.name}: aviso de entrada`,
       trigger_config: { to_stage_id: id },
       action_config: { message: `Um contacto entrou na etapa "${stage.name}".` },
       is_active: true,
     }
-    if (enterRuleIds.length === 0) {
-      const { error } = await supabase.from('automation_rules').insert({
-        agency_id: agencyId,
-        description: 'Criado pelo editor de notificações da etapa',
-        trigger_type: 'stage_changed',
-        action_type: 'send_notification',
-        pipeline_id: stage.pipeline_id,
-        ...row,
-      })
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    } else {
-      const { error } = await supabase.from('automation_rules').update(row).in('id', enterRuleIds)
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-  } else if (enterRuleIds.length > 0) {
-    const { error } = await supabase.from('automation_rules').delete().in('id', enterRuleIds)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const result = await syncRule(supabase, enterRuleIds, onEnter, {
+      agency_id: agencyId,
+      description: 'Criado pelo editor de notificações da etapa',
+      trigger_type: 'stage_changed',
+      action_type: 'send_notification',
+      pipeline_id: stage.pipeline_id,
+      ...row,
+    }, row)
+    if (result) return NextResponse.json(result, { status: 500 })
   }
 
   // Sincronizar "parado há X dias"
-  if (staleDays != null) {
+  {
     const row = {
       name: `Etapa ${stage.name}: parado ${staleDays} dias`,
       trigger_config: { stage_id: id, inactive_days: staleDays },
       action_config: { message: `Um contacto está há ${staleDays} dias sem atividade na etapa "${stage.name}".` },
       is_active: true,
     }
-    if (staleRuleIds.length === 0) {
-      // Sem pipeline_id: o cron lead-inactive não envia meta.pipelineId, e o
-      // gate por pipeline do motor descartaria a regra (nunca dispararia).
-      // O filtro por stage_id já a limita à etapa — e a etapa implica a pipeline.
-      const { error } = await supabase.from('automation_rules').insert({
-        agency_id: agencyId,
-        description: 'Criado pelo editor de notificações da etapa',
-        trigger_type: 'lead_inactive',
-        action_type: 'send_notification',
-        ...row,
-      })
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    } else {
-      const { error } = await supabase.from('automation_rules').update(row).in('id', staleRuleIds)
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-  } else if (staleRuleIds.length > 0) {
-    const { error } = await supabase.from('automation_rules').delete().in('id', staleRuleIds)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    // Sem pipeline_id: o cron lead-inactive não envia meta.pipelineId, e o
+    // gate por pipeline do motor descartaria a regra (nunca dispararia).
+    // O filtro por stage_id já a limita à etapa — e a etapa implica a pipeline.
+    const result = await syncRule(supabase, staleRuleIds, staleDays, {
+      agency_id: agencyId,
+      description: 'Criado pelo editor de notificações da etapa',
+      trigger_type: 'lead_inactive',
+      action_type: 'send_notification',
+      ...row,
+    }, row)
+    if (result) return NextResponse.json(result, { status: 500 })
   }
 
   // Sincronizar "X dias após entrar na etapa"
-  if (daysAfterEntry != null) {
+  {
     const row = {
       name: `Etapa ${stage.name}: ${daysAfterEntry} dias após entrar`,
       trigger_config: { stage_id: id, days: daysAfterEntry },
       action_config: { message: `Um contacto está há ${daysAfterEntry} dias na etapa "${stage.name}".` },
       is_active: true,
     }
-    if (daysAfterRuleIds.length === 0) {
-      const { error } = await supabase.from('automation_rules').insert({
-        agency_id: agencyId,
-        description: 'Criado pelo editor de notificações da etapa',
-        trigger_type: 'stage_days_after_entry',
-        action_type: 'send_notification',
-        ...row,
-      })
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    } else {
-      const { error } = await supabase.from('automation_rules').update(row).in('id', daysAfterRuleIds)
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-  } else if (daysAfterRuleIds.length > 0) {
-    const { error } = await supabase.from('automation_rules').delete().in('id', daysAfterRuleIds)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const result = await syncRule(supabase, daysAfterRuleIds, daysAfterEntry, {
+      agency_id: agencyId,
+      description: 'Criado pelo editor de notificações da etapa',
+      trigger_type: 'stage_days_after_entry',
+      action_type: 'send_notification',
+      ...row,
+    }, row)
+    if (result) return NextResponse.json(result, { status: 500 })
   }
 
   // Sincronizar "a cada X dias" (recorrente)
-  if (recurringDays != null) {
+  {
     const row = {
       name: `Etapa ${stage.name}: lembrete a cada ${recurringDays} dias`,
       trigger_config: { stage_id: id, interval_days: recurringDays },
       action_config: { message: `Lembrete: um contacto continua na etapa "${stage.name}" (aviso a cada ${recurringDays} dias).` },
       is_active: true,
     }
-    if (recurringRuleIds.length === 0) {
-      const { error } = await supabase.from('automation_rules').insert({
-        agency_id: agencyId,
-        description: 'Criado pelo editor de notificações da etapa',
-        trigger_type: 'stage_recurring',
-        action_type: 'send_notification',
-        ...row,
-      })
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    } else {
-      const { error } = await supabase.from('automation_rules').update(row).in('id', recurringRuleIds)
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-  } else if (recurringRuleIds.length > 0) {
-    const { error } = await supabase.from('automation_rules').delete().in('id', recurringRuleIds)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const result = await syncRule(supabase, recurringRuleIds, recurringDays, {
+      agency_id: agencyId,
+      description: 'Criado pelo editor de notificações da etapa',
+      trigger_type: 'stage_recurring',
+      action_type: 'send_notification',
+      ...row,
+    }, row)
+    if (result) return NextResponse.json(result, { status: 500 })
   }
 
-  const { state } = await readState(supabase, agencyId, id)
-  return NextResponse.json(state)
+  return NextResponse.json({
+    on_enter: onEnter,
+    stale_days: staleDays,
+    days_after_entry: daysAfterEntry,
+    recurring_days: recurringDays,
+  } satisfies StageNotificationsState)
 }
