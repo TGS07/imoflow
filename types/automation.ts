@@ -4,6 +4,8 @@ export type AutomationTriggerType =
   | 'activity_completed'
   | 'lead_inactive'
   | 'whatsapp_message_received'
+  | 'stage_days_after_entry'
+  | 'stage_recurring'
 
 export type AutomationActionType =
   | 'create_activity'
@@ -49,5 +51,6 @@ export type AutomationEvent = {
     activityId?: string
     inactiveDays?: number
     messageBody?: string
+    daysSinceStageEntry?: number
   }
 }

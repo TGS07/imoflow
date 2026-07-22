@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { resend } from '@/lib/resend'
+import { isTelegramConfigured, sendTelegramMessage } from '@/lib/telegram/send'
 
 export type NotificationType =
   | 'new_lead'
@@ -48,12 +49,24 @@ export async function createNotification(params: CreateNotificationParams, clien
       .in('id', toDelete)
   }
 
-  // 3. Verificar opt-out e enviar email
+  // 3. Buscar dados do utilizador para email + Telegram
   const { data: userRow } = await supabase
     .from('users')
-    .select('name, email_notifications')
+    .select('name, email_notifications, telegram_chat_id')
     .eq('id', userId)
     .single()
+
+  // 3a. Telegram (não bloqueia o envio de email nem é bloqueado por ele)
+  if (userRow?.telegram_chat_id && isTelegramConfigured()) {
+    try {
+      await sendTelegramMessage(
+        userRow.telegram_chat_id,
+        [`[ImoFlow] ${title}`, '', body, link ? `\nhttps://app.imoflow.pt${link}` : ''].join('\n')
+      )
+    } catch (err) {
+      console.error('Failed to send Telegram notification:', err)
+    }
+  }
 
   if (!userRow?.email_notifications) return
 

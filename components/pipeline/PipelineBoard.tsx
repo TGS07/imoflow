@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { HelpButton } from '@/components/help/HelpButton'
 import { Lead, PipelineStage, Pipeline } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
-import { ContactPickerModal } from '@/components/pipeline/ContactPickerModal'
+import { PropertyPickerModal } from '@/components/pipeline/PropertyPickerModal'
 import { ContactSlideOver } from '@/components/pipeline/ContactSlideOver'
 import { PipelineSettingsModal } from '@/components/pipeline/PipelineSettingsModal'
 
@@ -43,16 +43,6 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
 
   const selected = pipelines.find(p => p.id === selectedId) ?? null
 
-  // Contactos já presentes nesta pipeline (lead ativa = etapa não won/lost)
-  const alreadyInIds = useMemo(() => {
-    const set = new Set<string>()
-    for (const l of leads) {
-      const st = l.pipeline_stages
-      if (l.person_id && st && !st.is_won && !st.is_lost) set.add(l.person_id)
-    }
-    return set
-  }, [leads])
-
   async function deletePipeline(p: Pipeline) {
     if (!confirm(`Eliminar a pipeline "${p.name}"? As etapas são apagadas.`)) return
     const res = await fetch(`/api/pipelines/${p.id}`, { method: 'DELETE' })
@@ -74,10 +64,9 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
         <NewLeadModal pipelineId={selectedId} onClose={() => setShowNewLead(false)} onCreated={() => { setShowNewLead(false); if (selectedId) loadBoard(selectedId) }} />
       )}
       {showPicker && selected && (
-        <ContactPickerModal
+        <PropertyPickerModal
           pipelineId={selected.id}
           pipelineName={selected.name}
-          alreadyInIds={alreadyInIds}
           onClose={() => setShowPicker(false)}
           onAdded={() => selectedId && loadBoard(selectedId)}
         />
@@ -133,7 +122,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button onClick={() => setShowPicker(true)} disabled={!selected} className="btn btn-ghost">+ Contactos</button>
+          <button onClick={() => setShowPicker(true)} disabled={!selected} className="btn btn-ghost">+ Imóveis</button>
           <button onClick={() => setShowNewLead(true)} disabled={!selectedId} className="btn btn-primary">+ Novo Lead</button>
         </div>
       </div>

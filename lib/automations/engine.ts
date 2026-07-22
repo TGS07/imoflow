@@ -8,6 +8,9 @@ import { fillVariables, TemplateVars } from '@/lib/email/variables'
 import { sendWhatsAppMessage } from '@/lib/whatsapp/send'
 import { normalizePhone } from '@/lib/whatsapp/utils'
 
+// Trigger types that can be scoped to specific stages
+const STAGE_SCOPED_TRIGGERS = ['lead_inactive', 'stage_days_after_entry', 'stage_recurring']
+
 // `client` permite passar o service client em contextos sem sessão (crons,
 // webhooks) — sem ele, o RLS bloqueia as queries silenciosamente.
 export async function triggerAutomations(event: AutomationEvent, client?: SupabaseClient): Promise<void> {
@@ -42,7 +45,7 @@ export async function triggerAutomations(event: AutomationEvent, client?: Supaba
   // Regras de inatividade podem ser limitadas a uma etapa específica
   // (trigger_config.stage_id) — só disparam se a lead estiver nessa etapa.
   const stageFilteredRules = matchingRules.filter((rule: AutomationRule) => {
-    if (rule.trigger_type !== 'lead_inactive') return true
+    if (!STAGE_SCOPED_TRIGGERS.includes(rule.trigger_type)) return true
     const cfgStage = (rule.trigger_config as Record<string, unknown>).stage_id
     return !cfgStage || cfgStage === lead.stage_id
   })
@@ -112,6 +115,18 @@ function matchesTriggerConfig(rule: AutomationRule, event: AutomationEvent): boo
     const required = Number(config.inactive_days ?? 0)
     const actual = Number(event.meta?.inactiveDays ?? 0)
     if (actual < required) return false
+  }
+
+  if (rule.trigger_type === 'stage_days_after_entry') {
+    const required = Number(config.days ?? 0)
+    const actual = Number(event.meta?.daysSinceStageEntry ?? -1)
+    if (required <= 0 || actual !== required) return false
+  }
+
+  if (rule.trigger_type === 'stage_recurring') {
+    const required = Number(config.interval_days ?? 0)
+    const actual = Number(event.meta?.daysSinceStageEntry ?? 0)
+    if (required <= 0 || actual <= 0 || actual % required !== 0) return false
   }
 
   return true
