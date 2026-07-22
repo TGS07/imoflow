@@ -82,7 +82,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       phone: person?.phone ?? null,
       stage_id: firstStage.id,
       pipeline_id: pipelineId,
-      person_id: item.person_id,
+      person_id: person?.id ?? null,
       property_id: item.property_id,
       assigned_to: user.id,
       zone: property.zone,
