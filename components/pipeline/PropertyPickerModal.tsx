@@ -50,7 +50,9 @@ export function PropertyPickerModal({ pipelineId, pipelineName, onClose, onAdded
     setSearch('')
     setResults([])
     setShowSearchDropdown(false)
-    setSelected(prev => [...prev, { property, personId: null, personQuery: '', personResults: [], showPersonDropdown: false }])
+    setSelected(prev => prev.some(item => item.property.id === property.id)
+      ? prev
+      : [...prev, { property, personId: null, personQuery: '', personResults: [], showPersonDropdown: false }])
 
     const res = await fetch(`/api/properties/${property.id}`)
     if (!res.ok) return
