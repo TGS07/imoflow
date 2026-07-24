@@ -211,12 +211,18 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     setPipelineBusy(true)
     setPipelineMenuOpen(false)
     try {
-      for (const pipelineId of pipelineIds) {
-        await fetch(`/api/people/${id}/pipeline`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pipeline_id: pipelineId }),
-        })
+      const results = await Promise.allSettled(
+        pipelineIds.map(pipelineId =>
+          fetch(`/api/people/${id}/pipeline`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pipeline_id: pipelineId }),
+          })
+        )
+      )
+      const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.ok)).length
+      if (failed > 0) {
+        alert(`${failed} de ${pipelineIds.length} pipeline(s) não foram adicionadas.`)
       }
       fetchPerson(); onChanged?.()
     } finally {
