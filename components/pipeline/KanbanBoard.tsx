@@ -30,9 +30,9 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields }: { lead: Lead;
   const router = useRouter()
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lead.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
-  const initials = lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')
+  const initials = (lead.people?.name ?? lead.name).split(' ').map((n: string) => n[0]).slice(0, 2).join('')
   const typeMeta = lead.people?.types?.length ? contactTypeMeta(lead.people.types[0]) : null
-  const primaryText = cardFieldValue(lead, cardFields.primary) ?? lead.name
+  const primaryText = cardFieldValue(lead, cardFields.primary) ?? lead.people?.name ?? lead.name
   const secondaryText = cardFieldValue(lead, cardFields.secondary)
   // Campos já mostrados em cima não se repetem nas linhas fixas. Se o
   // primário caiu no fallback (nome), o nome conta como promovido na mesma.
