@@ -333,7 +333,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
             {selectedPerson ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, ...inputStyle, background: 'var(--card)' }}>
                 <span style={{ fontSize: 13, flex: 1 }}>{selectedPerson.name}</span>
-                <button type="button" onClick={() => { setSelectedPerson(null); setPersonSearch(''); setForm(f => ({ ...f, name: '' })) }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+                <button type="button" onClick={() => { setSelectedPerson(null); setPersonSearch(''); setForm(f => ({ ...f, name: '', email: '', phone: '' })) }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>✕</button>
               </div>
             ) : (
               <input style={inputStyle} placeholder="Pesquisar pessoa..." value={personSearch} onChange={e => { setPersonSearch(e.target.value); setShowPersonDropdown(true) }} onFocus={() => setShowPersonDropdown(true)} />
