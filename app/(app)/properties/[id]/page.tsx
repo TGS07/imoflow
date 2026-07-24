@@ -69,7 +69,7 @@ export default function PropertyPage() {
     title: '', reference: '', type: 'apartamento' as PropertyType, status: 'disponivel' as PropertyStatus,
     price: '', area_m2: '', typology: '', bedrooms: '', bathrooms: '', floor: '',
     condition: '' as string, address: '', city: '', zone: '', postal_code: '',
-    description: '', notes: '', features: '', photos: ''
+    description: '', notes: '', features: '', photos: '', idealista_url: ''
   })
 
   const fetchProperty = useCallback(async () => {
@@ -87,6 +87,7 @@ export default function PropertyPage() {
       description: data.description ?? '', notes: data.notes ?? '',
       features: (data.features ?? []).join(', '),
       photos: (data.photos ?? []).join('\n'),
+      idealista_url: data.idealista_url ?? '',
     })
   }, [id])
 
@@ -114,6 +115,7 @@ export default function PropertyPage() {
         postal_code: form.postal_code || null,
         description: form.description || null,
         notes: form.notes || null,
+        idealista_url: form.idealista_url || null,
         features: form.features ? form.features.split(',').map(f => f.trim()).filter(Boolean) : [],
         photos: form.photos ? form.photos.split('\n').map(u => u.trim()).filter(Boolean) : [],
       }),
@@ -307,6 +309,13 @@ export default function PropertyPage() {
             <div style={{ marginTop: 12 }}>
               <div style={labelStyle}>Notas</div>
               {editing ? <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' as const }} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /> : <div style={{ fontSize: 13, color: property.notes ? 'var(--text)' : 'var(--muted)', whiteSpace: 'pre-wrap' }}>{property.notes ?? '—'}</div>}
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              <div style={labelStyle}>Link Idealista</div>
+              {editing ? <input style={inputStyle} value={form.idealista_url} onChange={e => setForm(p => ({ ...p, idealista_url: e.target.value }))} placeholder="https://www.idealista.pt/imovel/..." /> : (
+                property.idealista_url ? <a href={property.idealista_url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--gold)' }}>{property.idealista_url}</a> : <div style={{ fontSize: 13, color: 'var(--muted)' }}>—</div>
+              )}
             </div>
           </div>
         </div>

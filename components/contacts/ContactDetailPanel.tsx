@@ -601,6 +601,11 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
             )}
 
             <div className="card" style={{ padding: 24 }}>
+              {cardTitle('Idealista')}
+              {field('Link do anúncio', fieldValue(d.idealista_url), <input className="input" value={d.idealista_url ?? ''} onChange={e => setDetail('idealista_url', e.target.value)} />)}
+            </div>
+
+            <div className="card" style={{ padding: 24 }}>
               {cardTitle('Notas')}
               {editing ? (
                 <textarea className="input" style={{ minHeight: 90 }} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} />

@@ -51,7 +51,7 @@ export default function PropertiesPage() {
     price: '', area_m2: '', typology: '', bedrooms: '', bathrooms: '', floor: '',
     condition: '' as PropertyCondition | '', reference: '',
     zone: '', address: '', city: '', postal_code: '',
-    description: '', features: '', photos: '', notes: '',
+    description: '', features: '', photos: '', notes: '', idealista_url: '',
   }
   const [form, setForm] = useState(emptyForm)
   const [creating, setCreating] = useState(false)
@@ -122,6 +122,7 @@ export default function PropertiesPage() {
           postal_code: form.postal_code || null,
           description: form.description || null,
           notes: form.notes || null,
+          idealista_url: form.idealista_url || null,
           features: form.features ? form.features.split(',').map(s => s.trim()).filter(Boolean) : [],
           photos: form.photos ? form.photos.split('\n').map(s => s.trim()).filter(Boolean) : [],
         }),
@@ -203,6 +204,9 @@ export default function PropertiesPage() {
 
               <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginTop: 4 }}>Fotos (opcional)</div>
               <textarea className="input" placeholder="URLs das fotos, uma por linha" value={form.photos} onChange={e => setForm(p => ({ ...p, photos: e.target.value }))} rows={2} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+
+              <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginTop: 4 }}>Idealista</div>
+              <input className="input" placeholder="Link do anúncio (https://www.idealista.pt/imovel/...)" value={form.idealista_url} onChange={e => setForm(p => ({ ...p, idealista_url: e.target.value }))} />
 
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="button" onClick={() => setShowForm(false)} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
