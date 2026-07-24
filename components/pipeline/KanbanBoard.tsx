@@ -12,7 +12,10 @@ export type PipelineCardFields = { primary: PipelineCardField; secondary: Pipeli
 // Valor de um campo configurável do card; null quando o lead não o tem.
 function cardFieldValue(lead: Lead, field: PipelineCardField): string | null {
   switch (field) {
-    case 'name': return lead.name
+    // O contacto ligado é a fonte da verdade para o nome — lead.name é só
+    // uma cópia guardada na criação, que fica desatualizada se o contacto
+    // for renomeado depois.
+    case 'name': return lead.people?.name ?? lead.name
     case 'zone': return lead.zone
     case 'typology': return lead.typology
     case 'property': return lead.properties ? (lead.properties.reference ?? lead.properties.title) : null
