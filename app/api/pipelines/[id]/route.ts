@@ -64,15 +64,17 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     .eq('agency_id', profile.agency_id)
   if ((count ?? 0) <= 1) return NextResponse.json({ error: 'Tem de existir pelo menos uma pipeline' }, { status: 400 })
 
-  // Recusar se a pipeline tiver leads — o delete em cascata das etapas
-  // falharia na FK de leads.stage_id com um erro críptico do Postgres.
-  const { count: leadCount } = await supabase
+  // As leads desta pipeline são apagadas antes da pipeline em si — o FK de
+  // leads.stage_id impede o cascade normal de pipeline_stages. Isto só apaga
+  // a ligação à pipeline: people/organizations/properties nunca são tocados
+  // (todos os FKs lead_id no schema são ON DELETE CASCADE — activities,
+  // tasks, contacts, automation_logs, etc. — por isso isto é seguro).
+  const { error: leadsError } = await supabase
     .from('leads')
-    .select('id', { count: 'exact', head: true })
+    .delete()
     .eq('pipeline_id', id)
-  if ((leadCount ?? 0) > 0) {
-    return NextResponse.json({ error: `Esta pipeline tem ${leadCount} contacto(s) — move-os ou remove-os primeiro.` }, { status: 400 })
-  }
+    .eq('agency_id', profile.agency_id)
+  if (leadsError) return NextResponse.json({ error: leadsError.message }, { status: 500 })
 
   const { error } = await supabase
     .from('pipelines')
