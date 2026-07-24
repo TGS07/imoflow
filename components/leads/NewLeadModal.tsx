@@ -1,9 +1,10 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { LeadSource, CustomField, Person, Organization, Property, Pipeline, ContactDetails } from '@/types'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
 import { ContactFormFields, type Member } from '@/components/contacts/ContactFormFields'
 import type { ContactTypeKey } from '@/lib/contacts/constants'
+import { normalizePhone } from '@/lib/whatsapp/utils'
 
 type Props = {
   onClose: () => void
@@ -50,6 +51,13 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
   const [birthday, setBirthday] = useState('')
   const [isRegular, setIsRegular] = useState(false)
   const [members, setMembers] = useState<Member[]>([])
+  // Pessoa criada durante esta sessão do modal — evita duplicar o contacto
+  // se uma tentativa anterior de submissão falhar a meio (ex: erro ao criar
+  // uma das leads) e o utilizador tentar submeter outra vez.
+  const [createdPersonId, setCreatedPersonId] = useState<string | null>(null)
+  // Contactos existentes, para detetar duplicados enquanto se escreve (mesmo
+  // padrão do NewContactModal.tsx).
+  const [existing, setExisting] = useState<Person[]>([])
 
   const toggleContactType = (t: ContactTypeKey) =>
     setContactTypes(prev => (prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]))
@@ -124,6 +132,28 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
       .catch(() => {})
   }, [])
 
+  // Carregar contactos existentes uma vez, para detetar duplicados enquanto
+  // se preenche o formulário de contacto novo (mesmo padrão do NewContactModal).
+  useEffect(() => {
+    fetch('/api/people')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Person[]) => setExisting(data))
+      .catch(() => {})
+  }, [])
+
+  // Só relevante quando não se escolheu uma pessoa existente no autocomplete
+  // — se já houver `selectedPerson`, não se vai criar um contacto novo.
+  const duplicate = useMemo(() => {
+    if (selectedPerson) return null
+    const phoneNorm = form.phone.trim() ? normalizePhone(form.phone) : null
+    const emailNorm = form.email.trim().toLowerCase() || null
+    if (!phoneNorm && !emailNorm) return null
+    return existing.find(p =>
+      (phoneNorm && p.phone && normalizePhone(p.phone) === phoneNorm) ||
+      (emailNorm && p.email && p.email.toLowerCase() === emailNorm)
+    ) ?? null
+  }, [existing, form.phone, form.email, selectedPerson])
+
   // Person search
   useEffect(() => {
     if (!personSearch || selectedPerson) { setPersonResults([]); return }
@@ -182,9 +212,11 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
         }
       }
 
-      // Pessoa: usa a escolhida no autocomplete, ou cria uma nova com todos
-      // os campos de ContactFormFields preenchidos neste mesmo passo.
-      let personId = selectedPerson?.id ?? null
+      // Pessoa: usa a escolhida no autocomplete, ou a criada numa tentativa
+      // anterior desta mesma sessão do modal (evita duplicar o contacto se
+      // uma submissão anterior falhar a meio, ex: erro ao criar uma lead),
+      // ou cria uma nova com todos os campos de ContactFormFields preenchidos.
+      let personId = selectedPerson?.id ?? createdPersonId
       if (!personId) {
         const personRes = await fetch('/api/people', {
           method: 'POST',
@@ -206,6 +238,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
         if (!personRes.ok) throw new Error('Erro ao criar contacto')
         const createdPerson = await personRes.json() as { id: string }
         personId = createdPerson.id
+        setCreatedPersonId(personId)
       }
 
       // Uma lead por pipeline marcada, todas ligadas à mesma pessoa/imóvel.
@@ -300,7 +333,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
             {selectedPerson ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, ...inputStyle, background: 'var(--card)' }}>
                 <span style={{ fontSize: 13, flex: 1 }}>{selectedPerson.name}</span>
-                <button type="button" onClick={() => { setSelectedPerson(null); setPersonSearch('') }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+                <button type="button" onClick={() => { setSelectedPerson(null); setPersonSearch(''); setForm(f => ({ ...f, name: '' })) }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>✕</button>
               </div>
             ) : (
               <input style={inputStyle} placeholder="Pesquisar pessoa..." value={personSearch} onChange={e => { setPersonSearch(e.target.value); setShowPersonDropdown(true) }} onFocus={() => setShowPersonDropdown(true)} />
@@ -384,6 +417,15 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
           {!selectedPerson && (
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', fontWeight: 600 }}>Contacto</div>
+
+              {duplicate && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#B45309' }}>
+                  <span>⚠</span>
+                  <span style={{ flex: 1 }}>Já existe um contacto com este {duplicate.phone && form.phone && normalizePhone(duplicate.phone) === normalizePhone(form.phone) ? 'telefone' : 'email'}: <strong>{duplicate.name}</strong></span>
+                  <a href={`/people/${duplicate.id}`} style={{ color: 'var(--gold)', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>Ver ficha →</a>
+                </div>
+              )}
+
               <ContactFormFields
                 types={contactTypes} onToggleType={toggleContactType}
                 capacity={capacity} onCapacityChange={setCapacity}
