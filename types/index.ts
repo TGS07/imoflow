@@ -130,6 +130,7 @@ export type Property = {
   features: string[]
   photos: string[]
   notes: string | null
+  idealista_url: string | null
   seller_id: string | null
   buyer_id?: string | null
   buyer?: { id: string; name: string; phone: string | null; email: string | null } | null

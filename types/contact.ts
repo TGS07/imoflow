@@ -4,6 +4,8 @@ import type { ContactTypeKey, CapacityBand } from '@/lib/contacts/constants'
 export type ContactTemperature = 'quente' | 'morno' | 'frio'
 
 export type ContactDetails = {
+  // link do anúncio no Idealista — campo geral, independente do tipo (comprador/vendedor/investidor)
+  idealista_url?: string
   // comprador / investidor
   looking_for?: string
   search_zone?: string
