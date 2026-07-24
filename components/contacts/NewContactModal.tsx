@@ -1,9 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import {
-  CONTACT_TYPES, CAPACITY_BANDS, CONTACT_SOURCES, SOURCE_LABELS,
-  type ContactTypeKey,
-} from '@/lib/contacts/constants'
+import { type ContactTypeKey } from '@/lib/contacts/constants'
+import { ContactFormFields, type Member } from '@/components/contacts/ContactFormFields'
 import type { ContactDetails, Person } from '@/types'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
 import { normalizePhone } from '@/lib/whatsapp/utils'
@@ -18,8 +16,6 @@ type Initial = Partial<{
   details: ContactDetails
   notes: string
 }>
-
-type Member = { id: string; name: string; avatar_initials: string }
 
 export function NewContactModal({ initial, onClose, onCreated }: {
   initial?: Initial
@@ -71,10 +67,10 @@ export function NewContactModal({ initial, onClose, onCreated }: {
     ) ?? null
   }, [existing, phone, email])
 
-  const has = (t: ContactTypeKey) => types.includes(t)
   const toggleType = (t: ContactTypeKey) =>
     setTypes(prev => (prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]))
-  const d = (k: keyof ContactDetails, v: unknown) => setDetails(p => ({ ...p, [k]: v }))
+  const setDetail = <K extends keyof ContactDetails>(k: K, v: ContactDetails[K]) =>
+    setDetails(p => ({ ...p, [k]: v }))
 
   function applyExtracted(f: Record<string, unknown>) {
     if (typeof f.name === 'string') setName(f.name)
@@ -112,7 +108,6 @@ export function NewContactModal({ initial, onClose, onCreated }: {
     }
   }
 
-  const cb = { width: 15, height: 15, accentColor: '#B07D2E', cursor: 'pointer' as const }
   const sectionLabel = { fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 6 }
 
   return (
@@ -161,129 +156,15 @@ export function NewContactModal({ initial, onClose, onCreated }: {
             </div>
           )}
 
-          <div>
-            <div style={sectionLabel}>Tipo</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {CONTACT_TYPES.map(meta => {
-                const active = has(meta.key)
-                return (
-                  <button
-                    key={meta.key}
-                    type="button"
-                    onClick={() => toggleType(meta.key)}
-                    style={{
-                      fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
-                      background: active ? `${meta.color}18` : 'var(--surface)',
-                      color: active ? meta.color : 'var(--muted)',
-                      border: active ? `1px solid ${meta.color}55` : '1px solid var(--border)',
-                    }}
-                  >
-                    {meta.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {(has('comprador') || has('investidor')) && (
-            <div>
-              <div style={sectionLabel}>Capacidade financeira</div>
-              <select className="input" value={capacity} onChange={e => setCapacity(e.target.value)}>
-                <option value="">—</option>
-                {CAPACITY_BANDS.map(b => (
-                  <option key={b.key} value={b.key}>{b.label} ({b.range})</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div>
-            <div style={sectionLabel}>Origem</div>
-            <select className="input" value={source} onChange={e => setSource(e.target.value)}>
-              <option value="">—</option>
-              {CONTACT_SOURCES.map(s => (
-                <option key={s} value={s}>{SOURCE_LABELS[s]}</option>
-              ))}
-            </select>
-          </div>
-
-          {(has('comprador') || has('investidor')) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
-              <div style={sectionLabel}>Procura</div>
-              <input className="input" placeholder="O que procura" value={details.looking_for ?? ''} onChange={e => d('looking_for', e.target.value)} />
-              <input className="input" placeholder="Zona" value={details.search_zone ?? ''} onChange={e => d('search_zone', e.target.value)} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
-                <input type="checkbox" style={cb} checked={!!details.already_bought} onChange={e => d('already_bought', e.target.checked)} />
-                Já comprou connosco
-              </label>
-            </div>
-          )}
-
-          {(has('vendedor') || has('investidor')) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
-              <div style={sectionLabel}>Venda</div>
-              <input className="input" placeholder={has('vendedor') ? 'O que vende' : 'O que oferece'} value={details.selling_property ?? ''} onChange={e => d('selling_property', e.target.value)} />
-              <input className="input" placeholder="Onde vende" value={details.selling_zone ?? ''} onChange={e => d('selling_zone', e.target.value)} />
-              <input className="input" type="number" placeholder="Preço (€)" value={details.selling_price ?? ''} onChange={e => d('selling_price', Number(e.target.value) || undefined)} />
-              <input className="input" placeholder="Tipologia" value={details.typology ?? ''} onChange={e => d('typology', e.target.value)} />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
-                  <input type="checkbox" style={cb} checked={!!details.has_garage} onChange={e => d('has_garage', e.target.checked)} />
-                  Garagem
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
-                  <input type="checkbox" style={cb} checked={!!details.has_balcony} onChange={e => d('has_balcony', e.target.checked)} />
-                  Varanda
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
-                  <input type="checkbox" style={cb} checked={!!details.has_exclusivity} onChange={e => d('has_exclusivity', e.target.checked)} />
-                  Exclusividade
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
-                  <input type="checkbox" style={cb} checked={!!details.is_active_seller} onChange={e => d('is_active_seller', e.target.checked)} />
-                  Vendedor ativo
-                </label>
-              </div>
-            </div>
-          )}
-
-          {has('consultor') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
-              <div style={sectionLabel}>Consultor Imobiliário</div>
-              <input className="input" placeholder="Agência" value={details.agency_name ?? ''} onChange={e => d('agency_name', e.target.value)} />
-              <input className="input" placeholder="Zona de atuação" value={details.working_zone ?? ''} onChange={e => d('working_zone', e.target.value)} />
-            </div>
-          )}
-
-          {has('servico') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
-              <div style={sectionLabel}>Serviço</div>
-              <input className="input" placeholder="O que faz (ex: canalizador, eletricista)" value={details.service_type ?? ''} onChange={e => d('service_type', e.target.value)} />
-              <input className="input" placeholder="Zona de atuação" value={details.working_zone ?? ''} onChange={e => d('working_zone', e.target.value)} />
-            </div>
-          )}
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div>
-              <div style={sectionLabel}>Responsável *</div>
-              <select className="input" value={assignedTo} onChange={e => setAssignedTo(e.target.value)} required>
-                <option value="" disabled>Escolher…</option>
-                {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <div style={sectionLabel}>Nascimento</div>
-              <input className="input" type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
-            </div>
-          </div>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
-            <input type="checkbox" style={cb} checked={isRegular} onChange={e => setIsRegular(e.target.checked)} />
-            <span>
-              <span style={{ fontWeight: 600 }}>Contacto regular</span>
-              <span style={{ color: 'var(--muted)', marginLeft: 6 }}>— com follow-ups automáticos</span>
-            </span>
-          </label>
+          <ContactFormFields
+            types={types} onToggleType={toggleType}
+            capacity={capacity} onCapacityChange={setCapacity}
+            source={source} onSourceChange={setSource}
+            details={details} onDetailChange={setDetail}
+            assignedTo={assignedTo} onAssignedToChange={setAssignedTo} members={members}
+            birthday={birthday} onBirthdayChange={setBirthday}
+            isRegular={isRegular} onIsRegularChange={setIsRegular}
+          />
 
           <div>
             <div style={sectionLabel}>Notas</div>
