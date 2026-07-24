@@ -52,6 +52,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
   const [pipelines, setPipelines] = useState<{ id: string; name: string }[]>([])
   const [stagesByPipeline, setStagesByPipeline] = useState<Record<string, { id: string; name: string; is_won: boolean; is_lost: boolean }[]>>({})
   const [pipelineMenuOpen, setPipelineMenuOpen] = useState(false)
+  const [pipelineSelection, setPipelineSelection] = useState<string[]>([])
   const pipelineMenuRef = useRef<HTMLDivElement>(null)
   const [customInterval, setCustomInterval] = useState('')
   const [newSpecialDate, setNewSpecialDate] = useState({ label: '', month: '', day: '' })
@@ -205,18 +206,22 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     onChanged?.()
   }
 
-  async function addToPipeline(pipelineId: string) {
+  async function addToPipelines(pipelineIds: string[]) {
+    if (pipelineIds.length === 0) return
     setPipelineBusy(true)
     setPipelineMenuOpen(false)
     try {
-      const res = await fetch(`/api/people/${id}/pipeline`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pipeline_id: pipelineId }),
-      })
-      if (res.ok) { fetchPerson(); onChanged?.() }
+      for (const pipelineId of pipelineIds) {
+        await fetch(`/api/people/${id}/pipeline`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pipeline_id: pipelineId }),
+        })
+      }
+      fetchPerson(); onChanged?.()
     } finally {
       setPipelineBusy(false)
+      setPipelineSelection([])
     }
   }
 
@@ -336,10 +341,26 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                 {pipelineBusy ? 'A adicionar…' : '+ Pipeline'}
               </button>
               {pipelineMenuOpen && (
-                <div className="card" style={{ position: 'absolute', top: '110%', right: 0, zIndex: 30, minWidth: 180, padding: 6, display: 'flex', flexDirection: 'column', gap: 2, boxShadow: 'var(--shadow-md)' }}>
+                <div className="card" style={{ position: 'absolute', top: '110%', right: 0, zIndex: 30, minWidth: 200, padding: 10, display: 'flex', flexDirection: 'column', gap: 4, boxShadow: 'var(--shadow-md)' }}>
                   {missingPipelines.map(p => (
-                    <button key={p.id} onClick={() => addToPipeline(p.id)} className="btn btn-ghost btn-sm" style={{ justifyContent: 'flex-start' }}>{p.name}</button>
+                    <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px', fontSize: 'var(--fs-sm)', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={pipelineSelection.includes(p.id)}
+                        onChange={() => setPipelineSelection(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id])}
+                      />
+                      {p.name}
+                    </label>
                   ))}
+                  <button
+                    type="button"
+                    disabled={pipelineSelection.length === 0}
+                    onClick={() => addToPipelines(pipelineSelection)}
+                    className="btn btn-primary btn-sm"
+                    style={{ marginTop: 6 }}
+                  >
+                    Adicionar
+                  </button>
                 </div>
               )}
             </div>
