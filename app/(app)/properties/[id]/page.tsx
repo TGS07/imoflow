@@ -314,7 +314,7 @@ export default function PropertyPage() {
             <div style={{ marginTop: 12 }}>
               <div style={labelStyle}>Link Idealista</div>
               {editing ? <input style={inputStyle} value={form.idealista_url} onChange={e => setForm(p => ({ ...p, idealista_url: e.target.value }))} placeholder="https://www.idealista.pt/imovel/..." /> : (
-                property.idealista_url ? <a href={property.idealista_url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--gold)' }}>{property.idealista_url}</a> : <div style={{ fontSize: 13, color: 'var(--muted)' }}>—</div>
+                property.idealista_url && /^https?:\/\//i.test(property.idealista_url) ? <a href={property.idealista_url} target="_blank" rel="noreferrer" style={{ fontSize: 13, color: 'var(--gold)' }}>{property.idealista_url}</a> : <div style={{ fontSize: 13, color: property.idealista_url ? 'var(--text)' : 'var(--muted)' }}>{property.idealista_url ?? '—'}</div>
               )}
             </div>
           </div>
