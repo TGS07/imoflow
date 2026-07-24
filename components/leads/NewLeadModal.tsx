@@ -1,14 +1,16 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { LeadSource, CustomField, Person, Organization, Property } from '@/types'
+import { LeadSource, CustomField, Person, Organization, Property, Pipeline, ContactDetails } from '@/types'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
+import { ContactFormFields, type Member } from '@/components/contacts/ContactFormFields'
+import type { ContactTypeKey } from '@/lib/contacts/constants'
 
 type Props = {
   onClose: () => void
   onCreated: () => void
   initialPerson?: Person
   initialValues?: Partial<{ zone: string; typology: string; budget: number }>
-  pipelineId?: string
+  defaultPipelineIds?: string[]
 }
 
 const SOURCES: { value: LeadSource; label: string }[] = [
@@ -19,7 +21,7 @@ const SOURCES: { value: LeadSource; label: string }[] = [
   { value: 'outro', label: '◯ Outro' },
 ]
 
-export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues, pipelineId }: Props) {
+export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues, defaultPipelineIds }: Props) {
   const [form, setForm] = useState({
     name: initialPerson?.name ?? '',
     email: initialPerson?.email ?? '',
@@ -36,6 +38,29 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
   const [customValues, setCustomValues] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'manual' | 'audio'>('manual')
+
+  // Campos de contacto — só usados para criar uma pessoa nova (quando
+  // nenhuma pessoa é escolhida no autocomplete "Pessoa" abaixo). Mesmos
+  // campos que o NewContactModal, via ContactFormFields.
+  const [contactTypes, setContactTypes] = useState<ContactTypeKey[]>([])
+  const [capacity, setCapacity] = useState('')
+  const [contactSource, setContactSource] = useState('')
+  const [details, setDetails] = useState<ContactDetails>({})
+  const [assignedTo, setAssignedTo] = useState('')
+  const [birthday, setBirthday] = useState('')
+  const [isRegular, setIsRegular] = useState(false)
+  const [members, setMembers] = useState<Member[]>([])
+
+  const toggleContactType = (t: ContactTypeKey) =>
+    setContactTypes(prev => (prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]))
+  const setDetail = <K extends keyof ContactDetails>(k: K, v: ContactDetails[K]) =>
+    setDetails(p => ({ ...p, [k]: v }))
+
+  // Pipelines — seleção múltipla; cria uma lead por pipeline marcada.
+  const [pipelines, setPipelines] = useState<Pipeline[]>([])
+  const [pipelineIds, setPipelineIds] = useState<string[]>(defaultPipelineIds ?? [])
+  const togglePipeline = (pid: string) =>
+    setPipelineIds(prev => prev.includes(pid) ? prev.filter(x => x !== pid) : [...prev, pid])
 
   function applyVoice(f: Record<string, unknown>) {
     setForm(p => ({
@@ -77,6 +102,26 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
 
   useEffect(() => {
     fetch('/api/custom-fields').then(r => r.json()).then(setCustomFields)
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/team/members')
+      .then(r => r.ok ? r.json() : { members: [], current_user_id: '' })
+      .then((data: { members: Member[]; current_user_id: string }) => {
+        setMembers(data.members)
+        setAssignedTo(prev => prev || data.current_user_id)
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/pipelines')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Pipeline[]) => {
+        setPipelines(data)
+        setPipelineIds(prev => prev.length > 0 ? prev : (data[0] ? [data[0].id] : []))
+      })
+      .catch(() => {})
   }, [])
 
   // Person search
@@ -122,6 +167,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (pipelineIds.length === 0) return
     setLoading(true)
     try {
       const cfValues: Record<string, string | number | null> = {}
@@ -136,34 +182,71 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
         }
       }
 
-      const res = await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          budget: form.budget ? Number(form.budget) : null,
-          deal_value: form.deal_value ? Number(form.deal_value) : null,
-          expected_close_date: form.expected_close_date || null,
-          notes: form.notes || null,
-          person_id: selectedPerson?.id ?? null,
-          organization_id: selectedOrg?.id ?? null,
-          property_id: selectedProp?.id ?? null,
-          pipeline_id: pipelineId ?? null,
-          custom_fields: Object.keys(cfValues).length > 0 ? cfValues : undefined,
-        }),
-      })
-      if (!res.ok) throw new Error('Erro ao criar lead')
-      const created = await res.json() as { id?: string }
-      if (created?.id) {
+      // Pessoa: usa a escolhida no autocomplete, ou cria uma nova com todos
+      // os campos de ContactFormFields preenchidos neste mesmo passo.
+      let personId = selectedPerson?.id ?? null
+      if (!personId) {
+        const personRes = await fetch('/api/people', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email || null,
+            phone: form.phone || null,
+            types: contactTypes,
+            financial_capacity: (contactTypes.includes('comprador') || contactTypes.includes('investidor')) ? (capacity || null) : null,
+            source: contactSource || null,
+            details,
+            notes: form.notes || null,
+            birthday: birthday || null,
+            is_regular: isRegular,
+            assigned_to: assignedTo || null,
+          }),
+        })
+        if (!personRes.ok) throw new Error('Erro ao criar contacto')
+        const createdPerson = await personRes.json() as { id: string }
+        personId = createdPerson.id
+      }
+
+      // Uma lead por pipeline marcada, todas ligadas à mesma pessoa/imóvel.
+      const createdLeadIds: string[] = []
+      for (const pipelineId of pipelineIds) {
+        const res = await fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email || null,
+            phone: form.phone || null,
+            source: form.source,
+            zone: form.zone || null,
+            typology: form.typology || null,
+            budget: form.budget ? Number(form.budget) : null,
+            deal_value: form.deal_value ? Number(form.deal_value) : null,
+            expected_close_date: form.expected_close_date || null,
+            notes: form.notes || null,
+            person_id: personId,
+            organization_id: selectedOrg?.id ?? null,
+            property_id: selectedProp?.id ?? null,
+            pipeline_id: pipelineId,
+            custom_fields: Object.keys(cfValues).length > 0 ? cfValues : undefined,
+          }),
+        })
+        if (!res.ok) throw new Error('Erro ao criar lead')
+        const created = await res.json() as { id?: string }
+        if (created?.id) createdLeadIds.push(created.id)
+      }
+
+      for (const leadId of createdLeadIds) {
         fetch('/api/ai/qualify-lead', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lead_id: created.id }),
+          body: JSON.stringify({ lead_id: leadId }),
         })
           .then(r => r.ok ? r.json() : null)
           .then(async (q: { score: number } | null) => {
             if (!q) return
-            await fetch(`/api/leads/${created.id}`, {
+            await fetch(`/api/leads/${leadId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ score: q.score }),
@@ -171,6 +254,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
           })
           .catch(() => {})
       }
+
       onCreated()
       onClose()
     } catch {
@@ -182,7 +266,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" style={{ width: 480 }} onClick={e => e.stopPropagation()}>
+      <div className="modal" style={{ width: 480, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div className="font-display" style={{ fontSize: 18 }}>Novo Lead</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer' }}>✕</button>
@@ -224,7 +308,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
             {showPersonDropdown && personSearch && !selectedPerson && (
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, marginTop: 4, maxHeight: 180, overflowY: 'auto', zIndex: 10 }}>
                 {personResults.map(p => (
-                  <div key={p.id} onClick={() => { setSelectedPerson(p); setPersonSearch(p.name); setShowPersonDropdown(false); if (!form.email && p.email) setForm(f => ({ ...f, email: p.email! })); if (!form.phone && p.phone) setForm(f => ({ ...f, phone: p.phone! })) }} style={{ padding: '8px 12px', fontSize: 12, cursor: 'pointer', borderBottom: '1px solid var(--border)' }}>
+                  <div key={p.id} onClick={() => { setSelectedPerson(p); setPersonSearch(p.name); setShowPersonDropdown(false); setForm(f => ({ ...f, name: p.name, email: f.email || p.email || '', phone: f.phone || p.phone || '' })) }} style={{ padding: '8px 12px', fontSize: 12, cursor: 'pointer', borderBottom: '1px solid var(--border)' }}>
                     <div style={{ fontWeight: 500 }}>{p.name}</div>
                     {p.email && <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.email}</div>}
                   </div>
@@ -281,11 +365,37 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
             )}
           </div>
 
-          <div><label style={labelStyle}>Nome *</label><input style={inputStyle} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} required /></div>
+          <div>
+            <label style={labelStyle}>Nome *</label>
+            <input
+              style={{ ...inputStyle, ...(selectedPerson ? { background: 'var(--card)', color: 'var(--muted)' } : {}) }}
+              value={form.name}
+              onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+              disabled={!!selectedPerson}
+              title={selectedPerson ? 'Nome do contacto ligado — edita-se na ficha do contacto' : undefined}
+              required
+            />
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div><label style={labelStyle}>Email</label><input type="email" style={inputStyle} value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
             <div><label style={labelStyle}>Telefone</label><input style={inputStyle} value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} /></div>
           </div>
+
+          {!selectedPerson && (
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', fontWeight: 600 }}>Contacto</div>
+              <ContactFormFields
+                types={contactTypes} onToggleType={toggleContactType}
+                capacity={capacity} onCapacityChange={setCapacity}
+                source={contactSource} onSourceChange={setContactSource}
+                details={details} onDetailChange={setDetail}
+                assignedTo={assignedTo} onAssignedToChange={setAssignedTo} members={members}
+                birthday={birthday} onBirthdayChange={setBirthday}
+                isRegular={isRegular} onIsRegularChange={setIsRegular}
+              />
+            </div>
+          )}
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div><label style={labelStyle}>Zona</label><input style={inputStyle} value={form.zone} onChange={e => setForm(p => ({ ...p, zone: e.target.value }))} placeholder="Ex: Cascais" /></div>
             <div><label style={labelStyle}>Tipologia</label><input style={inputStyle} value={form.typology} onChange={e => setForm(p => ({ ...p, typology: e.target.value }))} placeholder="Ex: T3" /></div>
@@ -293,7 +403,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div><label style={labelStyle}>Orçamento (€)</label><input type="number" style={inputStyle} value={form.budget} onChange={e => setForm(p => ({ ...p, budget: e.target.value }))} placeholder="Ex: 350000" /></div>
             <div>
-              <label style={labelStyle}>Origem</label>
+              <label style={labelStyle}>Origem do negócio</label>
               <select style={{ ...inputStyle }} value={form.source} onChange={e => setForm(p => ({ ...p, source: e.target.value as LeadSource }))}>
                 {SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
@@ -361,9 +471,22 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
             </div>
           )}
 
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 10, fontWeight: 600 }}>Pipelines</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {pipelines.map(p => (
+                <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', background: pipelineIds.includes(p.id) ? 'var(--gold-glow)' : 'var(--surface)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={pipelineIds.includes(p.id)} onChange={() => togglePipeline(p.id)} />
+                  {p.name}
+                </label>
+              ))}
+            </div>
+            {pipelineIds.length === 0 && <div style={{ fontSize: 11, color: '#B45309', marginTop: 6 }}>Marca pelo menos uma pipeline.</div>}
+          </div>
+
           <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
             <button type="button" onClick={onClose} className="btn btn-ghost" style={{ flex: 1 }}>Cancelar</button>
-            <button type="submit" disabled={loading} className="btn btn-primary" style={{ flex: 1 }}>
+            <button type="submit" disabled={loading || pipelineIds.length === 0} className="btn btn-primary" style={{ flex: 1 }}>
               {loading ? 'A criar...' : 'Criar Lead'}
             </button>
           </div>

@@ -61,7 +61,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
   return (
     <>
       {showNewLead && selectedId && (
-        <NewLeadModal pipelineId={selectedId} onClose={() => setShowNewLead(false)} onCreated={() => { setShowNewLead(false); if (selectedId) loadBoard(selectedId) }} />
+        <NewLeadModal defaultPipelineIds={[selectedId]} onClose={() => setShowNewLead(false)} onCreated={() => { setShowNewLead(false); if (selectedId) loadBoard(selectedId) }} />
       )}
       {showPicker && selected && (
         <PropertyPickerModal
