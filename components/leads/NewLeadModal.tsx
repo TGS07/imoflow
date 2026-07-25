@@ -55,6 +55,11 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
   // se uma tentativa anterior de submissão falhar a meio (ex: erro ao criar
   // uma das leads) e o utilizador tentar submeter outra vez.
   const [createdPersonId, setCreatedPersonId] = useState<string | null>(null)
+  // Leads já criadas nesta sessão do modal, por pipeline — mesma lógica do
+  // createdPersonId: evita duplicar leads das pipelines já bem-sucedidas se
+  // uma tentativa anterior falhar a meio (ex: pipeline 3 falha depois de 1 e
+  // 2 já terem criado lead) e o utilizador submeter outra vez.
+  const [createdLeadIdByPipeline, setCreatedLeadIdByPipeline] = useState<Record<string, string>>({})
   // Contactos existentes, para detetar duplicados enquanto se escreve (mesmo
   // padrão do NewContactModal.tsx).
   const [existing, setExisting] = useState<Person[]>([])
@@ -242,8 +247,15 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
       }
 
       // Uma lead por pipeline marcada, todas ligadas à mesma pessoa/imóvel.
+      // Pipelines já criadas com sucesso numa tentativa anterior (ver
+      // createdLeadIdByPipeline) são saltadas, para não duplicar leads se
+      // uma submissão anterior falhar a meio noutra pipeline.
       const createdLeadIds: string[] = []
       for (const pipelineId of pipelineIds) {
+        if (createdLeadIdByPipeline[pipelineId]) {
+          createdLeadIds.push(createdLeadIdByPipeline[pipelineId])
+          continue
+        }
         const res = await fetch('/api/leads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -267,7 +279,10 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
         })
         if (!res.ok) throw new Error('Erro ao criar lead')
         const created = await res.json() as { id?: string }
-        if (created?.id) createdLeadIds.push(created.id)
+        if (created?.id) {
+          createdLeadIds.push(created.id)
+          setCreatedLeadIdByPipeline(prev => ({ ...prev, [pipelineId]: created.id! }))
+        }
       }
 
       for (const leadId of createdLeadIds) {
