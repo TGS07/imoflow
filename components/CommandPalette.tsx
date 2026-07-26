@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Icon, IconName } from '@/components/ui/Icon'
+import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 type NavItem = { label: string; href: string; icon: IconName; keywords?: string }
 type LeadHit = { id: string; name: string; phone: string | null; email: string | null }
@@ -181,7 +182,7 @@ export function CommandPalette() {
                   onMouseEnter={() => setActive(i)} onClick={() => go(row)}>
                   <Icon name="leads" size={15} style={{ flexShrink: 0, opacity: 0.7 }} />
                   <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.item.name}</span>
-                  <span className="cmdk-hint">{row.item.phone ?? row.item.email ?? ''}</span>
+                  <span className="cmdk-hint">{(row.item.phone ? formatPhoneDisplay(row.item.phone) : row.item.phone) ?? row.item.email ?? ''}</span>
                 </button>
               </div>
             )

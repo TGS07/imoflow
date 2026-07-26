@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Person, PropertyStatus } from '@/types'
+import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 type Buyer = { id: string; name: string; phone: string | null; email: string | null }
 
@@ -55,7 +56,7 @@ export function PropertyBuyer({ propertyId, buyer, status, onChange }: {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <Link href={`/people/${buyer.id}`} style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', textDecoration: 'none' }}>{buyer.name}</Link>
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{buyer.phone || buyer.email || 'Sem contacto'}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{(buyer.phone ? formatPhoneDisplay(buyer.phone) : buyer.phone) || buyer.email || 'Sem contacto'}</div>
             </div>
             <button onClick={() => setBuyer(null)} className="btn btn-danger btn-sm" style={{ padding: '2px 8px' }}>Remover</button>
           </div>
@@ -78,7 +79,7 @@ export function PropertyBuyer({ propertyId, buyer, status, onChange }: {
             {results.map(p => (
               <button key={p.id} onClick={() => setBuyer(p.id)} className="table-row" style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>{p.phone || p.email || ''}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted)' }}>{(p.phone ? formatPhoneDisplay(p.phone) : p.phone) || p.email || ''}</div>
               </button>
             ))}
           </div>

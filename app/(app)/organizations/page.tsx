@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Organization } from '@/types'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
+import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 type OrgWithLeads = Organization & { leads?: { id: string }[] }
 
@@ -153,7 +154,7 @@ export default function OrganizationsPage() {
                     </div>
                   </td>
                   <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{o.email ?? '—'}</td>
-                  <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{o.phone ?? '—'}</td>
+                  <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{(o.phone ? formatPhoneDisplay(o.phone) : o.phone) ?? '—'}</td>
                   <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{o.website ?? '—'}</td>
                   <td style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
                     <span style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>{o.leads?.length ?? 0}</span>

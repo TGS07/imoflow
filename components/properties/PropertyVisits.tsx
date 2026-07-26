@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import type { Person } from '@/types'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
+import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 type Visit = {
   id: string
@@ -121,7 +122,7 @@ export function PropertyVisits({ propertyId }: { propertyId: string }) {
                     {results.map(p => (
                       <button key={p.id} onClick={() => { setSelected(p); setResults([]); setSearch('') }} style={{ textAlign: 'left', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
                         <div style={{ fontSize: 12, fontWeight: 600 }}>{p.name}</div>
-                        <div style={{ fontSize: 10, color: 'var(--muted)' }}>{p.phone || p.email || ''}</div>
+                        <div style={{ fontSize: 10, color: 'var(--muted)' }}>{(p.phone ? formatPhoneDisplay(p.phone) : p.phone) || p.email || ''}</div>
                       </button>
                     ))}
                   </div>

@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { Person } from '@/types'
+import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 type Consultant = { id: string; person_id: string; people: { id: string; name: string; phone: string | null; email: string | null } }
 
@@ -64,7 +65,7 @@ export function PropertyConsultants({ propertyId, consultants, onChange }: {
               <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px' }}>
                 <div>
                   <Link href={`/people/${c.people.id}`} style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', textDecoration: 'none' }}>{c.people.name}</Link>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{c.people.phone || c.people.email || ''}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{(c.people.phone ? formatPhoneDisplay(c.people.phone) : c.people.phone) || c.people.email || ''}</div>
                 </div>
                 <button onClick={() => remove(c.person_id)} className="btn btn-danger btn-sm" style={{ padding: '2px 8px' }}>Remover</button>
               </div>
@@ -85,7 +86,7 @@ export function PropertyConsultants({ propertyId, consultants, onChange }: {
             {results.map(p => (
               <button key={p.id} onClick={() => associate(p.id)} className="table-row" style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>{p.phone || p.email || ''}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted)' }}>{(p.phone ? formatPhoneDisplay(p.phone) : p.phone) || p.email || ''}</div>
               </button>
             ))}
           </div>
