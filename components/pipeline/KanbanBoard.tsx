@@ -5,7 +5,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { Lead, PipelineStage, PipelineCardField } from '@/types'
 import { useRouter } from 'next/navigation'
-import { contactTypeMeta } from '@/lib/contacts/constants'
+import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 
 export type PipelineCardFields = { primary: PipelineCardField; secondary: PipelineCardField }
 
@@ -31,7 +31,6 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields }: { lead: Lead;
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lead.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
   const initials = (lead.people?.name ?? lead.name).split(' ').map((n: string) => n[0]).slice(0, 2).join('')
-  const typeMeta = lead.people?.types?.length ? contactTypeMeta(lead.people.types[0]) : null
   const primaryText = cardFieldValue(lead, cardFields.primary) ?? lead.people?.name ?? lead.name
   const secondaryText = cardFieldValue(lead, cardFields.secondary)
   // Campos já mostrados em cima não se repetem nas linhas fixas. Se o
@@ -54,10 +53,8 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields }: { lead: Lead;
             {initials}
           </div>
           <div style={{ fontWeight: 500, fontSize: 13, color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{primaryText}</div>
-          {typeMeta && (
-            <span title={typeMeta.label} style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 999, background: `${typeMeta.color}18`, color: typeMeta.color, border: `1px solid ${typeMeta.color}40`, flexShrink: 0 }}>
-              {typeMeta.label.split(' ')[0]}
-            </span>
+          {lead.people?.types && lead.people.types.length > 0 && (
+            <ContactTypeChips types={lead.people.types} size={8} />
           )}
         </div>
         {secondaryText && secondaryText !== primaryText && (
