@@ -5,6 +5,7 @@ import { Lead, PipelineStage, Pipeline } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { PropertyPickerModal } from '@/components/pipeline/PropertyPickerModal'
+import { ContactPickerModal } from '@/components/pipeline/ContactPickerModal'
 import { ContactSlideOver } from '@/components/pipeline/ContactSlideOver'
 import { PipelineSettingsModal } from '@/components/pipeline/PipelineSettingsModal'
 
@@ -16,6 +17,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
   const [loading, setLoading] = useState(true)
   const [showNewLead, setShowNewLead] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
+  const [showContactPicker, setShowContactPicker] = useState(false)
   const [openContact, setOpenContact] = useState<{ personId: string; leadId: string } | null>(null)
   const [pipelineModal, setPipelineModal] = useState<{ mode: 'create' } | { mode: 'edit'; pipeline: Pipeline } | null>(null)
 
@@ -43,6 +45,11 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
 
   const selected = pipelines.find(p => p.id === selectedId) ?? null
 
+  const alreadyInIds = new Set(
+    leads.filter(l => l.person_id && l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost)
+      .map(l => l.person_id as string)
+  )
+
   async function deletePipeline(p: Pipeline) {
     if (!confirm(`Eliminar a pipeline "${p.name}"? As etapas são apagadas.`)) return
     const res = await fetch(`/api/pipelines/${p.id}`, { method: 'DELETE' })
@@ -68,6 +75,15 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           pipelineId={selected.id}
           pipelineName={selected.name}
           onClose={() => setShowPicker(false)}
+          onAdded={() => selectedId && loadBoard(selectedId)}
+        />
+      )}
+      {showContactPicker && selected && (
+        <ContactPickerModal
+          pipelineId={selected.id}
+          pipelineName={selected.name}
+          alreadyInIds={alreadyInIds}
+          onClose={() => setShowContactPicker(false)}
           onAdded={() => selectedId && loadBoard(selectedId)}
         />
       )}
@@ -122,6 +138,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <button onClick={() => setShowContactPicker(true)} disabled={!selected} className="btn btn-ghost">+ Contactos</button>
           <button onClick={() => setShowPicker(true)} disabled={!selected} className="btn btn-ghost">+ Imóveis</button>
           <button onClick={() => setShowNewLead(true)} disabled={!selectedId} className="btn btn-primary">+ Novo Lead</button>
         </div>
