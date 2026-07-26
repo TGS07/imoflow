@@ -7,6 +7,7 @@ import type { ContactDetails, ContactSpecialDate } from '@/types'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { InteractionTimeline } from '@/components/contacts/InteractionTimeline'
 import { CONTACT_TYPES, CAPACITY_BANDS, capacityMeta, type ContactTypeKey } from '@/lib/contacts/constants'
+import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 import { ContactAiSuggestion } from '@/components/contacts/ContactAiSuggestion'
 import { ContactIdealistaPreferences } from '@/components/contacts/ContactIdealistaPreferences'
 import { SellerProperties } from '@/components/contacts/SellerProperties'
@@ -425,7 +426,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                   <input className="input" type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
                 )}
                 {field('Telefone',
-                  fieldValue(person.phone),
+                  fieldValue(person.phone ? formatPhoneDisplay(person.phone) : person.phone),
                   <input className="input" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
                 )}
                 {field('Morada',

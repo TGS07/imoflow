@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { NewContactModal } from '@/components/contacts/NewContactModal'
 import { ContactFilters, EMPTY_FILTERS, applyContactFilters, type ContactFilterState } from '@/components/contacts/ContactFilters'
-import { buildWaLink } from '@/lib/whatsapp/utils'
+import { buildWaLink, formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 function daysSince(iso: string | null): number | null {
   if (!iso) return null
@@ -62,7 +62,7 @@ function PreviewLine({ p }: { p: Person }) {
       <div style={dim}>
         {p.details?.agency_name || '—'}
         {p.details?.working_zone && <>{dot}{p.details.working_zone}</>}
-        {(p.email || p.phone) && <>{dot}{p.email ?? p.phone}</>}
+        {(p.email || p.phone) && <>{dot}{p.email ?? (p.phone ? formatPhoneDisplay(p.phone) : p.phone)}</>}
       </div>
     )
   }
@@ -72,12 +72,12 @@ function PreviewLine({ p }: { p: Person }) {
       <div style={dim}>
         {p.details?.service_type || '—'}
         {p.details?.working_zone && <>{dot}{p.details.working_zone}</>}
-        {(p.email || p.phone) && <>{dot}{p.email ?? p.phone}</>}
+        {(p.email || p.phone) && <>{dot}{p.email ?? (p.phone ? formatPhoneDisplay(p.phone) : p.phone)}</>}
       </div>
     )
   }
 
-  return <div style={dim}>{p.email ?? p.phone ?? '—'}</div>
+  return <div style={dim}>{p.email ?? (p.phone ? formatPhoneDisplay(p.phone) : p.phone) ?? '—'}</div>
 }
 
 export default function PeoplePage() {

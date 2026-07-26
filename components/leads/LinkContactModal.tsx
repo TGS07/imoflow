@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import type { Person } from '@/types'
+import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 type Props = {
   leadId: string
@@ -67,7 +68,7 @@ export function LinkContactModal({ leadId, onClose, onLinked }: Props) {
               style={{ textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
             >
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{p.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--muted)' }}>{p.email ?? p.phone ?? ''}</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>{p.email ?? (p.phone ? formatPhoneDisplay(p.phone) : p.phone) ?? ''}</div>
             </button>
           ))}
           {search.trim() && results.length === 0 && (

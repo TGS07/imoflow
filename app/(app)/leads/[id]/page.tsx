@@ -8,6 +8,7 @@ import { WhatsAppModal } from '@/components/leads/WhatsAppModal'
 import { LinkContactModal } from '@/components/leads/LinkContactModal'
 import { Icon } from '@/components/ui/Icon'
 import { REGULAR_INTERVAL_PRESETS } from '@/lib/contacts/special-dates'
+import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 const EXTRAS_SUGERIDOS = ['vista mar', 'garagem', 'piscina', 'jardim', 'varanda', 'elevador', 'ar condicionado', 'lareira']
 const TIPOLOGIAS = ['T0', 'T1', 'T2', 'T3', 'T4', 'T5+']
@@ -346,7 +347,7 @@ export default function LeadPage() {
         {/* Info Pills */}
         <div className="stagger" style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           {[
-            { icon: '📞', label: 'Telefone', value: lead.phone },
+            { icon: '📞', label: 'Telefone', value: lead.phone ? formatPhoneDisplay(lead.phone) : lead.phone },
             { icon: '✉', label: 'Email', value: lead.email },
             { icon: '📍', label: 'Zona', value: lead.zone },
             { icon: '🏠', label: 'Tipologia', value: lead.typology },
