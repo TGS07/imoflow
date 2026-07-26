@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { resolveContactPropertyCandidates } from '@/lib/pipeline/resolve-contact-property'
 
 // Adiciona vários contactos já existentes a esta pipeline de uma vez: cria
 // uma lead por pessoa na 1ª etapa, sem imóvel associado. Bloqueia
@@ -24,6 +25,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     ? body.person_ids.filter((v: unknown): v is string => typeof v === 'string')
     : []
   if (personIds.length === 0) return NextResponse.json({ added: 0 })
+
+  // Escolhas explícitas do cliente para contactos com 2+ imóveis candidatos
+  // (perguntadas no ContactPickerModal antes de submeter). Valor `null`
+  // significa "sem imóvel", escolhido deliberadamente.
+  const propertyChoices: Record<string, string | null> = (body.property_choices && typeof body.property_choices === 'object')
+    ? body.property_choices
+    : {}
 
   const { data: pipeline } = await supabase
     .from('pipelines')
@@ -61,8 +69,43 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .eq('agency_id', profile.agency_id)
     .in('id', toAdd)
 
-  const rows = (people ?? []).map(person => {
+  // Imóveis escolhidos explicitamente (não nulos) — preciso de zone/typology/price
+  // para copiar para a lead, tal como o add-properties já faz.
+  const explicitIds = [...new Set(Object.values(propertyChoices).filter((v): v is string => typeof v === 'string'))]
+  const { data: explicitProperties } = explicitIds.length > 0
+    ? await supabase.from('properties').select('id, zone, typology, price').eq('agency_id', profile.agency_id).in('id', explicitIds)
+    : { data: [] as { id: string; zone: string | null; typology: string | null; price: number | null }[] }
+  const explicitPropertyById = new Map((explicitProperties ?? []).map(p => [p.id, p]))
+
+  const rows = await Promise.all((people ?? []).map(async person => {
     const details = (person.details ?? {}) as Record<string, unknown>
+    const hasChoice = person.id in propertyChoices
+
+    let propertyId: string | null = null
+    let propertyZone: string | null = null
+    let propertyTypology: string | null = null
+    let propertyBudget: number | null = null
+
+    if (hasChoice) {
+      propertyId = propertyChoices[person.id]
+      if (propertyId) {
+        const property = explicitPropertyById.get(propertyId)
+        if (property) {
+          propertyZone = property.zone
+          propertyTypology = property.typology
+          propertyBudget = property.price
+        }
+      }
+    } else {
+      const candidates = await resolveContactPropertyCandidates(supabase, profile.agency_id, person.id)
+      if (candidates.length === 1) {
+        propertyId = candidates[0].id
+        propertyZone = candidates[0].zone
+        propertyTypology = candidates[0].typology
+        propertyBudget = candidates[0].price
+      }
+    }
+
     return {
       agency_id: profile.agency_id,
       name: person.name,
@@ -71,13 +114,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       stage_id: firstStage.id,
       pipeline_id: pipelineId,
       person_id: person.id,
-      property_id: null,
+      property_id: propertyId,
       assigned_to: user.id,
-      zone: (details.search_zone ?? details.selling_zone ?? null) as string | null,
-      typology: (details.typology ?? null) as string | null,
+      zone: propertyZone ?? ((details.search_zone ?? details.selling_zone ?? null) as string | null),
+      typology: propertyTypology ?? ((details.typology ?? null) as string | null),
+      budget: propertyBudget,
       source: 'outro',
     }
-  })
+  }))
 
   if (rows.length === 0) return NextResponse.json({ added: 0 })
 
