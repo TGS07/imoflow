@@ -4,7 +4,7 @@ import { type ContactTypeKey } from '@/lib/contacts/constants'
 import { ContactFormFields, type Member } from '@/components/contacts/ContactFormFields'
 import type { ContactDetails, Person } from '@/types'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
-import { normalizePhone } from '@/lib/whatsapp/utils'
+import { normalizePhone, formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 type Initial = Partial<{
   name: string
@@ -146,7 +146,7 @@ export function NewContactModal({ initial, onClose, onCreated }: {
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input className="input" placeholder="Nome *" value={name} onChange={e => setName(e.target.value)} required />
           <input className="input" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-          <input className="input" placeholder="Telefone" value={phone} onChange={e => setPhone(e.target.value)} />
+          <input className="input" placeholder="Telefone" value={phone} onChange={e => setPhone(e.target.value)} onBlur={() => setPhone(p => p.trim() ? formatPhoneDisplay(p) : p)} />
 
           {duplicate && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#B45309' }}>

@@ -427,7 +427,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                 )}
                 {field('Telefone',
                   fieldValue(person.phone ? formatPhoneDisplay(person.phone) : person.phone),
-                  <input className="input" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+                  <input className="input" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} onBlur={() => setForm(p => ({ ...p, phone: p.phone.trim() ? formatPhoneDisplay(p.phone) : p.phone }))} />
                 )}
                 {field('Morada',
                   fieldValue(person.address),

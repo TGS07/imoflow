@@ -4,7 +4,7 @@ import { LeadSource, CustomField, Person, Organization, Property, Pipeline, Cont
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
 import { ContactFormFields, type Member } from '@/components/contacts/ContactFormFields'
 import type { ContactTypeKey } from '@/lib/contacts/constants'
-import { normalizePhone } from '@/lib/whatsapp/utils'
+import { normalizePhone, formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
 type Props = {
   onClose: () => void
@@ -426,7 +426,7 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div><label style={labelStyle}>Email</label><input type="email" style={inputStyle} value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
-            <div><label style={labelStyle}>Telefone</label><input style={inputStyle} value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} /></div>
+            <div><label style={labelStyle}>Telefone</label><input style={inputStyle} value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} onBlur={() => setForm(p => ({ ...p, phone: p.phone.trim() ? formatPhoneDisplay(p.phone) : p.phone }))} /></div>
           </div>
 
           {!selectedPerson && (
