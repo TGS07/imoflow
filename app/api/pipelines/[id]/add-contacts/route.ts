@@ -94,6 +94,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           propertyZone = property.zone
           propertyTypology = property.typology
           propertyBudget = property.price
+        } else {
+          propertyId = null
         }
       }
     } else {
