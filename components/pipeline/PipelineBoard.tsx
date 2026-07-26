@@ -141,6 +141,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
             stages={stages}
             onOpenContact={(personId, leadId) => setOpenContact({ personId, leadId })}
             cardFields={{ primary: selected?.card_primary_field ?? 'name', secondary: selected?.card_secondary_field ?? 'zone' }}
+            onDuplicated={() => selectedId && loadBoard(selectedId)}
           />
         )}
       </div>

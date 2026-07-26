@@ -26,7 +26,7 @@ function cardFieldValue(lead: Lead, field: PipelineCardField): string | null {
   }
 }
 
-function LeadCard({ lead, isDragging, onOpenContact, cardFields }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields }) {
+function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void }) {
   const router = useRouter()
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lead.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
@@ -37,6 +37,38 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields }: { lead: Lead;
   // primário caiu no fallback (nome), o nome conta como promovido na mesma.
   const promoted = new Set<PipelineCardField>([cardFields.primary, cardFields.secondary])
   if (primaryText === lead.name) promoted.add('name')
+
+  const [duplicating, setDuplicating] = useState(false)
+
+  async function duplicateCard(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!confirm('Duplicar este card? Cria uma nova entrada para o mesmo contacto, sem imóvel associado.')) return
+    setDuplicating(true)
+    try {
+      const res = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone,
+          source: lead.source,
+          zone: lead.zone,
+          typology: lead.typology,
+          budget: lead.budget,
+          notes: lead.notes,
+          person_id: lead.person_id,
+          organization_id: lead.organization_id,
+          property_id: null,
+          pipeline_id: lead.pipeline_id,
+          stage_id: lead.stage_id,
+        }),
+      })
+      if (res.ok) onDuplicated?.()
+    } finally {
+      setDuplicating(false)
+    }
+  }
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
@@ -56,6 +88,15 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields }: { lead: Lead;
           {lead.people?.types && (
             <ContactTypeChips types={lead.people.types} size={8} />
           )}
+          <button
+            onClick={duplicateCard}
+            disabled={duplicating}
+            title="Duplicar card"
+            className="icon-btn"
+            style={{ width: 20, height: 20, fontSize: 11, flexShrink: 0 }}
+          >
+            ⧉
+          </button>
         </div>
         {secondaryText && secondaryText !== primaryText && (
           <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{secondaryText}</div>
@@ -108,9 +149,10 @@ type Props = {
   stages: PipelineStage[]
   onOpenContact?: (personId: string, leadId: string) => void
   cardFields: PipelineCardFields
+  onDuplicated?: () => void
 }
 
-export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields }: Props) {
+export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, onDuplicated }: Props) {
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -181,7 +223,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields }:
               <SortableContext items={stageLeads.map(l => l.id)} strategy={verticalListSortingStrategy}>
                 <DroppableColumn id={stage.id}>
                   {stageLeads.map(lead => (
-                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} onOpenContact={onOpenContact} cardFields={cardFields} />
+                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} onOpenContact={onOpenContact} cardFields={cardFields} onDuplicated={onDuplicated} />
                   ))}
                 </DroppableColumn>
               </SortableContext>
@@ -190,7 +232,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields }:
         })}
       </div>
       <DragOverlay>
-        {activeLead && <LeadCard lead={activeLead} onOpenContact={onOpenContact} cardFields={cardFields} />}
+        {activeLead && <LeadCard lead={activeLead} onOpenContact={onOpenContact} cardFields={cardFields} onDuplicated={onDuplicated} />}
       </DragOverlay>
     </DndContext>
   )
