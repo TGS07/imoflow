@@ -36,6 +36,9 @@ export default function DuplicatesPage() {
   }, [people])
 
   async function keepThis(group: DuplicateGroup, primaryId: string) {
+    const primary = group.people.find(p => p.id === primaryId)
+    const others = group.people.filter(p => p.id !== primaryId)
+    if (!confirm(`Manter "${primary?.name}" e apagar ${others.map(p => `"${p.name}"`).join(', ')}? Esta ação não pode ser desfeita.`)) return
     setMergingPhone(group.phone)
     try {
       for (const p of group.people) {
