@@ -40,14 +40,19 @@ export default function DuplicatesPage() {
     try {
       for (const p of group.people) {
         if (p.id === primaryId) continue
-        await fetch('/api/people/merge', {
+        const res = await fetch('/api/people/merge', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ primary_id: primaryId, duplicate_id: p.id }),
         })
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}))
+          alert(d.error ?? `Erro ao juntar ${p.name}.`)
+          break
+        }
       }
-      await fetchPeople()
     } finally {
+      await fetchPeople()
       setMergingPhone(null)
     }
   }
