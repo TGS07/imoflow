@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { NewContactModal } from '@/components/contacts/NewContactModal'
 import { ContactFilters, EMPTY_FILTERS, applyContactFilters, type ContactFilterState } from '@/components/contacts/ContactFilters'
-import { buildWaLink, formatPhoneDisplay } from '@/lib/whatsapp/utils'
+import { buildWaLink, formatPhoneDisplay, normalizePhone } from '@/lib/whatsapp/utils'
 
 function daysSince(iso: string | null): number | null {
   if (!iso) return null
@@ -122,6 +122,17 @@ export default function PeoplePage() {
     return list
   }, [people, filters, activeTypes, search])
 
+  const duplicateCount = useMemo(() => {
+    const seen = new Map<string, number>()
+    for (const p of people) {
+      if (!p.phone) continue
+      const key = normalizePhone(p.phone)
+      if (!key) continue
+      seen.set(key, (seen.get(key) ?? 0) + 1)
+    }
+    return [...seen.values()].filter(n => n > 1).length
+  }, [people])
+
   const filtering = search.trim().length > 0 || activeTypes.length > 0 || JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS)
 
   return (
@@ -137,6 +148,9 @@ export default function PeoplePage() {
         <div>
           <h1 className="font-display" style={{ fontSize: 20 }}>Contactos <HelpButton section="people" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{visible.length} contactos</p>
+          {duplicateCount > 0 && (
+            <a href="/people/duplicates" style={{ fontSize: 12, color: '#B45309', fontWeight: 600, textDecoration: 'none' }}>⚠ {duplicateCount} duplicado(s)</a>
+          )}
         </div>
         <button onClick={() => setShowModal(true)} className="btn btn-primary">+ Novo Contacto</button>
       </div>
