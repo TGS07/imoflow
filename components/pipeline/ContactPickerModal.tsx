@@ -33,7 +33,7 @@ export function ContactPickerModal({ pipelineId, pipelineName, alreadyInIds, onC
     const digits = term.replace(/\D/g, '')
     return people.filter(p =>
       p.name.toLowerCase().includes(term) ||
-      (digits && (p.phone ?? '').replace(/\D/g, '').includes(digits))
+      (digits && (() => { const stored = (p.phone ?? '').replace(/\D/g, ''); return !!stored && (stored.includes(digits) || digits.includes(stored)) })())
     )
   }, [people, search])
 
@@ -55,7 +55,14 @@ export function ContactPickerModal({ pipelineId, pipelineName, alreadyInIds, onC
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ person_ids: [...checked] }),
       })
-      if (res.ok) { onAdded(); onClose() }
+      if (res.ok) {
+        const data = await res.json().catch(() => ({})) as { added?: number }
+        if (typeof data.added === 'number' && data.added < checked.size) {
+          alert(`${data.added} de ${checked.size} contacto(s) foram adicionados — os restantes já estavam ativos nesta pipeline.`)
+        }
+        onAdded()
+        onClose()
+      }
     } finally {
       setSaving(false)
     }
