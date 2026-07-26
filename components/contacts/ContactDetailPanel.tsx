@@ -7,7 +7,7 @@ import type { ContactDetails, ContactSpecialDate } from '@/types'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { InteractionTimeline } from '@/components/contacts/InteractionTimeline'
 import { CONTACT_TYPES, CAPACITY_BANDS, capacityMeta, type ContactTypeKey } from '@/lib/contacts/constants'
-import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
+import { formatPhoneDisplay, normalizePhone } from '@/lib/whatsapp/utils'
 import { ContactAiSuggestion } from '@/components/contacts/ContactAiSuggestion'
 import { ContactIdealistaPreferences } from '@/components/contacts/ContactIdealistaPreferences'
 import { SellerProperties } from '@/components/contacts/SellerProperties'
@@ -117,7 +117,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
       body: JSON.stringify({
         name: form.name,
         email: form.email || null,
-        phone: form.phone || null,
+        phone: form.phone.trim() ? normalizePhone(form.phone) : null,
         address: form.address || null,
         notes: form.notes || null,
         types: form.types,

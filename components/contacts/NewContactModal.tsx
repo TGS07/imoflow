@@ -94,7 +94,7 @@ export function NewContactModal({ initial, onClose, onCreated }: {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name, email, phone, types,
+          name, email, phone: phone.trim() ? normalizePhone(phone) : null, types,
           financial_capacity: (types.includes('comprador') || types.includes('investidor')) ? (capacity || null) : null,
           source, details, notes: notes || null,
           birthday: birthday || null,
