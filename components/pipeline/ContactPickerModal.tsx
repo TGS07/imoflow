@@ -62,6 +62,9 @@ export function ContactPickerModal({ pipelineId, pipelineName, alreadyInIds, onC
         }
         onAdded()
         onClose()
+      } else {
+        const d = await res.json().catch(() => ({})) as { error?: string }
+        alert(d.error ?? 'Erro ao adicionar contactos.')
       }
     } finally {
       setSaving(false)
