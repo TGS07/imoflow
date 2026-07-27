@@ -6,6 +6,8 @@ import { CSS } from '@dnd-kit/utilities'
 import { Lead, PipelineStage, PipelineCardField } from '@/types'
 import { useRouter } from 'next/navigation'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
+import { CardPropertyModal } from '@/components/pipeline/CardPropertyModal'
+import type { Property } from '@/types'
 
 export type PipelineCardFields = { primary: PipelineCardField; secondary: PipelineCardField }
 
@@ -26,7 +28,7 @@ function cardFieldValue(lead: Lead, field: PipelineCardField): string | null {
   }
 }
 
-function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void }) {
+function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, onEditProperty }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void; onEditProperty?: (lead: Lead) => void }) {
   const router = useRouter()
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lead.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
@@ -97,6 +99,14 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated }:
           >
             ⧉
           </button>
+          <button
+            onClick={e => { e.stopPropagation(); onEditProperty?.(lead) }}
+            title="Imóvel do card"
+            className="icon-btn"
+            style={{ width: 20, height: 20, fontSize: 11, flexShrink: 0 }}
+          >
+            🏠
+          </button>
         </div>
         {secondaryText && secondaryText !== primaryText && (
           <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{secondaryText}</div>
@@ -150,11 +160,24 @@ type Props = {
   onOpenContact?: (personId: string, leadId: string) => void
   cardFields: PipelineCardFields
   onDuplicated?: () => void
+  onCardUpdated?: () => void
 }
 
-export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, onDuplicated }: Props) {
+export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, onDuplicated, onCardUpdated }: Props) {
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [editingProperty, setEditingProperty] = useState<Lead | null>(null)
+
+  async function updateCardProperty(patch: { property_id: string | null; zone?: string | null; typology?: string | null; budget?: number | null }) {
+    if (!editingProperty) return
+    const res = await fetch(`/api/leads/${editingProperty.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    })
+    setEditingProperty(null)
+    if (res.ok) onCardUpdated?.()
+  }
 
   // Re-sincroniza quando o servidor devolve leads novos (ex: após criar via router.refresh())
   useEffect(() => { setLeads(initialLeads) }, [initialLeads])
@@ -200,7 +223,8 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="stagger kanban-board" style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '4px 0', minHeight: 'calc(100vh - 140px)' }}>
         {visibleStages.map(stage => {
           const stageLeads = getStageLeads(stage.id)
@@ -223,7 +247,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
               <SortableContext items={stageLeads.map(l => l.id)} strategy={verticalListSortingStrategy}>
                 <DroppableColumn id={stage.id}>
                   {stageLeads.map(lead => (
-                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} onOpenContact={onOpenContact} cardFields={cardFields} onDuplicated={onDuplicated} />
+                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} onOpenContact={onOpenContact} cardFields={cardFields} onDuplicated={onDuplicated} onEditProperty={setEditingProperty} />
                   ))}
                 </DroppableColumn>
               </SortableContext>
@@ -231,9 +255,19 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
           )
         })}
       </div>
-      <DragOverlay>
-        {activeLead && <LeadCard lead={activeLead} onOpenContact={onOpenContact} cardFields={cardFields} onDuplicated={onDuplicated} />}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay>
+          {activeLead && <LeadCard lead={activeLead} onOpenContact={onOpenContact} cardFields={cardFields} onDuplicated={onDuplicated} onEditProperty={setEditingProperty} />}
+        </DragOverlay>
+      </DndContext>
+      {editingProperty && (
+        <CardPropertyModal
+          currentPropertyId={editingProperty.property_id}
+          currentPropertyLabel={editingProperty.properties ? (editingProperty.properties.reference ?? editingProperty.properties.title) : null}
+          onClose={() => setEditingProperty(null)}
+          onSelect={(property: Property) => updateCardProperty({ property_id: property.id, zone: property.zone, typology: property.typology, budget: property.price })}
+          onRemove={() => updateCardProperty({ property_id: null })}
+        />
+      )}
+    </>
   )
 }
