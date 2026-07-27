@@ -167,7 +167,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
   function handleCardHoverStart(lead: Lead) {
     if (activeId) return
     if (hoverTimer.current) clearTimeout(hoverTimer.current)
-    hoverTimer.current = setTimeout(() => setHoveredLead(lead), 600)
+    hoverTimer.current = setTimeout(() => setHoveredLead(lead), 650)
   }
 
   // Só cancela o temporizador pendente (preview ainda não mostrado). Não
