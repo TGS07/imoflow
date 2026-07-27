@@ -86,7 +86,7 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#0D0D0F', flexShrink: 0 }}>
             {initials}
           </div>
-          <div style={{ fontWeight: 500, fontSize: 13, color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{primaryText}</div>
+          <div style={{ fontWeight: 500, fontSize: 13, color: 'var(--text)', flex: 1, minWidth: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, whiteSpace: 'normal', wordBreak: 'break-word' as const }}>{primaryText}</div>
           {lead.people?.types && (
             <ContactTypeChips types={lead.people.types} size={8} />
           )}
@@ -109,7 +109,7 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           </button>
         </div>
         {secondaryText && secondaryText !== primaryText && (
-          <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{secondaryText}</div>
+          <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, whiteSpace: 'normal', wordBreak: 'break-word' as const }}>{secondaryText}</div>
         )}
         {lead.people?.name && lead.people.name !== lead.name && lead.people.name !== primaryText && (
           <div style={{ fontSize: 10, color: 'var(--gold)', marginBottom: 4, opacity: 0.8 }}>👤 {lead.people.name}</div>
@@ -234,7 +234,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
           const stageLeads = getStageLeads(stage.id)
           const columnTotal = getColumnTotal(stage.id)
           return (
-            <div key={stage.id} id={stage.id} style={{ minWidth: 240, width: 240, flexShrink: 0 }}>
+            <div key={stage.id} id={stage.id} style={{ minWidth: 300, width: 300, flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: stage.color }} />
                 <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>{stage.name}</span>
