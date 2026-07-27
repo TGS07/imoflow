@@ -167,9 +167,13 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
     hoverTimer.current = setTimeout(() => setHoveredLead(lead), 450)
   }
 
+  // Só cancela o temporizador pendente (preview ainda não mostrado). Não
+  // fecha um preview já visível — nesse momento o backdrop do
+  // CardHoverPreview já cobre o card original, por isso um "mouseleave"
+  // deste card nesse instante é um artefacto do backdrop, não uma
+  // intenção real do utilizador de sair do preview.
   function handleCardHoverEnd() {
     if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null }
-    setHoveredLead(null)
   }
 
   function openLead(lead: Lead) {

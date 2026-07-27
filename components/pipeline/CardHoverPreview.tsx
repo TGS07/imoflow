@@ -10,6 +10,7 @@ import { cardFieldValue, daysInStage, type PipelineCardFields } from '@/lib/pipe
 // nome/telefone/email e "dias nesta fase". Clicável — dispara a mesma
 // ação do clique no card normal (abrir contacto ou navegar para o lead).
 // Não repete os ícones de duplicar/trocar imóvel do card normal.
+// O backdrop também fecha ao clicar fora do card interior (click-outside-to-dismiss), sem navegar.
 export function CardHoverPreview({ lead, cardFields, onClick, onMouseLeave }: {
   lead: Lead
   cardFields: PipelineCardFields
@@ -27,10 +28,11 @@ export function CardHoverPreview({ lead, cardFields, onClick, onMouseLeave }: {
   return (
     <div
       onMouseLeave={onMouseLeave}
+      onClick={onMouseLeave}
       style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,13,15,0.35)', backdropFilter: 'blur(4px)' }}
     >
       <div
-        onClick={onClick}
+        onClick={e => { e.stopPropagation(); onClick() }}
         className="card"
         style={{ width: 360, maxWidth: '90vw', background: 'var(--surface)', borderRadius: 12, padding: '20px 22px', cursor: 'pointer', boxShadow: 'var(--shadow-md)' }}
       >
