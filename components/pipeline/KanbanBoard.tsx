@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -7,10 +7,11 @@ import { Lead, PipelineStage, PipelineCardField } from '@/types'
 import { useRouter } from 'next/navigation'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { CardPropertyModal } from '@/components/pipeline/CardPropertyModal'
+import { CardHoverPreview } from '@/components/pipeline/CardHoverPreview'
 import type { Property } from '@/types'
 import { cardFieldValue, daysInStage, type PipelineCardFields } from '@/lib/pipeline/card-fields'
 
-function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, onEditProperty }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void; onEditProperty?: (lead: Lead) => void }) {
+function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, onEditProperty, onHoverStart, onHoverEnd }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void; onEditProperty?: (lead: Lead) => void; onHoverStart?: (lead: Lead) => void; onHoverEnd?: () => void }) {
   const router = useRouter()
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: lead.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 }
@@ -61,6 +62,8 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           if (lead.person_id && onOpenContact) onOpenContact(lead.person_id, lead.id)
           else router.push(`/leads/${lead.id}`)
         }}
+        onMouseEnter={() => onHoverStart?.(lead)}
+        onMouseLeave={() => onHoverEnd?.()}
         className="card card-hover"
         style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 14px', cursor: 'grab', marginBottom: 8, boxShadow: isDragging ? 'var(--shadow-md)' : undefined }}
       >
@@ -151,9 +154,28 @@ type Props = {
 }
 
 export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, onDuplicated, onCardUpdated }: Props) {
+  const router = useRouter()
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [editingProperty, setEditingProperty] = useState<Lead | null>(null)
+  const [hoveredLead, setHoveredLead] = useState<Lead | null>(null)
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleCardHoverStart(lead: Lead) {
+    if (activeId) return
+    if (hoverTimer.current) clearTimeout(hoverTimer.current)
+    hoverTimer.current = setTimeout(() => setHoveredLead(lead), 450)
+  }
+
+  function handleCardHoverEnd() {
+    if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null }
+    setHoveredLead(null)
+  }
+
+  function openLead(lead: Lead) {
+    if (lead.person_id && onOpenContact) onOpenContact(lead.person_id, lead.id)
+    else router.push(`/leads/${lead.id}`)
+  }
 
   async function updateCardProperty(patch: { property_id: string | null; zone?: string | null; typology?: string | null; budget?: number | null }) {
     if (!editingProperty) return
@@ -182,6 +204,8 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(event.active.id as string)
+    if (hoverTimer.current) { clearTimeout(hoverTimer.current); hoverTimer.current = null }
+    setHoveredLead(null)
   }
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -238,7 +262,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
               <SortableContext items={stageLeads.map(l => l.id)} strategy={verticalListSortingStrategy}>
                 <DroppableColumn id={stage.id}>
                   {stageLeads.map(lead => (
-                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} onOpenContact={onOpenContact} cardFields={cardFields} onDuplicated={onDuplicated} onEditProperty={setEditingProperty} />
+                    <LeadCard key={lead.id} lead={lead} isDragging={lead.id === activeId} onOpenContact={onOpenContact} cardFields={cardFields} onDuplicated={onDuplicated} onEditProperty={setEditingProperty} onHoverStart={handleCardHoverStart} onHoverEnd={handleCardHoverEnd} />
                   ))}
                 </DroppableColumn>
               </SortableContext>
@@ -257,6 +281,14 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
           onClose={() => setEditingProperty(null)}
           onSelect={(property: Property) => updateCardProperty({ property_id: property.id, zone: property.zone, typology: property.typology, budget: property.price })}
           onRemove={() => updateCardProperty({ property_id: null })}
+        />
+      )}
+      {hoveredLead && (
+        <CardHoverPreview
+          lead={hoveredLead}
+          cardFields={cardFields}
+          onClick={() => { const lead = hoveredLead; setHoveredLead(null); openLead(lead) }}
+          onMouseLeave={() => setHoveredLead(null)}
         />
       )}
     </>
