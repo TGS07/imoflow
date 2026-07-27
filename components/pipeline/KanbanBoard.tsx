@@ -75,9 +75,11 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           {lead.people?.types && (
             <ContactTypeChips types={lead.people.types} size={8} />
           )}
+          {/* Ao pousar o rato num destes ícones, cancela o temporizador do preview — sem isto, o preview podia aparecer por cima do botão antes do clique. */}
           <button
             onClick={duplicateCard}
             disabled={duplicating}
+            onMouseEnter={() => onHoverEnd?.()}
             title="Duplicar card"
             className="icon-btn"
             style={{ width: 20, height: 20, fontSize: 11, flexShrink: 0 }}
@@ -86,6 +88,7 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           </button>
           <button
             onClick={e => { e.stopPropagation(); onEditProperty?.(lead) }}
+            onMouseEnter={() => onHoverEnd?.()}
             title="Imóvel do card"
             className="icon-btn"
             style={{ width: 20, height: 20, fontSize: 11, flexShrink: 0 }}
@@ -164,7 +167,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
   function handleCardHoverStart(lead: Lead) {
     if (activeId) return
     if (hoverTimer.current) clearTimeout(hoverTimer.current)
-    hoverTimer.current = setTimeout(() => setHoveredLead(lead), 450)
+    hoverTimer.current = setTimeout(() => setHoveredLead(lead), 600)
   }
 
   // Só cancela o temporizador pendente (preview ainda não mostrado). Não
