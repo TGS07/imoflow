@@ -162,6 +162,7 @@ export type Lead = {
   is_regular: boolean
   regular_interval_days: number | null
   created_at: string
+  stage_entered_at: string
   users?: User
   pipeline_stages?: PipelineStage
   custom_field_values?: CustomFieldValue[]
