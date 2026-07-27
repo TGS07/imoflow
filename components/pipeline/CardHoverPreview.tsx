@@ -2,7 +2,7 @@
 import type { Lead } from '@/types'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
-import { cardFieldValue, daysInStage, type PipelineCardFields } from '@/components/pipeline/KanbanBoard'
+import { cardFieldValue, daysInStage, type PipelineCardFields } from '@/lib/pipeline/card-fields'
 
 // Overlay centrado no ecrã, mostrado ao fim de ~450ms de hover sobre um
 // card (gerido pelo KanbanBoard, não por este componente). Mostra a
