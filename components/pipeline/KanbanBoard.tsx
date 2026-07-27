@@ -12,7 +12,7 @@ import type { Property } from '@/types'
 export type PipelineCardFields = { primary: PipelineCardField; secondary: PipelineCardField }
 
 // Valor de um campo configurável do card; null quando o lead não o tem.
-function cardFieldValue(lead: Lead, field: PipelineCardField): string | null {
+export function cardFieldValue(lead: Lead, field: PipelineCardField): string | null {
   switch (field) {
     // O contacto ligado é a fonte da verdade para o nome — lead.name é só
     // uma cópia guardada na criação, que fica desatualizada se o contacto
@@ -26,6 +26,14 @@ function cardFieldValue(lead: Lead, field: PipelineCardField): string | null {
       return v ? `${(v / 1000).toFixed(0)}K€` : null
     }
   }
+}
+
+// Dias desde que o lead entrou na etapa atual. `stage_entered_at` é
+// reposto automaticamente pela base de dados sempre que `stage_id` muda
+// (trigger `leads_set_stage_entered_at`), por isso nunca precisa de ser
+// calculado/atualizado manualmente no cliente — só lido.
+export function daysInStage(lead: Lead): number {
+  return Math.floor((Date.now() - new Date(lead.stage_entered_at).getTime()) / 86400000)
 }
 
 function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, onEditProperty }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void; onEditProperty?: (lead: Lead) => void }) {
@@ -138,11 +146,16 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           ) : (
             <div />
           )}
-          {lead.expected_close_date && (
-            <div style={{ fontSize: 10, color: 'var(--muted)' }}>
-              {new Date(lead.expected_close_date).toLocaleDateString('pt-PT')}
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span title="Dias nesta fase" style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 999, background: 'var(--border)', color: 'var(--muted)' }}>
+              {daysInStage(lead)}d
+            </span>
+            {lead.expected_close_date && (
+              <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+                {new Date(lead.expected_close_date).toLocaleDateString('pt-PT')}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
