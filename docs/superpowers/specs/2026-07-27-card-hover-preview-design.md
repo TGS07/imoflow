@@ -14,8 +14,9 @@ Ao pousar o rato sobre um card do Kanban (sem clicar) durante ~450ms, mostra uma
 
 **Trigger e fecho:**
 - `onMouseEnter` no card arranca um temporizador de 450ms; se o rato ainda estiver sobre o card quando o temporizador disparar, mostra o preview.
-- `onMouseLeave` do card (antes do temporizador disparar, ou enquanto o preview está aberto) cancela/fecha imediatamente.
-- Enquanto qualquer card estiver a ser arrastado (`activeId` do `KanbanBoard` não nulo), o hover-preview fica desativado — não arranca temporizador nem mostra overlay, para não interferir com o drag-and-drop.
+- `onMouseLeave` do card só cancela o temporizador **enquanto o preview ainda não apareceu**. Depois de aparecer, o backdrop (que cobre o ecrã inteiro) passa a estar por cima do card original, por isso um "mouseleave" nesse card nesse momento é um artefacto do próprio backdrop, não uma intenção real de sair do preview — e por isso deixa de fechar o preview. (Descoberto e corrigido durante a implementação: a versão inicial fechava ao primeiro movimento do rato, antes de conseguir chegar ao preview.)
+- Com o preview já visível, fecha-se ao **clicar fora do card ampliado** (em qualquer ponto do fundo esbatido) — clique fora sem navegar, à semelhança de "click outside to dismiss" nos outros modais da app. Clicar no card ampliado em si continua a navegar (abre o contacto ou o lead).
+- Enquanto qualquer card estiver a ser arrastado (`activeId` do `KanbanBoard` não nulo), o hover-preview fica desativado — não arranca temporizador nem mostra overlay, e fecha imediatamente se já estiver aberto, para não interferir com o drag-and-drop.
 - Sem tratamento especial para ecrãs táteis: como não existe evento de hover persistente em touch, a funcionalidade simplesmente não é acionada em telemóvel/tablet — o comportamento atual do card mantém-se inalterado nesses dispositivos.
 
 **Conteúdo do preview:**
@@ -25,7 +26,7 @@ Ao pousar o rato sobre um card do Kanban (sem clicar) durante ~450ms, mostra uma
 - Telefone e email do contacto (quando existirem).
 - "X dias nesta fase" em destaque, calculado a partir de `leads.stage_entered_at` (ver secção 2).
 - **Não inclui** os ícones ⧉ (duplicar) e 🏠 (trocar imóvel) — essas ações continuam a fazer-se apenas no card normal do Kanban.
-- É clicável: clicar em qualquer ponto do preview dispara a mesma ação do clique no card normal (abre o painel de contacto ou navega para `/leads/[id]`).
+- É clicável: clicar no card ampliado dispara a mesma ação do clique no card normal (abre o painel de contacto ou navega para `/leads/[id]`).
 
 ### 2. "Dias nesta fase"
 
