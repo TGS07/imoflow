@@ -58,6 +58,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { data: before } = await beforeQuery.single()
   if (!before) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  if (typeof leadData.property_id === 'string') {
+    const { data: property } = await supabase
+      .from('properties')
+      .select('id')
+      .eq('id', leadData.property_id)
+      .eq('agency_id', profile.agency_id)
+      .maybeSingle()
+    if (!property) leadData.property_id = null
+  }
+
   let updateQuery = supabase
     .from('leads')
     .update(leadData)

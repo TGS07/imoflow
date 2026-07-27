@@ -175,8 +175,12 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
     })
-    setEditingProperty(null)
-    if (res.ok) onCardUpdated?.()
+    if (res.ok) {
+      setEditingProperty(null)
+      onCardUpdated?.()
+    } else {
+      alert('Erro ao atualizar o imóvel do card.')
+    }
   }
 
   // Re-sincroniza quando o servidor devolve leads novos (ex: após criar via router.refresh())
