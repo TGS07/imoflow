@@ -54,6 +54,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
   const [stagesByPipeline, setStagesByPipeline] = useState<Record<string, { id: string; name: string; is_won: boolean; is_lost: boolean }[]>>({})
   const [pipelineMenuOpen, setPipelineMenuOpen] = useState(false)
   const [pipelineSelection, setPipelineSelection] = useState<string[]>([])
+  const [propertyChoice, setPropertyChoice] = useState('')
   const pipelineMenuRef = useRef<HTMLDivElement>(null)
   const [customInterval, setCustomInterval] = useState('')
   const [newSpecialDate, setNewSpecialDate] = useState({ label: '', month: '', day: '' })
@@ -207,7 +208,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     onChanged?.()
   }
 
-  async function addToPipelines(pipelineIds: string[]) {
+  async function addToPipelines(pipelineIds: string[], propertyId?: string | null) {
     if (pipelineIds.length === 0) return
     setPipelineBusy(true)
     setPipelineMenuOpen(false)
@@ -217,7 +218,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
           fetch(`/api/people/${id}/pipeline`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pipeline_id: pipelineId }),
+            body: JSON.stringify({ pipeline_id: pipelineId, ...(propertyId !== undefined ? { property_id: propertyId } : {}) }),
           })
         )
       )
@@ -229,6 +230,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     } finally {
       setPipelineBusy(false)
       setPipelineSelection([])
+      setPropertyChoice('')
     }
   }
 
@@ -289,6 +291,17 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
   // Leads "ativas" = etapa não fechada/perdida; pode haver uma por pipeline
   const activeLeads = (person.leads ?? []).filter(l => l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost)
   const missingPipelines = pipelines.filter(p => !activeLeads.some(l => l.pipeline_id === p.id))
+  // Imóveis já associados a este contacto (vendedor, comprador candidato ou
+  // consultor) — candidatos a ligar ao card quando se adiciona a uma
+  // pipeline. Com 2+, o consultor escolhe qual usar antes de confirmar.
+  const candidateProperties: PropertyRef[] = (() => {
+    const seller = person.properties_as_seller ?? []
+    const buyer = person.properties_as_buyer ?? []
+    const consultant = (person.property_consultants ?? []).map(pc => pc.properties)
+    const byId = new Map<string, PropertyRef>()
+    for (const p of [...seller, ...buyer, ...consultant]) byId.set(p.id, p)
+    return [...byId.values()]
+  })()
   const age = person.birthday ? Math.floor((Date.now() - new Date(person.birthday).getTime()) / (365.25 * 24 * 3600 * 1000)) : null
 
   const activeTypes = person.types ?? []
@@ -359,10 +372,23 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                       {p.name}
                     </label>
                   ))}
+                  {candidateProperties.length >= 2 && (
+                    <select
+                      className="input"
+                      value={propertyChoice}
+                      onChange={e => setPropertyChoice(e.target.value)}
+                      style={{ fontSize: 'var(--fs-sm)', padding: '4px 6px', marginTop: 4 }}
+                    >
+                      <option value="">Sem imóvel</option>
+                      {candidateProperties.map(p => (
+                        <option key={p.id} value={p.id}>{p.reference ? `${p.reference} — ${p.title}` : p.title}</option>
+                      ))}
+                    </select>
+                  )}
                   <button
                     type="button"
                     disabled={pipelineSelection.length === 0}
-                    onClick={() => addToPipelines(pipelineSelection)}
+                    onClick={() => addToPipelines(pipelineSelection, candidateProperties.length >= 2 ? (propertyChoice || null) : undefined)}
                     className="btn btn-primary btn-sm"
                     style={{ marginTop: 6 }}
                   >

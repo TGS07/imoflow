@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { resolveContactPropertyCandidates } from '@/lib/pipeline/resolve-contact-property'
 
 // Adicionar/remover um contacto de uma pipeline específica.
 //
@@ -61,6 +62,39 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'Contacto já está nesta pipeline', lead_id: activeLeads[0].id }, { status: 409 })
   }
 
+  // Sem `property_id` no body → resolve automaticamente quando só há 1
+  // imóvel candidato; com 2+, o cliente já perguntou ao consultor e manda
+  // o `property_id` escolhido (ou null, se escolheu "sem imóvel").
+  const hasPropertyOverride = 'property_id' in body
+  let propertyId: string | null = hasPropertyOverride && typeof body.property_id === 'string' ? body.property_id : null
+  let propertyZone: string | null = null
+  let propertyTypology: string | null = null
+  let propertyBudget: number | null = null
+
+  if (!hasPropertyOverride) {
+    const candidates = await resolveContactPropertyCandidates(supabase, profile.agency_id, id)
+    if (candidates.length === 1) {
+      propertyId = candidates[0].id
+      propertyZone = candidates[0].zone
+      propertyTypology = candidates[0].typology
+      propertyBudget = candidates[0].price
+    }
+  } else if (propertyId) {
+    const { data: property } = await supabase
+      .from('properties')
+      .select('zone, typology, price')
+      .eq('id', propertyId)
+      .eq('agency_id', profile.agency_id)
+      .maybeSingle()
+    if (property) {
+      propertyZone = property.zone
+      propertyTypology = property.typology
+      propertyBudget = property.price
+    } else {
+      propertyId = null
+    }
+  }
+
   const { data: firstStage } = await supabase
     .from('pipeline_stages')
     .select('id')
@@ -81,9 +115,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       phone: person.phone,
       stage_id: firstStage.id,
       person_id: person.id,
+      property_id: propertyId,
       assigned_to: person.assigned_to ?? user.id,
-      zone: (details.search_zone ?? details.selling_zone ?? null) as string | null,
-      typology: (details.typology ?? null) as string | null,
+      zone: propertyZone ?? ((details.search_zone ?? details.selling_zone ?? null) as string | null),
+      typology: propertyTypology ?? ((details.typology ?? null) as string | null),
+      budget: propertyBudget,
       source: 'outro',
     })
     .select('id')
