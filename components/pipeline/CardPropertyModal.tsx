@@ -1,20 +1,33 @@
 'use client'
 import { useState, useEffect } from 'react'
-import type { Property } from '@/types'
+import type { ContactPropertyCandidate } from '@/lib/pipeline/resolve-contact-property'
 
 // Popup para escolher/trocar o imóvel de um card específico da pipeline —
 // pesquisa em toda a carteira da agência (não só os imóveis já associados
-// ao contacto), tal como o picker de comprador em PropertyBuyer.tsx.
-export function CardPropertyModal({ currentPropertyId, currentPropertyLabel, onClose, onSelect, onRemove }: {
+// ao contacto), tal como o picker de comprador em PropertyBuyer.tsx. Se o
+// card tiver um contacto associado, mostra logo os imóveis já ligados a
+// esse contacto (vendedor/comprador candidato/consultor) como sugestões,
+// antes de o consultor precisar de pesquisar do zero.
+export function CardPropertyModal({ currentPropertyId, currentPropertyLabel, personId, onClose, onSelect, onRemove }: {
   currentPropertyId: string | null
   currentPropertyLabel: string | null
+  personId: string | null
   onClose: () => void
-  onSelect: (property: Property) => void
+  onSelect: (property: ContactPropertyCandidate) => void
   onRemove: () => void
 }) {
   const [search, setSearch] = useState('')
-  const [results, setResults] = useState<Property[]>([])
+  const [results, setResults] = useState<ContactPropertyCandidate[]>([])
   const [loading, setLoading] = useState(false)
+  const [suggested, setSuggested] = useState<ContactPropertyCandidate[]>([])
+
+  useEffect(() => {
+    if (!personId) { setSuggested([]); return }
+    fetch(`/api/people/${personId}/candidate-properties`)
+      .then(r => r.ok ? r.json() : [])
+      .then(setSuggested)
+      .catch(() => setSuggested([]))
+  }, [personId])
 
   useEffect(() => {
     if (!search.trim()) { setResults([]); return }
@@ -26,6 +39,20 @@ export function CardPropertyModal({ currentPropertyId, currentPropertyLabel, onC
     }, 300)
     return () => clearTimeout(timer)
   }, [search])
+
+  const visibleSuggested = suggested.filter(p => p.id !== currentPropertyId)
+
+  const propertyRow = (p: ContactPropertyCandidate) => (
+    <button
+      key={p.id}
+      onClick={() => onSelect(p)}
+      className="table-row"
+      style={{ display: 'block', width: '100%', textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', marginBottom: 4, cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.reference ? `${p.reference} — ${p.title}` : p.title}</div>
+      <div style={{ fontSize: 11, color: 'var(--muted)' }}>{p.price ? `€${p.price.toLocaleString('pt-PT')}` : ''} {p.zone ?? ''}</div>
+    </button>
+  )
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -44,21 +71,20 @@ export function CardPropertyModal({ currentPropertyId, currentPropertyLabel, onC
           <input className="input" placeholder="Pesquisar imóvel por referência, título ou morada…" value={search} onChange={e => setSearch(e.target.value)} autoFocus />
         </div>
         <div style={{ overflowY: 'auto', flex: 1, minHeight: 0, padding: '8px 10px' }}>
+          {!search.trim() && visibleSuggested.length > 0 && (
+            <>
+              <div style={{ fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '4px 12px 6px', fontWeight: 500 }}>Sugeridos para este contacto</div>
+              {visibleSuggested.map(propertyRow)}
+            </>
+          )}
+          {!search.trim() && visibleSuggested.length === 0 && (
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 12 }}>Pesquisa e escolhe um imóvel.</div>
+          )}
           {loading && <div style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 12 }}>A procurar…</div>}
           {!loading && search.trim() && results.length === 0 && (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 12 }}>Nenhum imóvel encontrado.</div>
           )}
-          {!loading && results.filter(p => p.id !== currentPropertyId).map(p => (
-            <button
-              key={p.id}
-              onClick={() => onSelect(p)}
-              className="table-row"
-              style={{ display: 'block', width: '100%', textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', marginBottom: 4, cursor: 'pointer', fontFamily: 'var(--font-body)' }}
-            >
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{p.reference ? `${p.reference} — ${p.title}` : p.title}</div>
-              <div style={{ fontSize: 11, color: 'var(--muted)' }}>{p.price ? `€${p.price.toLocaleString('pt-PT')}` : ''} {p.zone ?? ''}</div>
-            </button>
-          ))}
+          {!loading && search.trim() && results.filter(p => p.id !== currentPropertyId).map(propertyRow)}
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { CardPropertyModal } from '@/components/pipeline/CardPropertyModal'
 import { CardHoverPreview } from '@/components/pipeline/CardHoverPreview'
-import type { Property } from '@/types'
+import type { ContactPropertyCandidate } from '@/lib/pipeline/resolve-contact-property'
 import { cardFieldValue, daysInStage, type PipelineCardFields } from '@/lib/pipeline/card-fields'
 
 function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, onEditProperty, onHoverStart, onHoverEnd }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void; onEditProperty?: (lead: Lead) => void; onHoverStart?: (lead: Lead) => void; onHoverEnd?: () => void }) {
@@ -75,9 +75,11 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           {lead.people?.types && (
             <ContactTypeChips types={lead.people.types} size={8} />
           )}
+          {/* Ao pousar o rato num destes ícones, cancela o temporizador do preview — sem isto, o preview podia aparecer por cima do botão antes do clique. */}
           <button
             onClick={duplicateCard}
             disabled={duplicating}
+            onMouseEnter={() => onHoverEnd?.()}
             title="Duplicar card"
             className="icon-btn"
             style={{ width: 20, height: 20, fontSize: 11, flexShrink: 0 }}
@@ -86,6 +88,7 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           </button>
           <button
             onClick={e => { e.stopPropagation(); onEditProperty?.(lead) }}
+            onMouseEnter={() => onHoverEnd?.()}
             title="Imóvel do card"
             className="icon-btn"
             style={{ width: 20, height: 20, fontSize: 11, flexShrink: 0 }}
@@ -164,7 +167,7 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
   function handleCardHoverStart(lead: Lead) {
     if (activeId) return
     if (hoverTimer.current) clearTimeout(hoverTimer.current)
-    hoverTimer.current = setTimeout(() => setHoveredLead(lead), 450)
+    hoverTimer.current = setTimeout(() => setHoveredLead(lead), 650)
   }
 
   // Só cancela o temporizador pendente (preview ainda não mostrado). Não
@@ -282,8 +285,9 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
         <CardPropertyModal
           currentPropertyId={editingProperty.property_id}
           currentPropertyLabel={editingProperty.properties ? (editingProperty.properties.reference ?? editingProperty.properties.title) : null}
+          personId={editingProperty.person_id}
           onClose={() => setEditingProperty(null)}
-          onSelect={(property: Property) => updateCardProperty({ property_id: property.id, zone: property.zone, typology: property.typology, budget: property.price })}
+          onSelect={(property: ContactPropertyCandidate) => updateCardProperty({ property_id: property.id, zone: property.zone, typology: property.typology, budget: property.price })}
           onRemove={() => updateCardProperty({ property_id: null })}
         />
       )}
