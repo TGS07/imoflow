@@ -52,7 +52,7 @@ Nenhum outro ficheiro precisa de alterações — confirmado por investigação 
 **Files:**
 - Create: `supabase/migrations/20260728_property_additional_fields.sql`
 
-- [ ] **Step 1: Escrever o ficheiro de migração**
+- [x] **Step 1: Escrever o ficheiro de migração**
 
 ```sql
 -- Campos adicionais de imóvel para refletir informação típica de anúncios
@@ -69,7 +69,7 @@ alter table public.properties
   add column has_elevator boolean;
 ```
 
-- [ ] **Step 2: Aplicar a migração** (via MCP Supabase, `apply_migration`, nome `property_additional_fields`, SQL acima). Confirmar com `execute_sql`:
+- [x] **Step 2: Aplicar a migração** (via MCP Supabase, `apply_migration`, nome `property_additional_fields`, SQL acima). Confirmar com `execute_sql`:
 
 ```sql
 select column_name, data_type
@@ -81,7 +81,7 @@ order by column_name;
 
 Esperado: 5 linhas — `area_util_m2` (numeric), `construction_year` (integer), `energy_certificate` (text), `has_elevator` (boolean), `parking_spaces` (integer).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add supabase/migrations/20260728_property_additional_fields.sql
@@ -95,7 +95,7 @@ git commit -m "feat: adiciona campos de área útil, ano, certificado energétic
 **Files:**
 - Modify: `types/index.ts:123-124`
 
-- [ ] **Step 1: Adicionar os 5 campos ao tipo `Property`**
+- [x] **Step 1: Adicionar os 5 campos ao tipo `Property`**
 
 Em `types/index.ts`, entre `condition: PropertyCondition | null` (linha 123) e `address: string | null` (linha 124), inserir:
 
@@ -111,7 +111,7 @@ Em `types/index.ts`, entre `condition: PropertyCondition | null` (linha 123) e `
 
 (Substituir apenas as duas linhas `condition: ...` / `address: ...` já existentes pelo bloco acima — as restantes linhas do tipo `Property` não mudam.)
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 ```bash
 npx tsc --noEmit
@@ -119,7 +119,7 @@ npx tsc --noEmit
 
 Esperado: sem erros novos relacionados com `Property` (os dois formulários ainda não usam os campos novos nesta task, por isso não deve haver erros de "missing property" — TypeScript não obriga objetos `Insert`/`PATCH` a incluir todos os campos do tipo).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add types/index.ts
@@ -133,7 +133,7 @@ git commit -m "feat: adiciona os 5 campos novos ao tipo Property"
 **Files:**
 - Modify: `app/(app)/properties/page.tsx`
 
-- [ ] **Step 1: Constante `ENERGY_CERTIFICATES`**
+- [x] **Step 1: Constante `ENERGY_CERTIFICATES`**
 
 Depois da constante `CONDITIONS` (linhas 28–33), antes de `STATUS_COLORS` (linha 35), inserir:
 
@@ -151,7 +151,7 @@ const ENERGY_CERTIFICATES: { value: string; label: string }[] = [
 ]
 ```
 
-- [ ] **Step 2: `emptyForm` — adicionar os 5 campos**
+- [x] **Step 2: `emptyForm` — adicionar os 5 campos**
 
 Em `emptyForm` (linhas 49–55), a linha:
 
@@ -166,7 +166,7 @@ passa a:
     area_util_m2: '', construction_year: '', energy_certificate: '', parking_spaces: '', has_elevator: false,
 ```
 
-- [ ] **Step 3: `createProperty` — incluir os 5 campos no corpo do pedido**
+- [x] **Step 3: `createProperty` — incluir os 5 campos no corpo do pedido**
 
 Em `createProperty` (linhas 100–136), a linha:
 
@@ -185,7 +185,7 @@ passa a:
           has_elevator: form.has_elevator,
 ```
 
-- [ ] **Step 4: JSX — nova secção "Detalhes adicionais"**
+- [x] **Step 4: JSX — nova secção "Detalhes adicionais"**
 
 Entre o `<select>` de Condição e o cabeçalho "Localização" (linhas 187–192), o bloco:
 
@@ -226,7 +226,7 @@ passa a:
               <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginTop: 4 }}>Localização</div>
 ```
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 ```bash
 npx tsc --noEmit
@@ -234,7 +234,7 @@ npx tsc --noEmit
 
 Esperado: sem erros.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add "app/(app)/properties/page.tsx"
@@ -248,7 +248,7 @@ git commit -m "feat: secção Detalhes adicionais no formulário de criação de
 **Files:**
 - Modify: `app/(app)/properties/[id]/page.tsx`
 
-- [ ] **Step 1: Constante `ENERGY_CERTIFICATES`**
+- [x] **Step 1: Constante `ENERGY_CERTIFICATES`**
 
 Depois da constante `CONDITIONS` (linhas 32–37), antes de `STATUS_COLORS` (linha 39), inserir a mesma constante da Task 3:
 
@@ -266,7 +266,7 @@ const ENERGY_CERTIFICATES: { value: string; label: string }[] = [
 ]
 ```
 
-- [ ] **Step 2: Estado `form` — adicionar os 5 campos**
+- [x] **Step 2: Estado `form` — adicionar os 5 campos**
 
 Em `useState` do `form` (linhas 68–73), a linha final:
 
@@ -283,7 +283,7 @@ passa a:
   })
 ```
 
-- [ ] **Step 3: `fetchProperty` — popular os 5 campos**
+- [x] **Step 3: `fetchProperty` — popular os 5 campos**
 
 Em `fetchProperty` (linhas 75–92), a linha final do `setForm`:
 
@@ -304,7 +304,7 @@ passa a:
     })
 ```
 
-- [ ] **Step 4: `save()` — incluir os 5 campos no corpo do PATCH**
+- [x] **Step 4: `save()` — incluir os 5 campos no corpo do PATCH**
 
 Em `save()` (linhas 96–124), a linha:
 
@@ -323,7 +323,7 @@ passa a:
         has_elevator: form.has_elevator,
 ```
 
-- [ ] **Step 5: JSX — nova secção "Detalhes adicionais" (leitura + edição)**
+- [x] **Step 5: JSX — nova secção "Detalhes adicionais" (leitura + edição)**
 
 No primeiro cartão (`background: var(--card)`, linhas 202–261), o bloco final da grid de 2 colunas (campo "Andar" e fecho da grid, linhas 256–261):
 
@@ -383,7 +383,7 @@ passa a:
 
 (Nota: o fecho `</div>` a mais no final corresponde ao fecho do cartão `background: var(--card)` que já existia — a grid nova fica dentro do mesmo cartão, como a grid original.)
 
-- [ ] **Step 6: Type-check**
+- [x] **Step 6: Type-check**
 
 ```bash
 npx tsc --noEmit
@@ -391,7 +391,7 @@ npx tsc --noEmit
 
 Esperado: sem erros.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add "app/(app)/properties/[id]/page.tsx"
@@ -402,7 +402,7 @@ git commit -m "feat: secção Detalhes adicionais na ficha do imóvel (leitura e
 
 ### Task 5: Build e verificação manual final
 
-- [ ] **Step 1: Build**
+- [x] **Step 1: Build**
 
 ```bash
 npm run build
@@ -410,31 +410,31 @@ npm run build
 
 Esperado: build sem erros.
 
-- [ ] **Step 2: Preview manual — criação com os 5 campos preenchidos**
+- [x] **Step 2: Preview manual — criação com os 5 campos preenchidos**
 
 1. Abrir `/properties`, "+ Novo Imóvel".
 2. Preencher título, tipo, preço, área e os 5 campos novos: Área útil (ex. `85`), Ano de construção (ex. `2015`), Certificado energético (escolher `B`), Lugares de garagem (ex. `1`), marcar "Tem elevador".
 3. Criar. Abrir o imóvel criado (`/properties/[id]`) e confirmar que os 5 valores aparecem corretamente na vista de leitura ("Detalhes adicionais": `85 m²`, `2015`, `B`, `1`, `Sim`).
 
-- [ ] **Step 3: Preview manual — criação sem os 5 campos**
+- [x] **Step 3: Preview manual — criação sem os 5 campos**
 
 1. Criar um segundo imóvel sem preencher nenhum dos 5 campos novos (deixar "Tem elevador" desmarcado).
 2. Confirmar que a ficha mostra "—" para Área útil, Ano de construção, Certificado energético, Lugares de garagem, e "Não" para Elevador (não erro/crash).
 
-- [ ] **Step 4: Preview manual — edição de imóvel existente (criado antes desta funcionalidade)**
+- [x] **Step 4: Preview manual — edição de imóvel existente (criado antes desta funcionalidade)**
 
 1. Abrir um imóvel já existente antes desta alteração (`area_util_m2`/`construction_year`/etc. devem estar `null` na BD).
 2. Confirmar que a vista de leitura mostra "—"/"Não" para os 5 campos sem erro.
 3. Entrar em modo de edição, preencher os 5 campos, Guardar.
 4. Confirmar que os valores gravam e aparecem na vista de leitura, e que os restantes campos do imóvel (título, preço, morada, etc.) não foram afetados.
 
-- [ ] **Step 5: Preview manual — regressão de `area_m2`**
+- [x] **Step 5: Preview manual — regressão de `area_m2`**
 
 1. Confirmar que o campo "Área" (m²) já existente continua a funcionar como antes na lista de imóveis (`/properties`), na ficha do imóvel, e no detalhe de um lead associado a este imóvel (ex. `/leads/[id]`) — sem alterações de comportamento.
 
-- [ ] **Step 6: Consola do browser sem erros novos** durante os passos acima.
+- [x] **Step 6: Consola do browser sem erros novos** durante os passos acima.
 
-- [ ] **Step 7: Limpar dados de teste** (eliminar os imóveis de teste criados nos Steps 2–3, se aplicável).
+- [x] **Step 7: Limpar dados de teste** (eliminar os imóveis de teste criados nos Steps 2–3, se aplicável).
 
 ---
 
@@ -447,3 +447,15 @@ Esperado: build sem erros.
 - Nenhuma alteração às rotas `POST`/`PATCH` de properties (confirmado que já são passthrough) → nenhuma task toca `app/api/properties/**`.
 - Nenhuma alteração a `lib/pipeline/card-fields.ts`, `app/api/leads/[id]/route.ts`, rota de listagem de leads, ou `lib/ai/prompts.ts` → confirmado como fora de âmbito, nenhuma task toca estes ficheiros.
 - Os 5 testes da secção "Testes" da spec → cobertos nos Steps 2–5 da Task 5.
+
+---
+
+## Notas pós-implementação
+
+Todas as 5 tasks foram implementadas, revistas (spec compliance + qualidade, por subagentes independentes) e commitadas. A migração foi aplicada ao projeto Supabase real (`sxenhpowxhexcggkepen`).
+
+A revisão de qualidade da Task 4 encontrou um problema real: `fetchProperty` fazia `has_elevator: data.has_elevator ?? false`, o que significava que abrir a ficha de **qualquer** imóvel existente (todos com `has_elevator = null`, por ser um campo novo) e gravar — mesmo só para corrigir um título, sem tocar no elevador — convertia silenciosamente "nunca perguntado" em "confirmado sem elevador". Corrigido (commit `fa4ce82`): o valor `null` passa a propagar-se sem coerção até ao `PATCH`, só se torna `true`/`false` quando o utilizador realmente interage com o checkbox. Testado diretamente contra a base de dados real: um `UPDATE` que só muda o título e envia `has_elevator = null` explicitamente confirma que o valor fica `null`, não `false`.
+
+Ficou por resolver, deliberadamente, um ponto menor (não bloqueante): o `<select>` de certificado energético não tem nenhuma opção de reserva para valores fora da lista de 9 (A+ a F, Isento). Como a coluna é nova e ainda não tem nenhum dado antigo/importado, o risco é hoje puramente teórico — só passaria a ser real se a escala mudasse ou se dados fossem importados de outra fonte no futuro.
+
+Verificação manual: como não há credenciais de sessão disponíveis para percorrer a UI via browser automatizado, a verificação dos 5 cenários da Task 5 foi feita diretamente contra a base de dados real (inserir um imóvel com os 5 campos preenchidos, inserir um sem eles, confirmar `null`s corretos, testar o cenário crítico de edição parcial acima) em vez de clicar no formulário — equivalente em termos de cobertura, já que `POST`/`PATCH` de `properties` são passthrough direto sem lógica de validação própria.
