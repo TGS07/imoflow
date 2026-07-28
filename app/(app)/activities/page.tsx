@@ -274,6 +274,9 @@ export default function ActivitiesPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 20 }}>{ACTIVITY_ICONS[selectedActivity.type]}</span>
+                {selectedActivity.source === 'notification' && (
+                  <span title="Criada automaticamente a partir de uma notificação">🔔</span>
+                )}
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>{selectedActivity.title}</div>
                   <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: `${ACTIVITY_COLORS[selectedActivity.type]}22`, color: ACTIVITY_COLORS[selectedActivity.type], fontWeight: 500 }}>
@@ -443,7 +446,7 @@ export default function ActivitiesPage() {
                       <div className="cal-events" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {dayActivities.slice(0, 3).map(a => (
                           <div key={a.id} className="cal-event" onClick={() => setSelectedActivity(a)} style={{ fontSize: 10, padding: '2px 5px', borderRadius: 3, background: `${ACTIVITY_COLORS[a.type]}22`, color: ACTIVITY_COLORS[a.type], cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: a.completed ? 'line-through' : 'none', opacity: a.completed ? 0.5 : 1, ['--dot' as string]: ACTIVITY_COLORS[a.type] }}>
-                            {ACTIVITY_ICONS[a.type]} {a.title}
+                            {ACTIVITY_ICONS[a.type]} {a.title}{a.source === 'notification' && ' 🔔'}
                           </div>
                         ))}
                         {dayActivities.length > 3 && (
@@ -484,7 +487,7 @@ export default function ActivitiesPage() {
                 <div key={a.id} onClick={() => setSelectedActivity(a)} className="card card-hover" style={{ display: 'flex', gap: 8, padding: '10px 12px', border: `1px solid ${isOverdue ? 'rgba(220,38,38,0.25)' : 'var(--border)'}`, cursor: 'pointer', alignItems: 'start' }}>
                   <div onClick={e => { e.stopPropagation(); toggleComplete(a) }} style={{ width: 14, height: 14, borderRadius: 3, border: '1.5px solid var(--border-strong)', cursor: 'pointer', flexShrink: 0, marginTop: 2 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.source === 'notification' && '🔔 '}{a.title}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
                       <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 3, background: `${ACTIVITY_COLORS[a.type]}22`, color: ACTIVITY_COLORS[a.type], fontWeight: 500 }}>
                         {ACTIVITY_LABELS[a.type]}
