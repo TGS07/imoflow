@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createNotification } from '@/lib/notifications'
+import { mirrorNotificationToCalendar } from '@/lib/calendar/mirror-notification'
 import { daysSince, followupStatus } from '@/lib/contacts/followup'
 import { matchSpecialDatesToday } from '@/lib/contacts/special-dates'
 
@@ -142,7 +143,7 @@ async function handle(request: Request) {
     if (await alreadyNotifiedRecently(supabase, userId, link, suffix, status.windowDays, now)) continue
 
     const label = it.kind === 'lead' ? 'Lead' : 'Contacto'
-    await createNotification({
+    const notification = await createNotification({
       userId,
       agencyId: it.agency_id,
       type: 'task_due',
@@ -150,6 +151,16 @@ async function handle(request: Request) {
       body: `Já não há contacto com ${it.name} há ${status.daysSince} dias. ${suffix}`,
       link,
     }, supabase)
+    if (notification) {
+      await mirrorNotificationToCalendar({
+        supabase,
+        agencyId: it.agency_id,
+        assignedTo: userId,
+        notificationId: notification.id,
+        title: `Acompanhamento: ${it.name}`,
+        target: it.kind === 'lead' ? { kind: 'lead', id: it.id } : { kind: 'person', id: it.id },
+      })
+    }
     processed++
   }
 
@@ -172,7 +183,7 @@ async function handle(request: Request) {
       if (await alreadyNotifiedRecently(supabase, userId, link, suffix, 1, now)) continue
 
       const icon = match.label === 'Natal' ? '🎄' : match.label === 'Páscoa' ? '🐣' : match.label === 'Aniversário' ? '🎂' : '✦'
-      await createNotification({
+      const notification = await createNotification({
         userId,
         agencyId: sp.agency_id,
         type: 'special_date',
@@ -180,6 +191,16 @@ async function handle(request: Request) {
         body: `Hoje é uma data especial para ${sp.name}. ${suffix}`,
         link,
       }, supabase)
+      if (notification) {
+        await mirrorNotificationToCalendar({
+          supabase,
+          agencyId: sp.agency_id,
+          assignedTo: userId,
+          notificationId: notification.id,
+          title: `${match.label}: ${sp.name}`,
+          target: { kind: 'person', id: sp.id },
+        })
+      }
       processed++
     }
   }

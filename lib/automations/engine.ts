@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { createNotification } from '@/lib/notifications'
+import { mirrorNotificationToCalendar } from '@/lib/calendar/mirror-notification'
 import { AutomationEvent, AutomationRule } from '@/types'
 import { ActivityType } from '@/types/activity'
 import { sendLeadEmail } from '@/lib/email/send'
@@ -10,6 +11,14 @@ import { normalizePhone } from '@/lib/whatsapp/utils'
 
 // Trigger types that can be scoped to specific stages
 const STAGE_SCOPED_TRIGGERS = ['lead_inactive', 'stage_days_after_entry', 'stage_recurring']
+
+// Gatilhos criados exclusivamente pelo editor de notificações da etapa
+// (StageNotificationsModal / API pipeline-stages/[id]/notifications) — os
+// únicos cujas notificações fazem sentido como evento de calendário. Outros
+// gatilhos com action_type 'send_notification' (lead_created,
+// activity_completed, whatsapp_message_received, ou um stage_changed criado
+// livremente em /settings/automations) ficam de fora.
+const STAGE_WARNING_TRIGGERS = ['stage_changed', 'lead_inactive', 'stage_days_after_entry', 'stage_recurring']
 
 // `client` permite passar o service client em contextos sem sessão (crons,
 // webhooks) — sem ele, o RLS bloqueia as queries silenciosamente.
@@ -196,7 +205,7 @@ async function executeAction(
   }
 
   if (rule.action_type === 'send_notification') {
-    await createNotification({
+    const notification = await createNotification({
       userId: assignedTo,
       agencyId,
       type: 'automation_rule_triggered',
@@ -204,6 +213,16 @@ async function executeAction(
       body: String(config.message ?? rule.name),
       link: `/leads/${leadId}`,
     }, supabase)
+    if (notification && STAGE_WARNING_TRIGGERS.includes(rule.trigger_type)) {
+      await mirrorNotificationToCalendar({
+        supabase,
+        agencyId,
+        assignedTo,
+        notificationId: notification.id,
+        title: `Etapa: ${lead.name}`,
+        target: { kind: 'lead', id: leadId },
+      })
+    }
     return { notification_sent: true }
   }
 

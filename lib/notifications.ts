@@ -20,18 +20,20 @@ interface CreateNotificationParams {
   link?: string
 }
 
-export async function createNotification(params: CreateNotificationParams, client?: SupabaseClient): Promise<void> {
+export async function createNotification(params: CreateNotificationParams, client?: SupabaseClient): Promise<{ id: string } | null> {
   const { userId, agencyId, type, title, body, link } = params
   const supabase = client ?? await createClient()
 
   // 1. Inserir notificação
-  const { error: insertError } = await supabase
+  const { data: notification, error: insertError } = await supabase
     .from('notifications')
     .insert({ user_id: userId, agency_id: agencyId, type, title, body, link })
+    .select('id')
+    .single()
 
-  if (insertError) {
-    console.error('Failed to insert notification:', insertError.message)
-    return
+  if (insertError || !notification) {
+    console.error('Failed to insert notification:', insertError?.message)
+    return null
   }
 
   // 2. Apagar as mais antigas se total > 20
@@ -68,11 +70,11 @@ export async function createNotification(params: CreateNotificationParams, clien
     }
   }
 
-  if (!userRow?.email_notifications) return
+  if (!userRow?.email_notifications) return { id: notification.id }
 
   const { data: authUser } = await supabase.auth.admin.getUserById(userId)
   const toEmail = authUser?.user?.email
-  if (!toEmail) return
+  if (!toEmail) return { id: notification.id }
 
   try {
     await resend.emails.send({
@@ -92,4 +94,6 @@ export async function createNotification(params: CreateNotificationParams, clien
   } catch (err) {
     console.error('Failed to send notification email:', err)
   }
+
+  return { id: notification.id }
 }
