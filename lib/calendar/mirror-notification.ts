@@ -28,19 +28,27 @@ export async function mirrorNotificationToCalendar(params: MirrorNotificationPar
   const { supabase, agencyId, assignedTo, notificationId, title, target } = params
 
   const table = target.kind === 'person' ? 'people' : 'leads'
-  const { data: row } = await supabase
+  const { data: row, error: rowError } = await supabase
     .from(table)
     .select('calendar_sync_enabled')
     .eq('id', target.id)
     .maybeSingle()
 
+  if (rowError) {
+    console.error('Failed to check calendar_sync_enabled for mirror-notification:', rowError.message)
+  }
+
   if (!row?.calendar_sync_enabled) return
 
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('activities')
     .select('id')
     .eq('notification_id', notificationId)
     .maybeSingle()
+
+  if (existingError) {
+    console.error('Failed to check existing mirrored activity:', existingError.message)
+  }
 
   if (existing) return
 
