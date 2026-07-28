@@ -82,7 +82,7 @@ export default function PropertyPage() {
     price: '', area_m2: '', typology: '', bedrooms: '', bathrooms: '', floor: '',
     condition: '' as string, address: '', city: '', zone: '', postal_code: '',
     description: '', notes: '', features: '', photos: '', idealista_url: '',
-    area_util_m2: '', construction_year: '', energy_certificate: '', parking_spaces: '', has_elevator: false,
+    area_util_m2: '', construction_year: '', energy_certificate: '', parking_spaces: '', has_elevator: false as boolean | null,
   })
 
   const fetchProperty = useCallback(async () => {
@@ -105,7 +105,7 @@ export default function PropertyPage() {
       construction_year: data.construction_year?.toString() ?? '',
       energy_certificate: data.energy_certificate ?? '',
       parking_spaces: data.parking_spaces?.toString() ?? '',
-      has_elevator: data.has_elevator ?? false,
+      has_elevator: data.has_elevator,
     })
   }, [id])
 
@@ -309,7 +309,7 @@ export default function PropertyPage() {
                 <div style={labelStyle}>Elevador</div>
                 {editing ? (
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={form.has_elevator} onChange={e => setForm(p => ({ ...p, has_elevator: e.target.checked }))} />
+                    <input type="checkbox" checked={!!form.has_elevator} onChange={e => setForm(p => ({ ...p, has_elevator: e.target.checked }))} />
                     {form.has_elevator ? 'Sim' : 'Não'}
                   </label>
                 ) : <div style={{ fontSize: 13, color: property.has_elevator == null ? 'var(--muted)' : 'var(--text)' }}>{property.has_elevator == null ? '—' : property.has_elevator ? 'Sim' : 'Não'}</div>}
