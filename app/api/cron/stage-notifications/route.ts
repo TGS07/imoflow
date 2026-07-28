@@ -76,10 +76,11 @@ async function handleCron(request: Request) {
   const personIds = [...new Set(leads.map(l => l.person_id).filter((p): p is string => !!p))]
   const regularPersonIds = new Set<string>()
   if (personIds.length > 0) {
-    const { data: people } = await supabase
+    const { data: people, error: peopleError } = await supabase
       .from('people')
       .select('id, is_regular, regular_interval_days')
       .in('id', personIds)
+    if (peopleError) console.error('stage-notifications: failed to fetch people cadence:', peopleError.message)
     for (const p of people ?? []) {
       if (p.is_regular && p.regular_interval_days != null) regularPersonIds.add(p.id)
     }
