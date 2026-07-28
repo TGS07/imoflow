@@ -24,6 +24,7 @@ export type LeadSummary = {
   created_at: string
   pipeline_stages?: { name: string; color: string; is_won: boolean; is_lost: boolean }
   pipelines?: { name: string } | null
+  stage_recurring_days?: number | null
 }
 
 type PropertyRef = { id: string; title: string; status: string; price: number | null; reference: string | null }
@@ -57,6 +58,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
   const [propertyChoice, setPropertyChoice] = useState('')
   const pipelineMenuRef = useRef<HTMLDivElement>(null)
   const [customInterval, setCustomInterval] = useState('')
+  const [agencyFollowup, setAgencyFollowup] = useState({ first: 7, second: 30 })
   const [newSpecialDate, setNewSpecialDate] = useState({ label: '', month: '', day: '' })
   const [form, setForm] = useState<{
     name: string; email: string; phone: string; address: string; notes: string
@@ -87,6 +89,15 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
 
   useEffect(() => {
     fetch('/api/pipelines').then(r => r.ok ? r.json() : []).then(setPipelines).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/agency')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { followup_first_days?: number; followup_second_days?: number } | null) => {
+        if (d) setAgencyFollowup({ first: d.followup_first_days ?? 7, second: d.followup_second_days ?? 30 })
+      })
+      .catch(() => {})
   }, [])
 
   // Etapas de cada pipeline com lead ativa (para o seletor inline de etapa)
@@ -149,10 +160,12 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
   // Frequência de follow-up própria deste contacto (substitui os prazos
   // globais da agência quando definida). null = voltar a usar os prazos da agência.
   async function setRegularInterval(days: number | null) {
+    const body: Record<string, unknown> = { regular_interval_days: days }
+    if (days != null && !person?.is_regular) body.is_regular = true
     await fetch(`/api/people/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ regular_interval_days: days }),
+      body: JSON.stringify(body),
     })
     setCustomInterval('')
     fetchPerson()
@@ -301,6 +314,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
 
   // Leads "ativas" = etapa não fechada/perdida; pode haver uma por pipeline
   const activeLeads = (person.leads ?? []).filter(l => l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost)
+  const leadsWithStageCadence = activeLeads.filter(l => l.stage_recurring_days != null && l.stage_recurring_days > 0)
   const missingPipelines = pipelines.filter(p => !activeLeads.some(l => l.pipeline_id === p.id))
   // Imóveis já associados a este contacto (vendedor, comprador candidato ou
   // consultor) — candidatos a ligar ao card quando se adiciona a uma
@@ -526,28 +540,46 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                 {/* Contacto regular (toggle rápido fora do modo edição) */}
                 <div>
                   <div className="section-label" style={{ marginBottom: 6 }}>Follow-ups</div>
+
+                  {/* Cadência efetiva: valor próprio do contacto → cadência da
+                      etapa de cada lead ativo → prazos da agência (nesta ordem). */}
+                  <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.5 }}>
+                    Cadência efetiva:{' '}
+                    {person.regular_interval_days != null ? (
+                      <strong style={{ color: 'var(--text)', fontWeight: 600 }}>a cada {person.regular_interval_days} dias (definido para este contacto)</strong>
+                    ) : leadsWithStageCadence.length > 0 ? (
+                      <span style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4 }}>
+                        {leadsWithStageCadence.map(lead => (
+                          <strong key={lead.id} style={{ color: 'var(--text)', fontWeight: 600 }}>
+                            «{lead.pipelines?.name ?? 'Negócio'}» (etapa «{lead.pipeline_stages?.name ?? '—'}»): a cada {lead.stage_recurring_days} dias, definido na etapa
+                          </strong>
+                        ))}
+                      </span>
+                    ) : (
+                      <strong style={{ color: 'var(--text)', fontWeight: 600 }}>prazos da agência (padrão: primeiro aviso aos {agencyFollowup.first} dias, depois aos {agencyFollowup.second} dias)</strong>
+                    )}
+                  </div>
+
                   <button onClick={toggleRegular} className={`chip${person.is_regular ? ' active' : ''}`} style={{ width: '100%', justifyContent: 'space-between', padding: '8px 14px', borderRadius: 10 }}>
                     <span style={{ fontSize: 'var(--fs-sm)' }}>{person.is_regular ? '✓ Contacto regular' : 'Marcar como regular'}</span>
                     <span style={{ fontSize: 'var(--fs-xs)', opacity: 0.75, fontWeight: 500 }}>{person.is_regular ? 'lembretes ativos' : 'sem lembretes'}</span>
                   </button>
 
-                  {person.is_regular && (
-                    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)' }}>
-                        Frequência: <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{person.regular_interval_days ? `a cada ${person.regular_interval_days} dias` : 'prazos da agência (padrão)'}</strong>
-                      </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                        <button type="button" onClick={() => setRegularInterval(null)} className={`chip${person.regular_interval_days == null ? ' active' : ''}`}>Prazos da agência</button>
-                        {REGULAR_INTERVAL_PRESETS.map(dd => (
-                          <button key={dd} type="button" onClick={() => setRegularInterval(dd)} className={`chip${person.regular_interval_days === dd ? ' active' : ''}`}>{dd} dias</button>
-                        ))}
-                      </div>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <input className="input" style={{ width: 110 }} type="number" min={1} placeholder="outro (dias)" value={customInterval} onChange={e => setCustomInterval(e.target.value)} />
-                        <button type="button" disabled={!customInterval} onClick={() => setRegularInterval(Number(customInterval))} className="btn btn-ghost btn-sm" style={{ height: 'auto' }}>Aplicar</button>
-                      </div>
+                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)' }}>
+                      Frequência: <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{person.regular_interval_days ? `a cada ${person.regular_interval_days} dias` : 'prazos da agência (padrão)'}</strong>
                     </div>
-                  )}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                      <button type="button" onClick={() => setRegularInterval(null)} className={`chip${person.regular_interval_days == null ? ' active' : ''}`}>Prazos da agência</button>
+                      {REGULAR_INTERVAL_PRESETS.map(dd => (
+                        <button key={dd} type="button" onClick={() => setRegularInterval(dd)} className={`chip${person.regular_interval_days === dd ? ' active' : ''}`}>{dd} dias</button>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input className="input" style={{ width: 110 }} type="number" min={1} placeholder="outro (dias)" value={customInterval} onChange={e => setCustomInterval(e.target.value)} />
+                      <button type="button" disabled={!customInterval} onClick={() => setRegularInterval(Number(customInterval))} className="btn btn-ghost btn-sm" style={{ height: 'auto' }}>Aplicar</button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Contacto especial (datas importantes) */}
