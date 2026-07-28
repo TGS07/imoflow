@@ -80,6 +80,7 @@ export type Person = {
   details: import('./contact').ContactDetails
   is_regular: boolean
   regular_interval_days: number | null
+  calendar_sync_enabled: boolean
   assigned_to: string | null
   birthday: string | null
   is_special: boolean
@@ -161,6 +162,7 @@ export type Lead = {
   pipeline_id: string | null
   is_regular: boolean
   regular_interval_days: number | null
+  calendar_sync_enabled: boolean
   created_at: string
   stage_entered_at: string
   users?: User
