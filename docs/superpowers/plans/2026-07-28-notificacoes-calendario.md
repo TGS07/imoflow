@@ -61,7 +61,7 @@
 - Create: `lib/calendar/ics.ts`
 - Create: `lib/calendar/mirror-notification.ts`
 
-- [ ] **Step 1: Migração** (ficheiro apenas — aplicada via MCP na Task 7)
+- [x] **Step 1: Migração** (ficheiro apenas — aplicada via MCP na Task 7)
 
 Conteúdo completo de `supabase/migrations/20260728_calendar_sync.sql`:
 
@@ -94,7 +94,7 @@ create unique index activities_notification_unique_idx
   on public.activities(notification_id) where notification_id is not null;
 ```
 
-- [ ] **Step 2: Tipos `Person` e `Lead`** — em `types/index.ts`, no tipo `Person` (linha 68), a seguir a `regular_interval_days: number | null` (linha 82), acrescentar:
+- [x] **Step 2: Tipos `Person` e `Lead`** — em `types/index.ts`, no tipo `Person` (linha 68), a seguir a `regular_interval_days: number | null` (linha 82), acrescentar:
 
 ```ts
   calendar_sync_enabled: boolean
@@ -106,7 +106,7 @@ E no tipo `Lead` (linha 142), a seguir a `regular_interval_days: number | null` 
   calendar_sync_enabled: boolean
 ```
 
-- [ ] **Step 3: Tipo `Activity`** — conteúdo completo de `types/activity.ts` (acrescenta `source` e `notification_id` a seguir a `completed_at`):
+- [x] **Step 3: Tipo `Activity`** — conteúdo completo de `types/activity.ts` (acrescenta `source` e `notification_id` a seguir a `completed_at`):
 
 ```ts
 export type ActivityType = 'chamada' | 'visita' | 'email' | 'reuniao' | 'tarefa' | 'nota' | 'whatsapp'
@@ -133,7 +133,7 @@ export type Activity = {
 }
 ```
 
-- [ ] **Step 4: Gerador ICS puro** — conteúdo completo de `lib/calendar/ics.ts`:
+- [x] **Step 4: Gerador ICS puro** — conteúdo completo de `lib/calendar/ics.ts`:
 
 ```ts
 // lib/calendar/ics.ts
@@ -191,7 +191,7 @@ export function buildIcsFeed(events: IcsEvent[]): string {
 }
 ```
 
-- [ ] **Step 5: Verificação rápida do gerador ICS** (sem test runner — script descartável)
+- [x] **Step 5: Verificação rápida do gerador ICS** (sem test runner — script descartável)
 
 Criar um ficheiro descartável `scripts/_verify-ics.ts` (fica no repo só até ao fim deste step):
 
@@ -215,7 +215,7 @@ rm scripts/_verify-ics.ts
 
 Esperado: imprime um `VCALENDAR` válido, `BEGIN:VEVENT count = 1`, `has CRLF = true`, e a vírgula em "João, Silva" aparece escapada como `João\, Silva` no `SUMMARY`. Se `npx tsx` não estiver instalado localmente, corre na mesma via `npx` (descarrega-o só para este comando, sem ficar como dependência do projeto).
 
-- [ ] **Step 6: Helper de espelhagem, idempotente** — conteúdo completo de `lib/calendar/mirror-notification.ts`:
+- [x] **Step 6: Helper de espelhagem, idempotente** — conteúdo completo de `lib/calendar/mirror-notification.ts`:
 
 ```ts
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -285,7 +285,7 @@ export async function mirrorNotificationToCalendar(params: MirrorNotificationPar
 }
 ```
 
-- [ ] **Step 7: Type-check e commit**
+- [x] **Step 7: Type-check e commit**
 
 ```bash
 npx tsc --noEmit
@@ -302,7 +302,7 @@ git commit -m "feat: modelo de dados e helpers puros da sincronização com o ca
 - Modify: `app/api/cron/contact-followup/route.ts`
 - Modify: `lib/automations/engine.ts`
 
-- [ ] **Step 1: `createNotification` devolve o id inserido** — conteúdo completo de `lib/notifications.ts`:
+- [x] **Step 1: `createNotification` devolve o id inserido** — conteúdo completo de `lib/notifications.ts`:
 
 ```ts
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -406,7 +406,7 @@ export async function createNotification(params: CreateNotificationParams, clien
 }
 ```
 
-- [ ] **Step 2: Espelhar no cron `contact-followup`** — em `app/api/cron/contact-followup/route.ts`, acrescentar o import a seguir aos existentes:
+- [x] **Step 2: Espelhar no cron `contact-followup`** — em `app/api/cron/contact-followup/route.ts`, acrescentar o import a seguir aos existentes:
 
 ```ts
 import { mirrorNotificationToCalendar } from '@/lib/calendar/mirror-notification'
@@ -488,7 +488,7 @@ por:
       processed++
 ```
 
-- [ ] **Step 3: Espelhar no motor de automações (avisos de etapa)** — em `lib/automations/engine.ts`, acrescentar o import a seguir aos existentes:
+- [x] **Step 3: Espelhar no motor de automações (avisos de etapa)** — em `lib/automations/engine.ts`, acrescentar o import a seguir aos existentes:
 
 ```ts
 import { mirrorNotificationToCalendar } from '@/lib/calendar/mirror-notification'
@@ -548,7 +548,7 @@ por:
   }
 ```
 
-- [ ] **Step 4: Type-check e commit**
+- [x] **Step 4: Type-check e commit**
 
 ```bash
 npx tsc --noEmit
@@ -563,7 +563,7 @@ git commit -m "feat: espelhar notificações de acompanhamento e avisos de etapa
 **Files:**
 - Create: `app/api/calendar/[token]/route.ts`
 
-- [ ] **Step 1: Rota ICS** — conteúdo completo de `app/api/calendar/[token]/route.ts`:
+- [x] **Step 1: Rota ICS** — conteúdo completo de `app/api/calendar/[token]/route.ts`:
 
 ```ts
 import { createServiceClient } from '@/lib/supabase/service'
@@ -626,7 +626,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
 }
 ```
 
-- [ ] **Step 2: Type-check e commit**
+- [x] **Step 2: Type-check e commit**
 
 ```bash
 npx tsc --noEmit
@@ -646,7 +646,7 @@ git commit -m "feat: endpoint do feed ICS público por token"
 - Create: `app/(app)/profile/page.tsx`
 - Modify: `components/layout/Sidebar.tsx`
 
-- [ ] **Step 1: Rota GET/POST do token pessoal** — conteúdo completo de `app/api/users/me/calendar-token/route.ts`:
+- [x] **Step 1: Rota GET/POST do token pessoal** — conteúdo completo de `app/api/users/me/calendar-token/route.ts`:
 
 ```ts
 import { randomUUID } from 'crypto'
@@ -692,7 +692,7 @@ export async function POST() {
 }
 ```
 
-- [ ] **Step 2: Cartão do feed** — conteúdo completo de `components/profile/CalendarFeedCard.tsx`:
+- [x] **Step 2: Cartão do feed** — conteúdo completo de `components/profile/CalendarFeedCard.tsx`:
 
 ```tsx
 'use client'
@@ -752,7 +752,7 @@ export function CalendarFeedCard() {
 }
 ```
 
-- [ ] **Step 3: Página de perfil** — conteúdo completo de `app/(app)/profile/page.tsx`:
+- [x] **Step 3: Página de perfil** — conteúdo completo de `app/(app)/profile/page.tsx`:
 
 ```tsx
 import { redirect } from 'next/navigation'
@@ -773,7 +773,7 @@ export default async function ProfilePage() {
 }
 ```
 
-- [ ] **Step 4: Acesso a partir da sidebar** — em `components/layout/Sidebar.tsx`, o rodapé do utilizador (linhas 96-104) é hoje uma `<div>` sem link:
+- [x] **Step 4: Acesso a partir da sidebar** — em `components/layout/Sidebar.tsx`, o rodapé do utilizador (linhas 96-104) é hoje uma `<div>` sem link:
 
 ```tsx
       <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -803,7 +803,7 @@ Substituir por (troca a `div` externa por `Link`, mantendo estilos e conteúdo i
 
 `Link` já está importado no topo do ficheiro (`import Link from 'next/link'`, linha 2) — nenhum import novo.
 
-- [ ] **Step 5: Type-check e commit**
+- [x] **Step 5: Type-check e commit**
 
 ```bash
 npx tsc --noEmit
@@ -820,7 +820,7 @@ git commit -m "feat: página de perfil com o link pessoal do feed ICS"
 - Modify: `components/contacts/ContactDetailPanel.tsx`
 - Modify: `app/(app)/leads/[id]/page.tsx`
 
-- [ ] **Step 1: Allowlist do PATCH de pessoas** — em `app/api/people/[id]/route.ts`, dentro do array `allowed` do `PATCH`:
+- [x] **Step 1: Allowlist do PATCH de pessoas** — em `app/api/people/[id]/route.ts`, dentro do array `allowed` do `PATCH`:
 
 ```ts
   const allowed = [
@@ -837,7 +837,7 @@ Acrescentar `'calendar_sync_enabled'` à lista (por exemplo a seguir a `'regular
 
 `PATCH /api/leads/[id]` não precisa de alteração — faz passthrough direto do body (`update(leadData)`, sem allowlist), confirmado em "Factos do código".
 
-- [ ] **Step 2: Toggle no contacto** — em `components/contacts/ContactDetailPanel.tsx`, acrescentar a função de toggle a seguir a `toggleSpecial` (depois da linha 171):
+- [x] **Step 2: Toggle no contacto** — em `components/contacts/ContactDetailPanel.tsx`, acrescentar a função de toggle a seguir a `toggleSpecial` (depois da linha 171):
 
 ```ts
   async function toggleCalendarSync() {
@@ -865,7 +865,7 @@ E no JSX, dentro do bloco `{cardTitle('Acompanhamento')}` (a seguir ao `</div>` 
                 </div>
 ```
 
-- [ ] **Step 3: Toggle no lead** — em `app/(app)/leads/[id]/page.tsx`, acrescentar a função a seguir a `setRegularInterval` (depois da linha 160):
+- [x] **Step 3: Toggle no lead** — em `app/(app)/leads/[id]/page.tsx`, acrescentar a função a seguir a `setRegularInterval` (depois da linha 160):
 
 ```ts
   async function toggleCalendarSync() {
@@ -889,7 +889,7 @@ E no JSX, imediatamente a seguir ao bloco condicional "Frequência de follow-up 
         </div>
 ```
 
-- [ ] **Step 4: Type-check e commit**
+- [x] **Step 4: Type-check e commit**
 
 ```bash
 npx tsc --noEmit
@@ -904,7 +904,7 @@ git commit -m "feat: toggle de sincronização com o calendário no contacto e n
 **Files:**
 - Modify: `app/(app)/activities/page.tsx`
 
-- [ ] **Step 1: Badge de sino nas atividades espelhadas**
+- [x] **Step 1: Badge de sino nas atividades espelhadas**
 
 No pill do dia (mês), linha 445-446, o conteúdo do evento é:
 
@@ -953,7 +953,7 @@ Substituir por:
 
 (Nenhuma alteração é necessária em `app/api/activities/route.ts` nem em `app/api/activities/[id]/route.ts` — ambos já selecionam `'*, ...'`, por isso `source`/`notification_id` chegam automaticamente ao cliente assim que o tipo `Activity` for atualizado, feito na Task 1.)
 
-- [ ] **Step 2: Type-check e commit**
+- [x] **Step 2: Type-check e commit**
 
 ```bash
 npx tsc --noEmit
@@ -965,7 +965,7 @@ git commit -m "feat: indicação visual das atividades espelhadas a partir de no
 
 ### Task 7: Migração + build + verificação manual final (coordenador)
 
-- [ ] **Step 1: Aplicar a migração** via MCP Supabase (`apply_migration`, nome `calendar_sync`, SQL do ficheiro da Task 1). Confirmar com `execute_sql`:
+- [x] **Step 1: Aplicar a migração** via MCP Supabase (`apply_migration`, nome `calendar_sync`, SQL do ficheiro da Task 1). Confirmar com `execute_sql`:
 
 ```sql
 select column_name from information_schema.columns
@@ -976,13 +976,13 @@ order by table_name, column_name;
 
 Esperado: 5 linhas (`activities.notification_id`, `activities.source`, `leads.calendar_sync_enabled`, `people.calendar_sync_enabled`, `users.calendar_token`).
 
-- [ ] **Step 2: Build**
+- [x] **Step 2: Build**
 
 ```bash
 npm run build
 ```
 
-- [ ] **Step 3: Preview manual — toggles e ligação com o cron** (mapeia diretamente os pontos "Testes" da spec)
+- [x] **Step 3: Preview manual — toggles e ligação com o cron** (mapeia diretamente os pontos "Testes" da spec)
 
 1. Abrir a ficha de um contacto marcado como regular (`is_regular = true`), ligar "Adicionar notificações ao calendário". Confirmar via `execute_sql` que `people.calendar_sync_enabled = true` para esse registo.
 2. Correr manualmente o cron de acompanhamento (com o `CRON_SECRET` do `.env.local`):
@@ -999,7 +999,7 @@ curl -s -X POST http://localhost:3000/api/cron/contact-followup \
 7. Repetir os passos 1-3 para um **lead** com um aviso de etapa configurado em Definições → Pipeline → 🔔 (`StageNotificationsModal`), correndo `curl -X POST http://localhost:3000/api/cron/stage-notifications -H "Authorization: Bearer $CRON_SECRET"` em vez do cron de contactos.
 8. Limpar: apagar as `activities` de teste criadas nos passos acima e desligar os toggles usados.
 
-- [ ] **Step 4: Preview manual — feed ICS**
+- [x] **Step 4: Preview manual — feed ICS**
 
 1. Em `/profile`, copiar o link do feed (deve ter a forma `http://localhost:3000/api/calendar/<uuid>.ics`).
 2. `curl -s http://localhost:3000/api/calendar/<uuid>.ics` — confirmar `Content-Type: text/calendar; charset=utf-8` nos headers (`curl -sI ...`) e que o corpo é um `VCALENDAR` com um `VEVENT` por cada `activity` de `source = 'notification'` atribuída a este utilizador (contar `grep -c BEGIN:VEVENT`).
@@ -1007,6 +1007,16 @@ curl -s -X POST http://localhost:3000/api/cron/contact-followup \
 4. Em `/profile`, clicar "Regenerar link", confirmar (no prompt) e verificar que a URL muda. Repetir o `curl` do passo 2 com o **link antigo** — deve devolver `404`. Repetir com o **link novo** — deve devolver o feed normalmente.
 5. (Opcional, se houver acesso a um cliente de calendário) colar o link novo no Notion Calendar / Google Calendar ("Subscrever calendário" / "From URL") e confirmar que os eventos aparecem com o título e a data corretos.
 
-- [ ] **Step 5: Consola sem erros novos** — verificar `npx eslint` limpo e a consola do browser sem erros durante os passos 3-4.
+- [x] **Step 5: Consola sem erros novos** — verificar `npx eslint` limpo e a consola do browser sem erros durante os passos 3-4.
 
-- [ ] **Step 6: Revisão final da fatia + commit de eventuais correções.**
+- [x] **Step 6: Revisão final da fatia + commit de eventuais correções.**
+
+---
+
+## Notas pós-implementação
+
+Todas as 7 tasks foram implementadas, revistas (spec compliance + qualidade de código, por subagentes independentes) e commitadas. A migração foi aplicada ao projeto Supabase real (`sxenhpowxhexcggkepen`). A verificação manual da Task 7 contra dados reais encontrou e corrigiu três problemas que a revisão ao nível de cada task, isolada, não podia detetar:
+
+1. **`users_calendar_token_key` (unique constraint)** — acrescentado a `20260728_calendar_sync.sql` durante a revisão da Task 3 (o SQL original neste documento, na Task 1, não a inclui — o ficheiro de migração real é a fonte de verdade).
+2. **Duplicação do nome no título do evento ICS** e **token inválido a devolver 500 em vez de 404** — corrigidos em `app/api/calendar/[token]/route.ts` (commit `726f4c5`), depois de testar o feed contra atividades reais.
+3. **`notifications_type_check` não incluía `'automation_rule_triggered'`** — gap pré-existente (anterior a esta funcionalidade) que impedia silenciosamente o caminho de "avisos de etapa" de `lib/automations/engine.ts` de alguma vez criar notificação, e por isso de alguma vez espelhar uma `activity`. Corrigido por uma migração separada (`20260728221500_notifications_type_automation_rule.sql`, commit `dda5512`). Verificado com um insert de teste direto na BD real (sucesso) e com o caminho do cron `contact-followup` (que usa o mesmo helper de espelhagem) verificado ponta-a-ponta; o caminho específico dos avisos de etapa não foi verificado ponta-a-ponta com uma lead real por causa da deduplicação de produção já em vigor (proteção real contra reenvio de notificações) — a lógica foi confirmada por leitura de código e pelo insert de teste, não por um disparo real completo.
