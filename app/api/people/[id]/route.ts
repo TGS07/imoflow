@@ -32,7 +32,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = await request.json()
   const allowed = [
     'name', 'email', 'phone', 'address', 'notes', 'types', 'financial_capacity', 'source', 'details',
-    'assigned_to', 'is_regular', 'birthday', 'regular_interval_days',
+    'assigned_to', 'is_regular', 'birthday', 'regular_interval_days', 'calendar_sync_enabled',
     'is_special', 'special_notify_christmas', 'special_notify_easter', 'special_notify_birthday', 'special_dates',
   ] as const
   const update: Record<string, unknown> = {}

@@ -170,6 +170,17 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     onChanged?.()
   }
 
+  async function toggleCalendarSync() {
+    if (!person) return
+    await fetch(`/api/people/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ calendar_sync_enabled: !person.calendar_sync_enabled }),
+    })
+    fetchPerson()
+    onChanged?.()
+  }
+
   async function updateSpecialFlag(key: 'special_notify_christmas' | 'special_notify_easter' | 'special_notify_birthday', value: boolean) {
     await fetch(`/api/people/${id}`, {
       method: 'PATCH',
@@ -583,6 +594,15 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* Sincronização com o calendário (interno + feed ICS pessoal) */}
+                <div>
+                  <div className="section-label" style={{ marginBottom: 6 }}>Calendário</div>
+                  <button onClick={toggleCalendarSync} className={`chip${person.calendar_sync_enabled ? ' active' : ''}`} style={{ width: '100%', justifyContent: 'space-between', padding: '8px 14px', borderRadius: 10 }}>
+                    <span style={{ fontSize: 'var(--fs-sm)' }}>{person.calendar_sync_enabled ? '✓ No calendário' : 'Adicionar notificações ao calendário'}</span>
+                    <span style={{ fontSize: 'var(--fs-xs)', opacity: 0.75, fontWeight: 500 }}>{person.calendar_sync_enabled ? 'sincronizado' : 'não sincronizado'}</span>
+                  </button>
                 </div>
               </div>
             </div>

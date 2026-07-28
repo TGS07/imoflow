@@ -159,6 +159,13 @@ export default function LeadPage() {
     setCustomInterval('')
   }
 
+  async function toggleCalendarSync() {
+    if (!lead) return
+    const next = !lead.calendar_sync_enabled
+    setLead(prev => prev ? { ...prev, calendar_sync_enabled: next } : prev)
+    await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ calendar_sync_enabled: next }) })
+  }
+
   async function updateAssignee(userId: string) {
     setLead(prev => prev ? { ...prev, assigned_to: userId || null } : prev)
     await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assigned_to: userId || null }) })
@@ -379,6 +386,15 @@ export default function LeadPage() {
             </div>
           </div>
         )}
+
+        {/* Sincronização com o calendário — independente da cadência normal
+            (avisos de etapa disparam mesmo sem is_regular) */}
+        <div className="card" style={{ padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 11, color: 'var(--muted)' }}>Notificações deste lead no calendário (interno + feed pessoal)</div>
+          <button type="button" onClick={toggleCalendarSync} className={`chip${lead.calendar_sync_enabled ? ' active' : ''}`}>
+            {lead.calendar_sync_enabled ? '✓ No calendário' : 'Adicionar ao calendário'}
+          </button>
+        </div>
 
         {/* AI Suggestion Card */}
         <div className="card" style={{ overflow: 'hidden', marginBottom: 20, border: '1px solid rgba(176,125,46,0.25)' }}>
