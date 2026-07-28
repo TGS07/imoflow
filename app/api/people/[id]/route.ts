@@ -1,6 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+type LeadWithStage = {
+  id: string
+  stage_id: string
+  pipeline_stages?: { is_won: boolean; is_lost: boolean } | null
+  [key: string]: unknown
+}
+
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
@@ -20,7 +27,45 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     const status = error.code === 'PGRST116' ? 404 : 500
     return NextResponse.json({ error: error.message }, { status })
   }
-  return NextResponse.json(data)
+
+  // Cadência efetiva de notificação (ver spec
+  // 2026-07-28-cadencia-notificacao-contacto-design.md): para cada lead
+  // ativo (etapa não ganha/perdida), expor o interval_days da regra
+  // `stage_recurring` da etapa atual, se existir. Vai buscar todas as regras
+  // `stage_recurring` ativas (RLS já restringe à agência do utilizador,
+  // como o resto desta rota) e filtra em JS — mesmo padrão de
+  // `matchesTriggerConfig` em lib/automations/engine.ts. Evita N+1: uma
+  // query, não uma por lead.
+  const leads = (data.leads ?? []) as LeadWithStage[]
+  const activeStageIds = new Set(
+    leads
+      .filter(l => l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost)
+      .map(l => l.stage_id)
+  )
+
+  const stageRecurringByStage = new Map<string, number>()
+  if (activeStageIds.size > 0) {
+    const { data: rules } = await supabase
+      .from('automation_rules')
+      .select('trigger_config')
+      .eq('trigger_type', 'stage_recurring')
+      .eq('is_active', true)
+    for (const rule of rules ?? []) {
+      const cfg = rule.trigger_config as Record<string, unknown>
+      const stageId = cfg.stage_id as string | undefined
+      const intervalDays = Number(cfg.interval_days ?? 0)
+      if (stageId && activeStageIds.has(stageId) && intervalDays > 0) {
+        stageRecurringByStage.set(stageId, intervalDays)
+      }
+    }
+  }
+
+  const leadsWithRecurring = leads.map(l => ({
+    ...l,
+    stage_recurring_days: stageRecurringByStage.get(l.stage_id) ?? null,
+  }))
+
+  return NextResponse.json({ ...data, leads: leadsWithRecurring })
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
