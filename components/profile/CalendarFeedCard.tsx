@@ -25,10 +25,16 @@ export function CalendarFeedCard() {
   async function regenerate() {
     if (!confirm('Regenerar o link invalida o link atual — quem o tiver guardado deixa de receber atualizações. Continuar?')) return
     setLoading(true)
-    const res = await fetch('/api/users/me/calendar-token', { method: 'POST' })
-    const d = await res.json()
-    setToken(d.calendar_token)
-    setLoading(false)
+    try {
+      const res = await fetch('/api/users/me/calendar-token', { method: 'POST' })
+      if (!res.ok) { alert('Não foi possível regenerar o link.'); return }
+      const d = await res.json()
+      setToken(d.calendar_token)
+    } catch {
+      alert('Não foi possível regenerar o link.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
