@@ -36,6 +36,18 @@ const CONDITIONS: { value: PropertyCondition; label: string }[] = [
   { value: 'em_construcao', label: 'Em Construção' },
 ]
 
+const ENERGY_CERTIFICATES: { value: string; label: string }[] = [
+  { value: 'A+', label: 'A+' },
+  { value: 'A', label: 'A' },
+  { value: 'B', label: 'B' },
+  { value: 'B-', label: 'B-' },
+  { value: 'C', label: 'C' },
+  { value: 'D', label: 'D' },
+  { value: 'E', label: 'E' },
+  { value: 'F', label: 'F' },
+  { value: 'Isento', label: 'Isento' },
+]
+
 const STATUS_COLORS: Record<PropertyStatus, string> = {
   disponivel: '#10B981',
   reservado: '#F59E0B',
@@ -69,7 +81,8 @@ export default function PropertyPage() {
     title: '', reference: '', type: 'apartamento' as PropertyType, status: 'disponivel' as PropertyStatus,
     price: '', area_m2: '', typology: '', bedrooms: '', bathrooms: '', floor: '',
     condition: '' as string, address: '', city: '', zone: '', postal_code: '',
-    description: '', notes: '', features: '', photos: '', idealista_url: ''
+    description: '', notes: '', features: '', photos: '', idealista_url: '',
+    area_util_m2: '', construction_year: '', energy_certificate: '', parking_spaces: '', has_elevator: false,
   })
 
   const fetchProperty = useCallback(async () => {
@@ -88,6 +101,11 @@ export default function PropertyPage() {
       features: (data.features ?? []).join(', '),
       photos: (data.photos ?? []).join('\n'),
       idealista_url: data.idealista_url ?? '',
+      area_util_m2: data.area_util_m2?.toString() ?? '',
+      construction_year: data.construction_year?.toString() ?? '',
+      energy_certificate: data.energy_certificate ?? '',
+      parking_spaces: data.parking_spaces?.toString() ?? '',
+      has_elevator: data.has_elevator ?? false,
     })
   }, [id])
 
@@ -116,6 +134,11 @@ export default function PropertyPage() {
         description: form.description || null,
         notes: form.notes || null,
         idealista_url: form.idealista_url || null,
+        area_util_m2: form.area_util_m2 ? Number(form.area_util_m2) : null,
+        construction_year: form.construction_year ? Number(form.construction_year) : null,
+        energy_certificate: form.energy_certificate || null,
+        parking_spaces: form.parking_spaces ? Number(form.parking_spaces) : null,
+        has_elevator: form.has_elevator,
         features: form.features ? form.features.split(',').map(f => f.trim()).filter(Boolean) : [],
         photos: form.photos ? form.photos.split('\n').map(u => u.trim()).filter(Boolean) : [],
       }),
@@ -256,6 +279,40 @@ export default function PropertyPage() {
               <div>
                 <div style={labelStyle}>Andar</div>
                 {editing ? <input style={inputStyle} value={form.floor} onChange={e => setForm(p => ({ ...p, floor: e.target.value }))} /> : <div style={{ fontSize: 13, color: property.floor ? 'var(--text)' : 'var(--muted)' }}>{property.floor ?? '—'}</div>}
+              </div>
+            </div>
+
+            <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', marginTop: 16, marginBottom: 8 }}>Detalhes adicionais</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <div style={labelStyle}>Área útil</div>
+                {editing ? <input type="number" style={inputStyle} value={form.area_util_m2} onChange={e => setForm(p => ({ ...p, area_util_m2: e.target.value }))} /> : <div style={{ fontSize: 13, color: property.area_util_m2 != null ? 'var(--text)' : 'var(--muted)' }}>{property.area_util_m2 != null ? `${property.area_util_m2} m²` : '—'}</div>}
+              </div>
+              <div>
+                <div style={labelStyle}>Ano de construção</div>
+                {editing ? <input type="number" style={inputStyle} value={form.construction_year} onChange={e => setForm(p => ({ ...p, construction_year: e.target.value }))} /> : <div style={{ fontSize: 13, color: property.construction_year != null ? 'var(--text)' : 'var(--muted)' }}>{property.construction_year ?? '—'}</div>}
+              </div>
+              <div>
+                <div style={labelStyle}>Certificado energético</div>
+                {editing ? (
+                  <select style={inputStyle} value={form.energy_certificate} onChange={e => setForm(p => ({ ...p, energy_certificate: e.target.value }))}>
+                    <option value="">—</option>
+                    {ENERGY_CERTIFICATES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                ) : <div style={{ fontSize: 13, color: property.energy_certificate ? 'var(--text)' : 'var(--muted)' }}>{property.energy_certificate ?? '—'}</div>}
+              </div>
+              <div>
+                <div style={labelStyle}>Lugares de garagem</div>
+                {editing ? <input type="number" style={inputStyle} value={form.parking_spaces} onChange={e => setForm(p => ({ ...p, parking_spaces: e.target.value }))} /> : <div style={{ fontSize: 13, color: property.parking_spaces != null ? 'var(--text)' : 'var(--muted)' }}>{property.parking_spaces ?? '—'}</div>}
+              </div>
+              <div>
+                <div style={labelStyle}>Elevador</div>
+                {editing ? (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={form.has_elevator} onChange={e => setForm(p => ({ ...p, has_elevator: e.target.checked }))} />
+                    {form.has_elevator ? 'Sim' : 'Não'}
+                  </label>
+                ) : <div style={{ fontSize: 13, color: property.has_elevator == null ? 'var(--muted)' : 'var(--text)' }}>{property.has_elevator == null ? '—' : property.has_elevator ? 'Sim' : 'Não'}</div>}
               </div>
             </div>
           </div>
