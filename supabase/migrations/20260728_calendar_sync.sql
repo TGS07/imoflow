@@ -10,6 +10,7 @@ alter table public.leads  add column calendar_sync_enabled boolean not null defa
 -- app/api/users/me/calendar-token/route.ts). Não incluir esta coluna em
 -- selects amplos de `users` fora desse endpoint.
 alter table public.users add column calendar_token uuid not null default gen_random_uuid();
+alter table public.users add constraint users_calendar_token_key unique (calendar_token);
 
 -- Distingue atividades manuais de atividades espelhadas automaticamente a
 -- partir de uma notificação (cron contact-followup / avisos de etapa via

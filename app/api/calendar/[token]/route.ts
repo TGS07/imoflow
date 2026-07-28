@@ -18,22 +18,31 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
 
   const supabase = createServiceClient()
 
-  const { data: user } = await supabase
+  const { data: user, error: userError } = await supabase
     .from('users')
     .select('id')
     .eq('calendar_token', token)
     .maybeSingle()
 
+  if (userError) {
+    console.error('[calendar-feed] user lookup failed', userError)
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+  }
   if (!user) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const { data: activities } = await supabase
+  const { data: activities, error: activitiesError } = await supabase
     .from('activities')
     .select('id, title, due_date, lead_id, person_id, leads(name), people(name)')
     .eq('source', 'notification')
     .eq('assigned_to', user.id)
     .not('due_date', 'is', null)
+
+  if (activitiesError) {
+    console.error('[calendar-feed] activities query failed', activitiesError)
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+  }
 
   const events = (activities ?? []).map((a) => {
     const target =
