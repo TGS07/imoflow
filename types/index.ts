@@ -121,6 +121,11 @@ export type Property = {
   bathrooms: number | null
   floor: string | null
   condition: PropertyCondition | null
+  area_util_m2: number | null
+  construction_year: number | null
+  energy_certificate: string | null
+  parking_spaces: number | null
+  has_elevator: boolean | null
   address: string | null
   city: string | null
   zone: string | null
