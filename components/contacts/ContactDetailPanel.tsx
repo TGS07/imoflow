@@ -58,7 +58,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
   const [propertyChoice, setPropertyChoice] = useState('')
   const pipelineMenuRef = useRef<HTMLDivElement>(null)
   const [customInterval, setCustomInterval] = useState('')
-  const [agencyFollowup, setAgencyFollowup] = useState({ first: 7, second: 30 })
+  const [agencyFollowup, setAgencyFollowup] = useState<{ first: number; second: number } | null>(null)
   const [newSpecialDate, setNewSpecialDate] = useState({ label: '', month: '', day: '' })
   const [form, setForm] = useState<{
     name: string; email: string; phone: string; address: string; notes: string
@@ -98,6 +98,8 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
         if (d) setAgencyFollowup({ first: d.followup_first_days ?? 7, second: d.followup_second_days ?? 30 })
       })
       .catch(() => {})
+      // Falha silenciosa: agencyFollowup fica null e a UI mostra texto
+      // genérico em vez de arriscar números errados.
   }, [])
 
   // Etapas de cada pipeline com lead ativa (para o seletor inline de etapa)
@@ -555,8 +557,10 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                           </strong>
                         ))}
                       </span>
-                    ) : (
+                    ) : agencyFollowup ? (
                       <strong style={{ color: 'var(--text)', fontWeight: 600 }}>prazos da agência (padrão: primeiro aviso aos {agencyFollowup.first} dias, depois aos {agencyFollowup.second} dias)</strong>
+                    ) : (
+                      <strong style={{ color: 'var(--text)', fontWeight: 600 }}>prazos da agência (padrão)</strong>
                     )}
                   </div>
 
