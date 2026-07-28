@@ -544,10 +544,14 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                   <div className="section-label" style={{ marginBottom: 6 }}>Follow-ups</div>
 
                   {/* Cadência efetiva: valor próprio do contacto → cadência da
-                      etapa de cada lead ativo → prazos da agência (nesta ordem). */}
+                      etapa de cada lead ativo → prazos da agência (nesta ordem).
+                      is_regular=false anula o valor próprio, mesmo que
+                      regular_interval_days continue gravado — mesma condição
+                      exigida pela supressão no cron stage-notifications e pelo
+                      cron contact-followup (que só processa is_regular=true). */}
                   <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)', marginBottom: 10, lineHeight: 1.5 }}>
                     Cadência efetiva:{' '}
-                    {person.regular_interval_days != null ? (
+                    {person.is_regular && person.regular_interval_days != null ? (
                       <strong style={{ color: 'var(--text)', fontWeight: 600 }}>a cada {person.regular_interval_days} dias (definido para este contacto)</strong>
                     ) : leadsWithStageCadence.length > 0 ? (
                       <span style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4 }}>
@@ -571,7 +575,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
 
                   <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)' }}>
-                      Frequência: <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{person.regular_interval_days ? `a cada ${person.regular_interval_days} dias` : 'prazos da agência (padrão)'}</strong>
+                      Frequência: <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{person.is_regular && person.regular_interval_days ? `a cada ${person.regular_interval_days} dias` : 'prazos da agência (padrão)'}</strong>
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                       <button type="button" onClick={() => setRegularInterval(null)} className={`chip${person.regular_interval_days == null ? ' active' : ''}`}>Prazos da agência</button>
