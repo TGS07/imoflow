@@ -60,11 +60,30 @@ async function handleCron(request: Request) {
 
   const { data: leads } = await supabase
     .from('leads')
-    .select('id, assigned_to, agency_id, stage_id, stage_entered_at, pipeline_stages!inner(is_won, is_lost)')
+    .select('id, assigned_to, agency_id, stage_id, stage_entered_at, person_id, pipeline_stages!inner(is_won, is_lost)')
     .eq('pipeline_stages.is_won', false)
     .eq('pipeline_stages.is_lost', false)
 
   if (!leads || leads.length === 0) return NextResponse.json({ processed: 0 })
+
+  // Contactos com ritmo próprio definido: a cadência recorrente da etapa não
+  // se aplica às leads desses contactos (ver spec
+  // 2026-07-28-cadencia-notificacao-contacto-design.md) — só o aviso
+  // "stage_recurring" é suprimido; os outros três (entrada, parado há X
+  // dias, X dias após entrada) continuam a disparar normalmente. Uma única
+  // query para todos os person_id envolvidos (mesmo padrão de
+  // app/api/cron/contact-followup/route.ts), para evitar N+1.
+  const personIds = [...new Set(leads.map(l => l.person_id).filter((p): p is string => !!p))]
+  const regularPersonIds = new Set<string>()
+  if (personIds.length > 0) {
+    const { data: people } = await supabase
+      .from('people')
+      .select('id, is_regular, regular_interval_days')
+      .in('id', personIds)
+    for (const p of people ?? []) {
+      if (p.is_regular && p.regular_interval_days != null) regularPersonIds.add(p.id)
+    }
+  }
 
   const now = Date.now()
   let processed = 0
@@ -79,7 +98,11 @@ async function handleCron(request: Request) {
     const daysSinceStageEntry = Math.floor((now - enteredAt) / (24 * 60 * 60 * 1000))
     if (daysSinceStageEntry <= 0) continue
 
+    const hasOwnCadence = !!lead.person_id && regularPersonIds.has(lead.person_id)
+
     for (const type of ['stage_days_after_entry', 'stage_recurring'] as const) {
+      if (type === 'stage_recurring' && hasOwnCadence) continue
+
       const hasPlausibleMatch = agencyRules.some(
         rule => rule.trigger_type === type && ruleMatchesLead(rule, lead.stage_id, daysSinceStageEntry)
       )
