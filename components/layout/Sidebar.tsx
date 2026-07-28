@@ -93,7 +93,7 @@ export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: P
         })}
       </nav>
 
-      <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <Link href="/profile" onClick={onClose} style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
         <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #C9A84C, #8B6F30)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#FFFFFF', flexShrink: 0, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)' }}>
           {userInitials}
         </div>
@@ -101,7 +101,7 @@ export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: P
           <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName}</div>
           <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'capitalize' }}>{userRole === 'admin' ? 'Administrador' : 'Consultor'}</div>
         </div>
-      </div>
+      </Link>
     </aside>
   )
 }
