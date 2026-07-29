@@ -4,6 +4,7 @@ import { ContactSigla } from '@/types'
 
 export default function SiglasSettingsPage() {
   const [siglas, setSiglas] = useState<ContactSigla[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [code, setCode] = useState('')
   const [label, setLabel] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -12,7 +13,13 @@ export default function SiglasSettingsPage() {
   const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)', outline: 'none', fontFamily: 'var(--font-body)' }
 
   useEffect(() => {
-    fetch('/api/contact-siglas').then(r => r.json()).then((data: ContactSigla[]) => setSiglas(data))
+    fetch('/api/contact-siglas')
+      .then(r => {
+        if (!r.ok) throw new Error('Erro ao carregar siglas')
+        return r.json()
+      })
+      .then((data: ContactSigla[]) => setSiglas(data))
+      .catch(() => setLoadError('Não foi possível carregar as siglas.'))
   }, [])
 
   async function addSigla(e: React.FormEvent) {
@@ -38,22 +45,22 @@ export default function SiglasSettingsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>Siglas de contacto</h1>
-        <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
-          Lista de referência das siglas usadas para classificar contactos (ex.: na configuração de contactos do iPhone/iCloud). Esta lista não sincroniza automaticamente com o iPhone.
-        </p>
-      </div>
+    <div className="page-enter page-pad" style={{ padding: '32px 40px', maxWidth: 640 }}>
+      <h1 className="font-display" style={{ fontSize: 24, color: 'var(--text)', marginBottom: 6 }}>Siglas de contacto</h1>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 28 }}>
+        Lista de referência das siglas usadas para classificar contactos (ex.: na configuração de contactos do iPhone/iCloud). Esta lista não sincroniza automaticamente com o iPhone.
+      </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {loadError && <p style={{ color: 'var(--danger, #EF4444)', fontSize: 13, marginBottom: 16 }}>{loadError}</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
         {siglas.map(s => (
           <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold)', minWidth: 48 }}>{s.code}</span>
             <span style={{ fontSize: 13, color: 'var(--text)' }}>{s.label}</span>
           </div>
         ))}
-        {siglas.length === 0 && (
+        {siglas.length === 0 && !loadError && (
           <div style={{ fontSize: 13, color: 'var(--muted)' }}>Sem siglas ainda.</div>
         )}
       </div>
