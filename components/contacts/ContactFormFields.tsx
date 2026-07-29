@@ -101,6 +101,7 @@ export function ContactFormFields({
           <div style={sectionLabel}>Procura</div>
           <input className="input" placeholder="O que procura" value={details.looking_for ?? ''} onChange={e => onDetailChange('looking_for', e.target.value)} />
           <input className="input" placeholder="Zona" value={details.search_zone ?? ''} onChange={e => onDetailChange('search_zone', e.target.value)} />
+          <input className="input" type="number" placeholder="Preço máximo (€)" value={details.looking_price ?? ''} onChange={e => onDetailChange('looking_price', Number(e.target.value) || undefined)} />
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
             <input type="checkbox" style={cb} checked={!!details.already_bought} onChange={e => onDetailChange('already_bought', e.target.checked)} />
             Já comprou connosco
