@@ -9,6 +9,7 @@ export type ContactDetails = {
   // comprador / investidor
   looking_for?: string
   search_zone?: string
+  looking_price?: number
   /** @deprecated substituído por `is_regular` no contacto; mantido só para dados antigos */
   temperature?: ContactTemperature
   already_bought?: boolean
