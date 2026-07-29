@@ -54,6 +54,15 @@ export type CustomField = {
   created_at: string
 }
 
+export type ContactSigla = {
+  id: string
+  agency_id: string
+  code: string
+  label: string
+  is_active: boolean
+  created_at: string
+}
+
 export type CustomFieldValue = {
   id: string
   lead_id: string
