@@ -656,6 +656,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                     <>
                       {field('O que procura', fieldValue(d.looking_for), <input className="input" value={d.looking_for ?? ''} onChange={e => setDetail('looking_for', e.target.value)} />)}
                       {field('Zona', fieldValue(d.search_zone), <input className="input" value={d.search_zone ?? ''} onChange={e => setDetail('search_zone', e.target.value)} />)}
+                      {field('Preço máximo €', fieldValue(d.looking_price != null ? `€${d.looking_price.toLocaleString('pt-PT')}` : null), <input className="input" type="number" value={d.looking_price ?? ''} onChange={e => setDetail('looking_price', Number(e.target.value) || undefined)} />)}
                       {boolField('Já comprou', 'already_bought')}
                     </>
                   )}
