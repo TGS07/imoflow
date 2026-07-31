@@ -16,6 +16,7 @@ export type User = {
   email: string
   role: 'admin' | 'agent'
   avatar_initials: string
+  theme: 'light' | 'dark'
 }
 
 export type PipelineCardField = 'name' | 'zone' | 'property' | 'typology' | 'value'
