@@ -572,7 +572,7 @@ textarea.input { resize: vertical; line-height: 1.6; }
 
 .skeleton {
   border-radius: var(--radius-sm);
-  background: linear-gradient(90deg, #F2EEE6 25%, #E7E1D5 50%, #F2EEE6 75%);
+  background: linear-gradient(90deg, var(--card-hover) 25%, var(--border) 50%, var(--card-hover) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
