@@ -54,6 +54,38 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+[data-theme="dark"] {
+  /* Tema escuro quente — nunca preto puro, mesma lógica do claro */
+  --bg: #1E1912;
+  --surface: #262019;
+  --card: #262019;
+  --card-hover: #2E2720;
+  --border: #3A3125;
+  --border-strong: #4A3F2F;
+
+  /* Marca — dourado mais claro para manter contraste no escuro */
+  --gold: #C9A84C;
+  --gold-bright: #E0C171;
+  --gold-dim: #8C6B2E;
+  --gold-glow: rgba(201,168,76,0.16);
+
+  /* Texto */
+  --text: #F2EDE3;
+  --muted: #A69C8A;
+
+  /* Status */
+  --green: #34D399;
+  --red: #F87171;
+  --blue: #60A5FA;
+  --purple: #A78BFA;
+  --whatsapp: #25D366;
+
+  /* Sombras — mais escuras, sem tinta castanha */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.25);
+  --shadow-lg: 0 16px 40px rgba(0,0,0,0.5), 0 4px 10px rgba(0,0,0,0.3);
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -63,6 +95,7 @@ body {
   font-size: var(--fs-base);
   background: var(--bg);
   color: var(--text);
+  transition: background-color 0.25s var(--ease), color 0.25s var(--ease);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-variant-numeric: tabular-nums;
