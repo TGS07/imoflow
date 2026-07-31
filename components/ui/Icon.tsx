@@ -3,7 +3,7 @@ type IconName =
   | 'calendar' | 'chart' | 'settings' | 'zap' | 'form' | 'mail'
   | 'whatsapp' | 'team' | 'plus' | 'pencil' | 'trash' | 'close'
   | 'send' | 'bell' | 'check' | 'x' | 'chevron-down' | 'logout' | 'phone'
-  | 'search' | 'command' | 'help'
+  | 'search' | 'command' | 'help' | 'sun' | 'moon'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   dashboard: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
@@ -34,6 +34,8 @@ const PATHS: Record<IconName, React.ReactNode> = {
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>,
   command: <path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6Z" />,
   help: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 0 1 5 .3c0 1.7-2.5 2.2-2.5 3.7" /><circle cx="12" cy="16.8" r="0.5" /></>,
+  sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" /></>,
+  moon: <path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z" />,
 }
 
 type Props = {
