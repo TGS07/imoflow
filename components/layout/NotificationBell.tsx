@@ -103,7 +103,7 @@ export function NotificationBell() {
             position: 'absolute',
             top: 0,
             right: 0,
-            background: 'var(--red)',
+            background: '#ef4444',
             color: 'white',
             borderRadius: '9999px',
             fontSize: '0.65rem',
