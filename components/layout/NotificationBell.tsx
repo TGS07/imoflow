@@ -103,7 +103,7 @@ export function NotificationBell() {
             position: 'absolute',
             top: 0,
             right: 0,
-            background: '#ef4444',
+            background: 'var(--red)',
             color: 'white',
             borderRadius: '9999px',
             fontSize: '0.65rem',
@@ -126,8 +126,8 @@ export function NotificationBell() {
           right: 0,
           top: 'calc(100% + 8px)',
           width: '340px',
-          background: '#1A1A1E',
-          border: '1px solid #262629',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
           borderRadius: '8px',
           boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
           zIndex: 50,
@@ -138,9 +138,9 @@ export function NotificationBell() {
             justifyContent: 'space-between',
             alignItems: 'center',
             padding: '12px 16px',
-            borderBottom: '1px solid #262629',
+            borderBottom: '1px solid var(--border)',
           }}>
-            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#E8E4DC' }}>Notificações</span>
+            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text)' }}>Notificações</span>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
@@ -149,7 +149,7 @@ export function NotificationBell() {
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: '0.75rem',
-                  color: '#C9A84C',
+                  color: 'var(--gold-bright)',
                 }}
               >
                 Marcar todas como lidas
@@ -159,7 +159,7 @@ export function NotificationBell() {
 
           <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {notifications.length === 0 ? (
-              <p style={{ padding: '24px 16px', textAlign: 'center', color: '#7A7870', fontSize: '0.875rem' }}>
+              <p style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
                 Sem notificações
               </p>
             ) : (
@@ -173,21 +173,21 @@ export function NotificationBell() {
                     padding: '12px 16px',
                     width: '100%',
                     textAlign: 'left',
-                    background: n.read ? '#1A1A1E' : 'rgba(201,168,76,0.08)',
+                    background: n.read ? 'var(--surface)' : 'var(--gold-glow)',
                     border: 'none',
-                    borderBottom: '1px solid #262629',
+                    borderBottom: '1px solid var(--border)',
                     cursor: 'pointer',
                   }}
                 >
                   <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{TYPE_ICONS[n.type]}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: n.read ? 400 : 600, fontSize: '0.85rem', color: '#E8E4DC' }}>
+                    <p style={{ margin: 0, fontWeight: n.read ? 400 : 600, fontSize: '0.85rem', color: 'var(--text)' }}>
                       {n.title}
                     </p>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#7A7870', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {n.body}
                     </p>
-                    <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: '#7A7870' }}>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.72rem', color: 'var(--muted)' }}>
                       {timeAgo(n.created_at)}
                     </p>
                   </div>
