@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { NotificationBell } from './NotificationBell'
+import { ThemeToggle } from './ThemeToggle'
 import { CommandPalette } from '@/components/CommandPalette'
 import { Icon } from '@/components/ui/Icon'
 
@@ -10,9 +11,10 @@ type Props = {
   userName: string
   userInitials: string
   userRole: 'admin' | 'agent'
+  userTheme: 'light' | 'dark'
 }
 
-export function AppShell({ children, userName, userInitials, userRole }: Props) {
+export function AppShell({ children, userName, userInitials, userRole, userTheme }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMac, setIsMac] = useState(true)
 
@@ -62,6 +64,7 @@ export function AppShell({ children, userName, userInitials, userRole }: Props) 
             <span className="hide-mobile">Pesquisar…</span>
             <kbd className="hide-mobile">{isMac ? '⌘' : 'Ctrl'} K</kbd>
           </button>
+          <ThemeToggle initialTheme={userTheme} />
           <NotificationBell />
         </header>
         {children}
