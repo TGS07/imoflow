@@ -99,6 +99,9 @@ export function NotificationBell() {
       >
         🔔
         {unreadCount > 0 && (
+          // Vermelho fixo (não var(--red)) de propósito: --red aclara no tema
+          // escuro para legibilidade de texto/ícones, mas isso reduziria o
+          // contraste do texto branco sobre este badge sólido pequeno.
           <span style={{
             position: 'absolute',
             top: 0,
@@ -129,7 +132,7 @@ export function NotificationBell() {
           background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '8px',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+          boxShadow: 'var(--shadow-lg)',
           zIndex: 50,
           overflow: 'hidden',
         }}>
