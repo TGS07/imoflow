@@ -5,6 +5,7 @@ import { NotificationBell } from './NotificationBell'
 import { ThemeToggle } from './ThemeToggle'
 import { CommandPalette } from '@/components/CommandPalette'
 import { Icon } from '@/components/ui/Icon'
+import { PushBanner } from '@/components/pwa/PushBanner'
 
 type Props = {
   children: React.ReactNode
@@ -67,6 +68,7 @@ export function AppShell({ children, userName, userInitials, userRole, userTheme
           <ThemeToggle initialTheme={userTheme} />
           <NotificationBell />
         </header>
+        <PushBanner />
         {children}
       </main>
     </div>
