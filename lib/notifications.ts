@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { resend } from '@/lib/resend'
 import { isTelegramConfigured, sendTelegramMessage } from '@/lib/telegram/send'
+import { webpush } from '@/lib/web-push'
 
 export type NotificationType =
   | 'new_lead'
@@ -67,6 +68,39 @@ export async function createNotification(params: CreateNotificationParams, clien
       )
     } catch (err) {
       console.error('Failed to send Telegram notification:', err)
+    }
+  }
+
+  // 3b. Web Push (only for new_lead and task_due)
+  if (type === 'new_lead' || type === 'task_due') {
+    const { data: subs } = await supabase
+      .from('push_subscriptions')
+      .select('id, endpoint, p256dh, auth')
+      .eq('user_id', userId)
+
+    if (subs && subs.length > 0) {
+      const payload = JSON.stringify({
+        title,
+        body,
+        link,
+        icon: '/icon-192.png',
+      })
+
+      await Promise.allSettled(
+        subs.map(async (sub) => {
+          try {
+            await webpush.sendNotification(
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+              payload
+            )
+          } catch (err: any) {
+            if (err?.statusCode === 410 || err?.statusCode === 404) {
+              await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+            }
+            console.error('Push send failed:', err?.statusCode ?? err)
+          }
+        })
+      )
     }
   }
 
