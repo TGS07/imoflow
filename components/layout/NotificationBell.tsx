@@ -125,10 +125,10 @@ export function NotificationBell() {
 
       {open && (
         <div style={{
-          position: 'absolute',
-          right: 0,
-          top: 'calc(100% + 8px)',
-          width: '340px',
+          position: 'fixed',
+          right: 8,
+          top: 52,
+          width: 'min(340px, calc(100vw - 16px))',
           background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: '8px',
