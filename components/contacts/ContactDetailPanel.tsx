@@ -475,11 +475,11 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
               {cardTitle('Contacto')}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {field('Email',
-                  fieldValue(person.email),
+                  person.email ? <a href={`mailto:${person.email}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--fs-base)', color: 'var(--gold)', textDecoration: 'none' }}>{person.email}</a> : fieldValue(null),
                   <input className="input" type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
                 )}
                 {field('Telefone',
-                  fieldValue(person.phone ? formatPhoneDisplay(person.phone) : person.phone),
+                  person.phone ? <a href={`tel:${person.phone}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--fs-base)', color: 'var(--gold)', textDecoration: 'none' }}>{formatPhoneDisplay(person.phone)}</a> : fieldValue(null),
                   <input className="input" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} onBlur={() => setForm(p => ({ ...p, phone: p.phone.trim() ? formatPhoneDisplay(p.phone) : p.phone }))} />
                 )}
                 {field('Morada',
@@ -690,7 +690,10 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
 
             <div className="card" style={{ padding: 24 }}>
               {cardTitle('Idealista')}
-              {field('Link do anúncio', fieldValue(d.idealista_url), <input className="input" value={d.idealista_url ?? ''} onChange={e => setDetail('idealista_url', e.target.value)} />)}
+              {field('Link do anúncio',
+                d.idealista_url ? <a href={d.idealista_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--fs-base)', color: 'var(--gold)', textDecoration: 'none', wordBreak: 'break-all' }}>{d.idealista_url}</a> : fieldValue(null),
+                <input className="input" value={d.idealista_url ?? ''} onChange={e => setDetail('idealista_url', e.target.value)} />
+              )}
             </div>
 
             <div className="card" style={{ padding: 24 }}>
