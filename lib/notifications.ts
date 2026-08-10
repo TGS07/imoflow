@@ -71,37 +71,35 @@ export async function createNotification(params: CreateNotificationParams, clien
     }
   }
 
-  // 3b. Web Push (only for new_lead and task_due)
-  if (type === 'new_lead' || type === 'task_due') {
-    const { data: subs } = await supabase
-      .from('push_subscriptions')
-      .select('id, endpoint, p256dh, auth')
-      .eq('user_id', userId)
+  // 3b. Web Push
+  const { data: subs } = await supabase
+    .from('push_subscriptions')
+    .select('id, endpoint, p256dh, auth')
+    .eq('user_id', userId)
 
-    if (subs && subs.length > 0) {
-      const payload = JSON.stringify({
-        title,
-        body,
-        link,
-        icon: '/icon-192.png',
-      })
+  if (subs && subs.length > 0) {
+    const payload = JSON.stringify({
+      title,
+      body,
+      link,
+      icon: '/icon-192.png',
+    })
 
-      await Promise.allSettled(
-        subs.map(async (sub) => {
-          try {
-            await webpush.sendNotification(
-              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-              payload
-            )
-          } catch (err: any) {
-            if (err?.statusCode === 410 || err?.statusCode === 404) {
-              await supabase.from('push_subscriptions').delete().eq('id', sub.id)
-            }
-            console.error('Push send failed:', err?.statusCode ?? err)
+    await Promise.allSettled(
+      subs.map(async (sub) => {
+        try {
+          await webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            payload
+          )
+        } catch (err: any) {
+          if (err?.statusCode === 410 || err?.statusCode === 404) {
+            await supabase.from('push_subscriptions').delete().eq('id', sub.id)
           }
-        })
-      )
-    }
+          console.error('Push send failed:', err?.statusCode ?? err)
+        }
+      })
+    )
   }
 
   if (!userRow?.email_notifications) return { id: notification.id }
