@@ -10,6 +10,7 @@ const navItems: { href: string; icon: IconName; label: string; section: string }
   { href: '/people', icon: 'people', label: 'Contactos', section: 'Principal' },
   { href: '/organizations', icon: 'building', label: 'Organizações', section: 'Principal' },
   { href: '/properties', icon: 'home', label: 'Imóveis', section: 'Principal' },
+  { href: '/recommendations', icon: 'sparkle', label: 'Recomendações', section: 'Principal' },
   { href: '/activities', icon: 'calendar', label: 'Atividades', section: 'Principal' },
   { href: '/reports', icon: 'chart', label: 'Relatórios', section: 'Principal' },
   { href: '/settings/pipeline', icon: 'settings', label: 'Configurações', section: 'Sistema' },
