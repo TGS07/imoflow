@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Icon, IconName } from '@/components/ui/Icon'
+import { useState, useEffect } from 'react'
 
 const navItems: { href: string; icon: IconName; label: string; section: string }[] = [
   { href: '/dashboard', icon: 'dashboard', label: 'Dashboard', section: 'Principal' },
@@ -10,6 +11,7 @@ const navItems: { href: string; icon: IconName; label: string; section: string }
   { href: '/people', icon: 'people', label: 'Contactos', section: 'Principal' },
   { href: '/organizations', icon: 'building', label: 'Organizações', section: 'Principal' },
   { href: '/properties', icon: 'home', label: 'Imóveis', section: 'Principal' },
+  { href: '/recommendations', icon: 'sparkle', label: 'Recomendações', section: 'Principal' },
   { href: '/activities', icon: 'calendar', label: 'Atividades', section: 'Principal' },
   { href: '/reports', icon: 'chart', label: 'Relatórios', section: 'Principal' },
   { href: '/settings/pipeline', icon: 'settings', label: 'Configurações', section: 'Sistema' },
@@ -32,6 +34,15 @@ type Props = {
 
 export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: Props) {
   const pathname = usePathname()
+
+  const [pendingRecs, setPendingRecs] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/recommendations/count')
+      .then(r => r.json())
+      .then(d => setPendingRecs(d.count ?? 0))
+      .catch(() => {})
+  }, [pathname])
 
   const visibleItems = navItems.filter(item => item.section !== 'Sistema' || userRole === 'admin')
 
@@ -86,6 +97,21 @@ export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: P
                   >
                     <Icon name={item.icon} size={15} style={{ flexShrink: 0, opacity: active ? 1 : 0.7 }} />
                     {item.label}
+                    {item.href === '/recommendations' && pendingRecs > 0 && (
+                      <span style={{
+                        marginLeft: 'auto',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        background: 'linear-gradient(135deg, #C9A84C, #8B6F30)',
+                        color: '#fff',
+                        borderRadius: 10,
+                        padding: '1px 7px',
+                        minWidth: 18,
+                        textAlign: 'center',
+                      }}>
+                        {pendingRecs}
+                      </span>
+                    )}
                   </Link>
                 )
               })}
