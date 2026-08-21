@@ -79,6 +79,12 @@ export default function LoginPage() {
           </form>
         )}
       </div>
+
+      <div style={{ position: 'fixed', bottom: 20, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 20 }}>
+        <a href="/termos" style={{ fontSize: 11, color: 'var(--muted)', textDecoration: 'none', opacity: 0.7 }}>Termos de Uso</a>
+        <a href="/privacidade" style={{ fontSize: 11, color: 'var(--muted)', textDecoration: 'none', opacity: 0.7 }}>Privacidade</a>
+        <a href="/documentacao" style={{ fontSize: 11, color: 'var(--muted)', textDecoration: 'none', opacity: 0.7 }}>Documentação</a>
+      </div>
     </div>
   )
 }
