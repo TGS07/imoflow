@@ -120,6 +120,12 @@ export function Sidebar({ userName, userInitials, userRole, isOpen, onClose }: P
         })}
       </nav>
 
+      <div style={{ padding: '8px 20px', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <Link href="/termos" style={{ fontSize: 10, color: 'var(--muted)', textDecoration: 'none', opacity: 0.7 }}>Termos</Link>
+        <Link href="/privacidade" style={{ fontSize: 10, color: 'var(--muted)', textDecoration: 'none', opacity: 0.7 }}>Privacidade</Link>
+        <Link href="/documentacao" style={{ fontSize: 10, color: 'var(--muted)', textDecoration: 'none', opacity: 0.7 }}>Docs</Link>
+      </div>
+
       <Link href="/profile" onClick={onClose} style={{ padding: '16px 20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
         <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, #C9A84C, #8B6F30)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#FFFFFF', flexShrink: 0, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)' }}>
           {userInitials}

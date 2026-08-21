@@ -23,7 +23,11 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isPublic = request.nextUrl.pathname === '/login' || request.nextUrl.pathname.startsWith('/f/')
+  const isPublic = request.nextUrl.pathname === '/login'
+    || request.nextUrl.pathname.startsWith('/f/')
+    || request.nextUrl.pathname === '/termos'
+    || request.nextUrl.pathname === '/privacidade'
+    || request.nextUrl.pathname === '/documentacao'
   const isAdmin = request.nextUrl.pathname.startsWith('/admin')
 
   if (!user && !isPublic) {
