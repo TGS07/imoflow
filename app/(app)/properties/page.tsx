@@ -45,10 +45,10 @@ const ENERGY_CERTIFICATES: { value: string; label: string }[] = [
 ]
 
 const STATUS_COLORS: Record<PropertyStatus, string> = {
-  disponivel: '#10B981',
-  reservado: '#F59E0B',
-  vendido: '#8B5CF6',
-  arrendado: '#3B82F6',
+  disponivel: '#059669',
+  reservado: '#B07D2E',
+  vendido: '#2563EB',
+  arrendado: '#8B5CF6',
 }
 
 export default function PropertiesPage() {
@@ -262,13 +262,19 @@ export default function PropertiesPage() {
       </div>
 
       <div className="page-pad" style={{ padding: '20px 32px' }}>
-        <div className="filter-bar" style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+        <div
+          className="filter-bar"
+          style={{
+            display: 'flex', gap: 12, marginBottom: 20, padding: 12,
+            background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
+          }}
+        >
           <input className="input" placeholder="Pesquisar por título, referência ou morada..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1 }} />
-          <select className="input hide-mobile" style={{ width: 140 }} value={filterType} onChange={e => setFilterType(e.target.value)}>
+          <select className="input hide-mobile" style={{ width: 160 }} value={filterType} onChange={e => setFilterType(e.target.value)}>
             <option value="">Todos os tipos</option>
             {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
-          <select className="input hide-mobile" style={{ width: 140 }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+          <select className="input hide-mobile" style={{ width: 160 }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             <option value="">Todos os status</option>
             {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
@@ -282,53 +288,75 @@ export default function PropertiesPage() {
             )}
           </div>
         ) : (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr className="table-header">
-                <th className="hide-mobile">Ref</th>
-                <th>Título</th>
-                <th className="hide-mobile">Tipo</th>
-                <th className="hide-mobile">Tipologia</th>
-                <th>Preço</th>
-                <th className="hide-mobile">Área</th>
-                <th className="hide-mobile">Zona</th>
-                <th>Status</th>
-                <th className="hide-mobile">Leads</th>
-              </tr>
-            </thead>
-            <tbody className="stagger">
-              {loading && [0, 1, 2, 3].map(i => (
-                <tr key={i}><td colSpan={9} style={{ padding: '8px 16px' }}><div className="skeleton" style={{ height: 34 }} /></td></tr>
-              ))}
-              {false && (
-                <tr><td colSpan={9} style={{ padding: 32, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Nenhum imóvel encontrado.</td></tr>
-              )}
-              {properties.map(p => {
-                const statusColor = STATUS_COLORS[p.status]
-                return (
-                  <tr key={p.id} onClick={() => router.push(`/properties/${p.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
-                    <td className="hide-mobile" style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }}>{p.reference ?? '—'}</td>
-                    <td style={{ color: 'var(--text)' }}>
-                      <div style={{ fontWeight: 600 }}>{p.title}</div>
-                      <div className="hide-mobile" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{[TYPES.find(t => t.value === p.type)?.label, p.zone].filter(Boolean).join(' · ')}</div>
-                    </td>
-                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{TYPES.find(t => t.value === p.type)?.label ?? p.type}</td>
-                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{p.typology ?? '—'}</td>
-                    <td style={{ color: 'var(--text)', fontWeight: 600 }}>{p.price ? `€${p.price.toLocaleString('pt-PT')}` : '—'}</td>
-                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{p.area_m2 ? `${p.area_m2}m²` : '—'}</td>
-                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{p.zone ?? '—'}</td>
-                    <td>
-                      <span className="stage-badge" style={{ background: `${statusColor}15`, color: statusColor, border: `1px solid ${statusColor}30` }}>
-                        {STATUSES.find(s => s.value === p.status)?.label ?? p.status}
-                      </span>
-                    </td>
-                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{p.leads?.length ?? 0}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        <div
+          className="stagger"
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}
+        >
+          {loading && [0, 1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="card" style={{ overflow: 'hidden' }}>
+              <div className="skeleton" style={{ height: 140 }} />
+              <div style={{ padding: 16 }}>
+                <div className="skeleton" style={{ height: 16, width: '70%', marginBottom: 8 }} />
+                <div className="skeleton" style={{ height: 12, width: '90%' }} />
+              </div>
+            </div>
+          ))}
+          {!loading && properties.map(p => {
+            const statusColor = STATUS_COLORS[p.status]
+            const statusLabel = STATUSES.find(s => s.value === p.status)?.label ?? p.status
+            const typeLabel = TYPES.find(t => t.value === p.type)?.label ?? p.type
+            const details = [p.zone, typeLabel, p.area_m2 ? `${p.area_m2}m²` : null, p.bedrooms ? `${p.bedrooms} quartos` : null]
+              .filter(Boolean)
+              .join(' · ')
+            return (
+              <div
+                key={p.id}
+                onClick={() => router.push(`/properties/${p.id}`)}
+                className="card card-hover"
+                style={{ overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}
+              >
+                <div style={{ position: 'relative', height: 140, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.3 }}>
+                    <path d="M3 10.5L12 3l9 7.5" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span
+                    className="stage-badge"
+                    style={{ position: 'absolute', top: 10, left: 10, background: `${statusColor}15`, color: statusColor, border: `1px solid ${statusColor}30` }}
+                  >
+                    {statusLabel}
+                  </span>
+                  {p.energy_certificate && (
+                    <span
+                      style={{
+                        position: 'absolute', top: 10, right: 10, fontSize: 11, fontWeight: 600,
+                        padding: '3px 8px', borderRadius: 999, background: 'var(--surface)',
+                        color: 'var(--text)', border: '1px solid var(--border)',
+                      }}
+                    >
+                      Cert. {p.energy_certificate}
+                    </span>
+                  )}
+                </div>
+                <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                  <div style={{ fontWeight: 600, color: 'var(--text)' }}>{p.title}</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)' }}>{details || '—'}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 8 }}>
+                    <span style={{ color: 'var(--gold)', fontWeight: 700, fontSize: 16 }}>
+                      {p.price ? `€${p.price.toLocaleString('pt-PT')}` : '—'}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--muted)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="var(--muted)" strokeWidth="1.5" />
+                        <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      {p.leads?.length ?? 0} leads
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
         )}
       </div>

@@ -8,10 +8,9 @@ import {
 import type { ReportsData, ReportPeriod } from '@/types'
 
 const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
-  { value: '30d', label: 'Últimos 30 dias' },
-  { value: '90d', label: 'Últimos 90 dias' },
-  { value: '6m', label: 'Últimos 6 meses' },
-  { value: '1y', label: 'Último ano' },
+  { value: '7d', label: '7 dias' },
+  { value: '30d', label: '30 dias' },
+  { value: '90d', label: '90 dias' },
 ]
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -70,17 +69,43 @@ export default function ReportsPage() {
           <h1 className="font-display" style={{ fontSize: 20 }}>Relatórios <HelpButton section="reports" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Métricas de performance do pipeline</p>
         </div>
-        <select
-          aria-label="Selecionar período"
-          value={period}
-          onChange={e => setPeriod(e.target.value as ReportPeriod)}
-          className="input"
-          style={{ width: 'auto' }}
-        >
-          {PERIOD_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div
+            role="group"
+            aria-label="Selecionar período"
+            style={{ display: 'flex', gap: 2, background: 'var(--bg)', borderRadius: 10, padding: 3, border: '1px solid var(--border)' }}
+          >
+            {PERIOD_OPTIONS.map(o => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => setPeriod(o.value)}
+                aria-pressed={period === o.value}
+                style={{
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '6px 14px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  transition: 'background 0.15s ease, color 0.15s ease',
+                  background: period === o.value ? 'var(--gold)' : 'transparent',
+                  color: period === o.value ? '#fff' : 'var(--muted)',
+                }}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => {}} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Exportar
+          </button>
+        </div>
       </div>
 
       <div className="page-enter page-pad" style={{ padding: '28px 32px', maxWidth: 1100 }}>
@@ -96,10 +121,10 @@ export default function ReportsPage() {
           {/* KPI Cards */}
           <div className="stats-grid stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
             {[
-              { label: 'Total de Leads', value: kpis?.total_leads ?? 0, color: 'var(--text)' },
-              { label: 'Taxa de Conversão', value: `${kpis?.conversion_rate ?? 0}%`, color: 'var(--green)' },
-              { label: 'Valor em Pipeline', value: formatCurrency(kpis?.pipeline_value ?? 0), color: 'var(--text)' },
-              { label: 'Leads Ganhas', value: kpis?.won_leads ?? 0, color: 'var(--gold)' },
+              { label: 'LEADS NOVOS', value: kpis?.total_leads ?? 0, color: 'var(--text)' },
+              { label: 'VISITAS REALIZADAS', value: kpis?.total_leads ?? 0, color: 'var(--text)' },
+              { label: 'PROPOSTAS ENVIADAS', value: kpis?.won_leads ?? 0, color: 'var(--gold)' },
+              { label: 'VALOR PIPELINE', value: formatCurrency(kpis?.pipeline_value ?? 0), color: 'var(--text)' },
             ].map(item => (
               <div key={item.label} className="card" style={{ padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', top: 0, left: 14, right: 14, height: 2, background: 'linear-gradient(90deg, #C9A84C, #8B6F30)', borderRadius: '0 0 2px 2px' }} />
