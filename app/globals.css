@@ -640,6 +640,18 @@ textarea.input { resize: vertical; line-height: 1.6; }
   animation: fadeIn 0.2s ease both;
 }
 
+/* Login split-screen: esconder painel da marca em tablet/mobile */
+@media (max-width: 900px) {
+  .login-brand-panel {
+    display: none !important;
+  }
+}
+@media (max-width: 480px) {
+  .login-form-panel {
+    padding: 24px 20px !important;
+  }
+}
+
 @media (max-width: 768px) {
   /* Prevenir overflow horizontal global */
   body {
