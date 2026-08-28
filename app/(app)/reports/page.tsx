@@ -22,7 +22,7 @@ const SOURCE_LABELS: Record<string, string> = {
   outro: 'Outro',
 }
 
-const CHART_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899']
+const CHART_COLORS = ['#B07D2E', '#C9A84C', '#7A5520', '#D4A94F', '#8B6F30', '#A0894A']
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-PT', {
@@ -64,12 +64,11 @@ export default function ReportsPage() {
   const kpis = data?.kpis
 
   return (
-    <div className="page-enter page-pad" style={{ padding: '28px 32px', maxWidth: 1100 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+    <>
+      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 22, marginBottom: 4 }}>Relatórios <HelpButton section="reports" /></h1>
-          <p style={{ fontSize: 13, color: 'var(--muted)' }}>Métricas de performance do pipeline</p>
+          <h1 className="font-display" style={{ fontSize: 20 }}>Relatórios <HelpButton section="reports" /></h1>
+          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Métricas de performance do pipeline</p>
         </div>
         <select
           aria-label="Selecionar período"
@@ -84,6 +83,8 @@ export default function ReportsPage() {
         </select>
       </div>
 
+      <div className="page-enter page-pad" style={{ padding: '28px 32px', maxWidth: 1100 }}>
+
       {error && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 16 }}>{error}</p>}
 
       {loading ? (
@@ -95,14 +96,15 @@ export default function ReportsPage() {
           {/* KPI Cards */}
           <div className="stats-grid stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
             {[
-              { label: 'Total de Leads', value: kpis?.total_leads ?? 0, color: 'var(--text)', fmt: String },
-              { label: 'Taxa de Conversão', value: `${kpis?.conversion_rate ?? 0}%`, color: '#10B981', fmt: String },
-              { label: 'Valor em Pipeline', value: formatCurrency(kpis?.pipeline_value ?? 0), color: 'var(--text)', fmt: String },
-              { label: 'Leads Ganhas', value: kpis?.won_leads ?? 0, color: '#3B82F6', fmt: String },
+              { label: 'Total de Leads', value: kpis?.total_leads ?? 0, color: 'var(--text)' },
+              { label: 'Taxa de Conversão', value: `${kpis?.conversion_rate ?? 0}%`, color: 'var(--green)' },
+              { label: 'Valor em Pipeline', value: formatCurrency(kpis?.pipeline_value ?? 0), color: 'var(--text)' },
+              { label: 'Leads Ganhas', value: kpis?.won_leads ?? 0, color: 'var(--gold)' },
             ].map(item => (
-              <div key={item.label} className="card" style={{ padding: '20px 24px' }}>
-                <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 500 }}>{item.label}</p>
-                <p style={{ fontSize: 26, fontWeight: 700, color: item.color, letterSpacing: '-0.02em' }}>{item.value}</p>
+              <div key={item.label} className="card" style={{ padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 14, right: 14, height: 2, background: 'linear-gradient(90deg, #C9A84C, #8B6F30)', borderRadius: '0 0 2px 2px' }} />
+                <p className="section-label" style={{ marginBottom: 10 }}>{item.label}</p>
+                <p className="font-display" style={{ fontSize: 26, color: item.color, letterSpacing: '-0.02em' }}>{item.value}</p>
               </div>
             ))}
           </div>
@@ -110,20 +112,20 @@ export default function ReportsPage() {
           {/* Gráficos — linha 1 */}
           <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
             <div className="card" style={{ padding: '20px 24px' }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>Funil de Conversão</p>
+              <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', marginBottom: 16 }}>Funil de Conversão</p>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={data?.funnel ?? []} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--muted)' }} />
                   <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 11, fill: 'var(--muted)' }} />
                   <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }} formatter={(value) => [value, 'Leads']} />
-                  <Bar dataKey="count" fill="#3B82F6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" fill="#B07D2E" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             <div className="card" style={{ padding: '20px 24px' }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>Leads por Fonte</p>
+              <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', marginBottom: 16 }}>Leads por Fonte</p>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
@@ -150,20 +152,20 @@ export default function ReportsPage() {
           {/* Gráficos — linha 2 */}
           <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
             <div className="card" style={{ padding: '20px 24px' }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>Leads ao Longo do Tempo</p>
+              <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', marginBottom: 16 }}>Leads ao Longo do Tempo</p>
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={(data?.over_time ?? []).map(d => ({ ...d, week: formatWeek(d.week_start) }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="week" tick={{ fontSize: 11, fill: 'var(--muted)' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--muted)' }} allowDecimals={false} />
                   <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }} formatter={(value) => [value, 'Leads']} />
-                  <Line type="monotone" dataKey="count" stroke="#3B82F6" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="count" stroke="#C9A84C" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
 
             <div className="card" style={{ padding: '20px 24px' }}>
-              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 16 }}>Performance por Agente</p>
+              <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', marginBottom: 16 }}>Performance por Agente</p>
               {(data?.by_agent ?? []).length === 0 ? (
                 <p style={{ fontSize: 12, color: 'var(--muted)', paddingTop: 16 }}>Sem dados de leads ganhas no período.</p>
               ) : (
@@ -173,7 +175,7 @@ export default function ReportsPage() {
                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--muted)' }} />
                     <YAxis tick={{ fontSize: 11, fill: 'var(--muted)' }} allowDecimals={false} />
                     <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }} formatter={(value) => [value, 'Ganhas']} />
-                    <Bar dataKey="won_count" fill="#10B981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="won_count" fill="#C9A84C" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -181,6 +183,7 @@ export default function ReportsPage() {
           </div>
         </>
       )}
-    </div>
+      </div>
+    </>
   )
 }

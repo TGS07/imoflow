@@ -130,12 +130,12 @@ export default function OrganizationsPage() {
         <div className="card" style={{ overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Nome</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Email</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Telefone</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Website</th>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Negócios</th>
+              <tr className="table-header">
+                <th>Nome</th>
+                <th className="hide-mobile">Email</th>
+                <th className="hide-mobile">Telefone</th>
+                <th className="hide-mobile">Website</th>
+                <th>Negócios</th>
               </tr>
             </thead>
             <tbody className="stagger">
@@ -144,20 +144,22 @@ export default function OrganizationsPage() {
               ))}
               {orgs.map(o => (
                 <tr key={o.id} onClick={() => router.push(`/organizations/${o.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 13, color: 'var(--text)' }}>
+                  <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🏢</div>
+                      <div className="avatar-initials" style={{ borderRadius: 8 }}>
+                        {o.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                      </div>
                       <div>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{o.name}</div>
+                        <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)' }}>{o.name}</div>
                         <div className="hide-mobile" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{o.email ?? o.website ?? ''}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{o.email ?? '—'}</td>
-                  <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{(o.phone ? formatPhoneDisplay(o.phone) : o.phone) ?? '—'}</td>
-                  <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{o.website ?? '—'}</td>
-                  <td style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>{o.leads?.length ?? 0}</span>
+                  <td className="hide-mobile">{o.email ?? '—'}</td>
+                  <td className="hide-mobile">{(o.phone ? formatPhoneDisplay(o.phone) : o.phone) ?? '—'}</td>
+                  <td className="hide-mobile">{o.website ?? '—'}</td>
+                  <td>
+                    <span className="stage-badge" style={{ background: 'var(--gold-glow)', color: 'var(--gold)', border: '1px solid rgba(176,125,46,0.25)' }}>{o.leads?.length ?? 0}</span>
                   </td>
                 </tr>
               ))}
