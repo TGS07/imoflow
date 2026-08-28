@@ -152,15 +152,27 @@ export default async function DashboardPage() {
             <span>Sincronização de Contactos (iPhone): <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{relativeSync(lastSync.ran_at)}</strong>{lastSync.contacts_processed > 0 && ` · ${lastSync.contacts_processed} atualizado${lastSync.contacts_processed !== 1 ? 's' : ''}`}</span>
           </div>
         )}
-        <div className="stagger stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 28 }}>
+        <div className="stagger stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr) 1.4fr', gap: 16, marginBottom: 28 }}>
           <StatCard label="Leads Ativos" value={activeLeads} icon="leads" hint="em negociação" />
-          <StatCard label="Pipeline Total" value={formatValue(pipelineTotal)} icon="chart" hint="valor em aberto" />
-          <StatCard label="Pipeline Ponderado" value={formatValue(pipelineWeighted)} icon="pipeline" hint="por probabilidade" />
+          <StatCard label="Pipeline" value={formatValue(pipelineTotal)} icon="chart" hint={`${formatValue(pipelineWeighted)} ponderado`} />
           <StatCard label="Fechados (mês)" value={closedThisMonth} icon="check" hint="negócios ganhos" />
-          <StatCard label="Atividades Pendentes" value={pendingCount ?? 0} icon="calendar" hint="por concluir" />
+          {nextActivity ? (
+            <Link href="/activities" className="card card-hover" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center', textDecoration: 'none', background: 'var(--gold-glow)', border: '1px solid rgba(176,125,46,0.30)' }}>
+              <div className="section-label" style={{ color: 'var(--gold)', marginBottom: 4 }}>A seguir</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>
+                {typeIcons[nextActivity.type] ?? '📝'} {nextActivity.title}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 3 }}>
+                {nextActivity.due_date && new Date(nextActivity.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                {nextActivity.leads?.[0]?.name && ` · ${nextActivity.leads[0].name}`}
+              </div>
+            </Link>
+          ) : (
+            <StatCard label="Atividades Pendentes" value={pendingCount ?? 0} icon="calendar" hint="por concluir" />
+          )}
         </div>
 
-        <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
+        <div className="dashboard-cols" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
             <div className="card" style={{ padding: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
@@ -235,18 +247,6 @@ export default async function DashboardPage() {
                 <div className="font-display" style={{ fontSize: 'var(--fs-md)' }}>Atividades de Hoje</div>
                 <Link href="/activities" style={{ fontSize: 'var(--fs-xs)', color: 'var(--gold)', fontWeight: 600, textDecoration: 'none' }}>Ver tudo →</Link>
               </div>
-              {nextActivity && (
-                <Link href="/activities" className="card-hover" style={{ display: 'block', textDecoration: 'none', background: 'var(--gold-glow)', border: '1px solid rgba(176,125,46,0.45)', borderRadius: 10, padding: '12px 14px', marginBottom: 14, transition: 'border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), transform 0.2s var(--ease)' }}>
-                  <div className="section-label" style={{ color: 'var(--gold)', marginBottom: 4 }}>A seguir</div>
-                  <div style={{ fontSize: 'var(--fs-base)', fontWeight: 600, color: 'var(--text)' }}>
-                    {typeIcons[nextActivity.type] ?? '📝'} {nextActivity.title}
-                  </div>
-                  <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)', marginTop: 2 }}>
-                    {nextActivity.due_date && new Date(nextActivity.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                    {nextActivity.leads?.[0]?.name && ` · ${nextActivity.leads[0].name}`}
-                  </div>
-                </Link>
-              )}
               <div>
                 {(todayActivities ?? []).map((a: { id: string; type: string; title: string; due_date: string | null; completed: boolean; leads: { name: string }[] | null; users: { name: string }[] | null }, i: number) => {
                   const color = typeColors[a.type] ?? '#6B7280'

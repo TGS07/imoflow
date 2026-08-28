@@ -579,10 +579,59 @@ textarea.input { resize: vertical; line-height: 1.6; }
 
 /* ---------- Tables / rows ---------- */
 
+.table-header {
+  background: #FBF9F4;
+}
+[data-theme="dark"] .table-header {
+  background: var(--bg);
+}
+.table-header th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
 .table-row {
   transition: background 0.12s ease;
 }
 .table-row:hover { background: var(--bg); }
+.table-row td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.stage-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  display: inline-block;
+}
+.avatar-initials {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #C9A84C, #8B6F30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* ---------- Notification Bell ---------- */
+
+.notification-bell-btn:hover {
+  background: var(--gold-glow) !important;
+  border-color: rgba(176,125,46,0.18) !important;
+  color: var(--gold) !important;
+}
 
 /* ---------- Misc ---------- */
 
@@ -640,15 +689,11 @@ textarea.input { resize: vertical; line-height: 1.6; }
   animation: fadeIn 0.2s ease both;
 }
 
-/* Login split-screen: esconder painel da marca em tablet/mobile */
-@media (max-width: 900px) {
-  .login-brand-panel {
-    display: none !important;
-  }
-}
+
 @media (max-width: 480px) {
-  .login-form-panel {
-    padding: 24px 20px !important;
+  .login-card {
+    padding: 40px 24px 32px !important;
+    border-radius: 20px !important;
   }
 }
 
