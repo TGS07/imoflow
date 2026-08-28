@@ -285,16 +285,16 @@ export default function PropertiesPage() {
         <div className="card" style={{ overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Ref</th>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Título</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Tipo</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Tipologia</th>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Preço</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Área</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Zona</th>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Status</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Leads</th>
+              <tr className="table-header">
+                <th className="hide-mobile">Ref</th>
+                <th>Título</th>
+                <th className="hide-mobile">Tipo</th>
+                <th className="hide-mobile">Tipologia</th>
+                <th>Preço</th>
+                <th className="hide-mobile">Área</th>
+                <th className="hide-mobile">Zona</th>
+                <th>Status</th>
+                <th className="hide-mobile">Leads</th>
               </tr>
             </thead>
             <tbody className="stagger">
@@ -308,22 +308,22 @@ export default function PropertiesPage() {
                 const statusColor = STATUS_COLORS[p.status]
                 return (
                   <tr key={p.id} onClick={() => router.push(`/properties/${p.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
-                    <td className="hide-mobile" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }}>{p.reference ?? '—'}</td>
-                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 13, color: 'var(--text)' }}>
+                    <td className="hide-mobile" style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'monospace' }}>{p.reference ?? '—'}</td>
+                    <td style={{ color: 'var(--text)' }}>
                       <div style={{ fontWeight: 600 }}>{p.title}</div>
                       <div className="hide-mobile" style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{[TYPES.find(t => t.value === p.type)?.label, p.zone].filter(Boolean).join(' · ')}</div>
                     </td>
-                    <td className="hide-mobile" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{TYPES.find(t => t.value === p.type)?.label ?? p.type}</td>
-                    <td className="hide-mobile" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{p.typology ?? '—'}</td>
-                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>{p.price ? `€${p.price.toLocaleString('pt-PT')}` : '—'}</td>
-                    <td className="hide-mobile" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{p.area_m2 ? `${p.area_m2}m²` : '—'}</td>
-                    <td className="hide-mobile" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{p.zone ?? '—'}</td>
-                    <td style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                      <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 5, background: `${statusColor}18`, color: statusColor, fontWeight: 600, border: `1px solid ${statusColor}30` }}>
+                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{TYPES.find(t => t.value === p.type)?.label ?? p.type}</td>
+                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{p.typology ?? '—'}</td>
+                    <td style={{ color: 'var(--text)', fontWeight: 600 }}>{p.price ? `€${p.price.toLocaleString('pt-PT')}` : '—'}</td>
+                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{p.area_m2 ? `${p.area_m2}m²` : '—'}</td>
+                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{p.zone ?? '—'}</td>
+                    <td>
+                      <span className="stage-badge" style={{ background: `${statusColor}15`, color: statusColor, border: `1px solid ${statusColor}30` }}>
                         {STATUSES.find(s => s.value === p.status)?.label ?? p.status}
                       </span>
                     </td>
-                    <td className="hide-mobile" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)' }}>{p.leads?.length ?? 0}</td>
+                    <td className="hide-mobile" style={{ fontSize: 12, color: 'var(--muted)' }}>{p.leads?.length ?? 0}</td>
                   </tr>
                 )
               })}

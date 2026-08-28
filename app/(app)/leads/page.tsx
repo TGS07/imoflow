@@ -115,14 +115,14 @@ export default function LeadsPage() {
         <div className="card" style={{ overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Nome</th>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Contacto</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Interesse</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Valor</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Origem</th>
-                <th className="hide-mobile" style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Score</th>
-                <th style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '12px 20px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>Fase</th>
+              <tr className="table-header">
+                <th>Lead</th>
+                <th>Contacto</th>
+                <th className="hide-mobile">Interesse</th>
+                <th className="hide-mobile">Valor</th>
+                <th className="hide-mobile">Origem</th>
+                <th className="hide-mobile">Score</th>
+                <th>Fase</th>
               </tr>
             </thead>
             <tbody>
@@ -137,22 +137,32 @@ export default function LeadsPage() {
                 const stageInfo = getStageInfo(lead)
                 return (
                   <tr key={lead.id} onClick={() => router.push(`/leads/${lead.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
-                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{lead.name}</td>
-                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{(lead.phone ? formatPhoneDisplay(lead.phone) : lead.phone) ?? lead.email ?? '—'}</td>
-                    <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 12, color: 'var(--muted)' }}>{[lead.typology, lead.zone].filter(Boolean).join(' · ') || '—'}</td>
-                    <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div className="avatar-initials">
+                          {lead.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--text)' }}>{lead.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{lead.email ?? '—'}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--muted)', fontSize: 12 }}>{(lead.phone ? formatPhoneDisplay(lead.phone) : lead.phone) ?? '—'}</td>
+                    <td className="hide-mobile" style={{ color: 'var(--muted)', fontSize: 12 }}>{[lead.typology, lead.zone].filter(Boolean).join(' · ') || '—'}</td>
+                    <td className="hide-mobile" style={{ fontWeight: 700, color: 'var(--text)' }}>
                       {lead.deal_value ? `${(lead.deal_value / 1000).toFixed(0)}K€` : lead.budget ? `${(lead.budget / 1000).toFixed(0)}K€` : '—'}
                     </td>
-                    <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
-                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)' }}>{lead.source}</span>
+                    <td className="hide-mobile">
+                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: 'var(--bg)', color: 'var(--muted)' }}>{lead.source}</span>
                     </td>
-                    <td className="hide-mobile" style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
+                    <td className="hide-mobile">
                       <div style={{ width: 60, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
                         <div style={{ height: '100%', borderRadius: 2, background: lead.score > 70 ? 'var(--green)' : lead.score > 40 ? 'var(--gold)' : 'var(--red)', width: `${lead.score}%` }} />
                       </div>
                     </td>
-                    <td style={{ padding: '12px 20px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
-                      <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: `${stageInfo.color}22`, color: stageInfo.color, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    <td>
+                      <span className="stage-badge" style={{ background: `${stageInfo.color}15`, color: stageInfo.color, border: `1px solid ${stageInfo.color}30` }}>
                         {stageInfo.name}
                       </span>
                     </td>
