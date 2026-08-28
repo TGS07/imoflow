@@ -5,6 +5,7 @@ import type { ReportsData, ReportPeriod, LeadSource } from '@/types'
 function getCutoff(period: ReportPeriod): string {
   const now = new Date()
   switch (period) {
+    case '7d': now.setDate(now.getDate() - 7); break
     case '30d': now.setDate(now.getDate() - 30); break
     case '90d': now.setDate(now.getDate() - 90); break
     case '6m': now.setMonth(now.getMonth() - 6); break
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
 
-  const VALID_PERIODS: ReportPeriod[] = ['30d', '90d', '6m', '1y']
+  const VALID_PERIODS: ReportPeriod[] = ['7d', '30d', '90d', '6m', '1y']
   const rawPeriod = searchParams.get('period') ?? '30d'
   if (!VALID_PERIODS.includes(rawPeriod as ReportPeriod)) {
     return NextResponse.json({ error: 'Invalid period' }, { status: 400 })

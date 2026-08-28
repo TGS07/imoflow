@@ -1,6 +1,6 @@
 import type { LeadSource } from './index'
 
-export type ReportPeriod = '30d' | '90d' | '6m' | '1y'
+export type ReportPeriod = '7d' | '30d' | '90d' | '6m' | '1y'
 
 export type ReportKpis = {
   total_leads: number

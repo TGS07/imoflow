@@ -7,6 +7,20 @@ import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 
+const PAGE_SIZE = 10
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  if (days <= 0) return 'Hoje'
+  if (days === 1) return 'Há 1 dia'
+  if (days < 30) return `Há ${days} dias`
+  const months = Math.floor(days / 30)
+  if (months < 12) return months === 1 ? 'Há 1 mês' : `Há ${months} meses`
+  const years = Math.floor(months / 12)
+  return years === 1 ? 'Há 1 ano' : `Há ${years} anos`
+}
+
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [stages, setStages] = useState<PipelineStage[]>([])
@@ -14,6 +28,7 @@ export default function LeadsPage() {
   const [search, setSearch] = useState('')
   const [stageFilter, setStageFilter] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [page, setPage] = useState(1)
   const router = useRouter()
   const searchParams = useSearchParams()
   const personFilter = searchParams.get('person_id')
@@ -48,10 +63,18 @@ export default function LeadsPage() {
 
   useEffect(() => { fetchLeads() }, [fetchLeads])
 
+  useEffect(() => { setPage(1) }, [debouncedSearch, stageFilter])
+
   function getStageInfo(lead: Lead) {
     const stage = lead.pipeline_stages ?? stages.find(s => s.id === lead.stage_id)
     return stage ?? { name: '—', color: '#666' }
   }
+
+  const totalPages = Math.max(1, Math.ceil(leads.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const pageStart = leads.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+  const pageEnd = Math.min(currentPage * PAGE_SIZE, leads.length)
+  const paginatedLeads = leads.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   return (
     <>
@@ -61,9 +84,19 @@ export default function LeadsPage() {
           <h1 className="font-display" style={{ fontSize: 20 }}>Leads <HelpButton section="leads" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{leads.length} leads</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn btn-primary">
-          + Novo Lead
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={() => {}} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Exportar
+          </button>
+          <button onClick={() => setShowModal(true)} className="btn btn-primary">
+            + Novo Lead
+          </button>
+        </div>
       </div>
 
       {personFilter && (
@@ -74,23 +107,49 @@ export default function LeadsPage() {
           </span>
         </div>
       )}
-      <div className="page-enter page-pad" style={{ padding: '20px 32px', display: 'flex', gap: 10 }}>
+      <div className="page-enter page-pad" style={{ padding: '20px 32px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         <input
           placeholder="Pesquisar por nome, email ou telefone..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="input"
-          style={{ flex: 1, background: 'var(--card)' }}
+          style={{ flex: 1, minWidth: 220, background: 'var(--card)' }}
         />
-        <select
-          value={stageFilter}
-          onChange={e => setStageFilter(e.target.value)}
-          className="input"
-          style={{ width: 'auto', background: 'var(--card)' }}
-        >
-          <option value="">Todas as fases</option>
-          {stages.filter(s => !s.is_lost).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-        </select>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setStageFilter('')}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              background: stageFilter === '' ? 'var(--gold)' : 'transparent',
+              color: stageFilter === '' ? 'white' : 'var(--muted)',
+              border: `1px solid ${stageFilter === '' ? 'var(--gold)' : 'var(--border)'}`,
+            }}
+          >
+            Todos
+          </button>
+          {stages.filter(s => !s.is_lost).map(s => (
+            <button
+              key={s.id}
+              onClick={() => setStageFilter(s.id)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+                background: stageFilter === s.id ? 'var(--gold)' : 'transparent',
+                color: stageFilter === s.id ? 'white' : 'var(--muted)',
+                border: `1px solid ${stageFilter === s.id ? 'var(--gold)' : 'var(--border)'}`,
+              }}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="page-pad" style={{ padding: '0 32px 32px' }}>
@@ -117,12 +176,12 @@ export default function LeadsPage() {
             <thead>
               <tr className="table-header">
                 <th>Lead</th>
-                <th>Contacto</th>
-                <th className="hide-mobile">Interesse</th>
+                <th className="hide-mobile">Tipologia</th>
+                <th className="hide-mobile">Zona</th>
                 <th className="hide-mobile">Valor</th>
-                <th className="hide-mobile">Origem</th>
-                <th className="hide-mobile">Score</th>
-                <th>Fase</th>
+                <th>Etapa</th>
+                <th>Contacto</th>
+                <th className="hide-mobile">Criado</th>
               </tr>
             </thead>
             <tbody>
@@ -133,7 +192,7 @@ export default function LeadsPage() {
                   </td>
                 </tr>
               ))}
-              {leads.map(lead => {
+              {paginatedLeads.map(lead => {
                 const stageInfo = getStageInfo(lead)
                 return (
                   <tr key={lead.id} onClick={() => router.push(`/leads/${lead.id}`)} className="table-row" style={{ cursor: 'pointer' }}>
@@ -148,29 +207,67 @@ export default function LeadsPage() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ color: 'var(--muted)', fontSize: 12 }}>{(lead.phone ? formatPhoneDisplay(lead.phone) : lead.phone) ?? '—'}</td>
-                    <td className="hide-mobile" style={{ color: 'var(--muted)', fontSize: 12 }}>{[lead.typology, lead.zone].filter(Boolean).join(' · ') || '—'}</td>
+                    <td className="hide-mobile" style={{ color: 'var(--muted)', fontSize: 12 }}>{lead.typology ?? '—'}</td>
+                    <td className="hide-mobile" style={{ color: 'var(--muted)', fontSize: 12 }}>{lead.zone ?? '—'}</td>
                     <td className="hide-mobile" style={{ fontWeight: 700, color: 'var(--text)' }}>
                       {lead.deal_value ? `${(lead.deal_value / 1000).toFixed(0)}K€` : lead.budget ? `${(lead.budget / 1000).toFixed(0)}K€` : '—'}
-                    </td>
-                    <td className="hide-mobile">
-                      <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 4, background: 'var(--bg)', color: 'var(--muted)' }}>{lead.source}</span>
-                    </td>
-                    <td className="hide-mobile">
-                      <div style={{ width: 60, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', borderRadius: 2, background: lead.score > 70 ? 'var(--green)' : lead.score > 40 ? 'var(--gold)' : 'var(--red)', width: `${lead.score}%` }} />
-                      </div>
                     </td>
                     <td>
                       <span className="stage-badge" style={{ background: `${stageInfo.color}15`, color: stageInfo.color, border: `1px solid ${stageInfo.color}30` }}>
                         {stageInfo.name}
                       </span>
                     </td>
+                    <td style={{ color: 'var(--muted)', fontSize: 12 }}>{(lead.phone ? formatPhoneDisplay(lead.phone) : lead.phone) ?? '—'}</td>
+                    <td className="hide-mobile" style={{ color: 'var(--muted)', fontSize: 12 }}>{timeAgo(lead.created_at)}</td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
+          {!loading && leads.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderTop: '1px solid var(--border)', flexWrap: 'wrap', gap: 10 }}>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+                A mostrar {pageStart}-{pageEnd} de {leads.length} leads
+              </span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="btn btn-ghost"
+                  style={{ padding: '4px 10px', fontSize: 12, opacity: currentPage === 1 ? 0.4 : 1 }}
+                >
+                  ‹
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      background: p === currentPage ? 'var(--gold)' : 'transparent',
+                      color: p === currentPage ? 'white' : 'var(--muted)',
+                      border: `1px solid ${p === currentPage ? 'var(--gold)' : 'var(--border)'}`,
+                    }}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="btn btn-ghost"
+                  style={{ padding: '4px 10px', fontSize: 12, opacity: currentPage === totalPages ? 0.4 : 1 }}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         )}
       </div>
