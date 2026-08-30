@@ -15,6 +15,7 @@ export type ReportFunnelEntry = {
   name: string
   position: number
   count: number
+  value: number
 }
 
 export type ReportSourceEntry = {

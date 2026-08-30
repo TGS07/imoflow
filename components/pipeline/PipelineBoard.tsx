@@ -45,6 +45,15 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
 
   const selected = pipelines.find(p => p.id === selectedId) ?? null
 
+  const activeLeads = leads.filter(l => l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost)
+  const pipelineValue = activeLeads.reduce((sum, l) => sum + (l.deal_value ?? 0), 0)
+
+  function formatCompactEuro(value: number) {
+    if (value >= 1_000_000) return `${(value / 1_000_000).toLocaleString('pt-PT', { maximumFractionDigits: 1 })}M€`
+    if (value >= 1_000) return `${(value / 1_000).toLocaleString('pt-PT', { maximumFractionDigits: 1 })}k€`
+    return `${value.toLocaleString('pt-PT')}€`
+  }
+
   const alreadyInIds = new Set(
     leads.filter(l => l.person_id && l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost)
       .map(l => l.person_id as string)
@@ -112,7 +121,15 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
 
       <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <h1 className="font-display" style={{ fontSize: 20, marginRight: 4 }}>Pipeline <HelpButton section="pipeline" /></h1>
+          <div style={{ marginRight: 4 }}>
+            <h1 className="font-display" style={{ fontSize: 20 }}>Pipeline <HelpButton section="pipeline" /></h1>
+            {!loading && selected && (
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                {activeLeads.length} lead{activeLeads.length === 1 ? '' : 's'} ativo{activeLeads.length === 1 ? '' : 's'}
+                {pipelineValue > 0 && <> · {formatCompactEuro(pipelineValue)} em pipeline</>}
+              </div>
+            )}
+          </div>
           {/* Seletor de pipelines */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {pipelines.map(p => (
@@ -120,15 +137,19 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
                 <button
                   onClick={() => setSelectedId(p.id)}
                   className={`chip${p.id === selectedId ? ' active' : ''}`}
-                  style={isAdmin && p.id === selectedId ? { ...tabBase, borderRadius: '8px 0 0 8px' } : tabBase}
+                  style={tabBase}
                 >
                   {p.name}
                 </button>
                 {isAdmin && p.id === selectedId && (
-                  <>
-                    <button onClick={() => setPipelineModal({ mode: 'edit', pipeline: p })} title="Editar pipeline" className="chip active" style={{ ...tabBase, padding: '0 8px', borderRadius: 0, borderLeft: 'none' }}>✏️</button>
-                    <button onClick={() => deletePipeline(p)} title="Eliminar pipeline" className="chip active" style={{ ...tabBase, padding: '0 8px', borderRadius: '0 8px 8px 0', borderLeft: 'none' }}>🗑️</button>
-                  </>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
+                    <button onClick={() => setPipelineModal({ mode: 'edit', pipeline: p })} title="Editar pipeline" className="icon-btn-sm">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    </button>
+                    <button onClick={() => deletePipeline(p)} title="Eliminar pipeline" className="icon-btn-sm">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                  </span>
                 )}
               </span>
             ))}

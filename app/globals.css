@@ -652,6 +652,21 @@ textarea.input { resize: vertical; line-height: 1.6; }
 }
 .icon-btn:hover { background: var(--card-hover); color: var(--text); }
 
+.icon-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+.icon-btn-sm:hover { background: var(--gold-glow); color: var(--gold); border-color: rgba(176,125,46,0.25); }
+
 /* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {

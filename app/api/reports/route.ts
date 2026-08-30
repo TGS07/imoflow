@@ -98,9 +98,13 @@ export async function GET(request: Request) {
 
     // Compute funnel in memory using period-filtered leads
     const stageCountMap = new Map<string, number>()
+    const stageValueMap = new Map<string, number>()
     for (const lead of leads) {
       const stageId = (lead as unknown as { stage_id: string }).stage_id
-      if (stageId) stageCountMap.set(stageId, (stageCountMap.get(stageId) ?? 0) + 1)
+      if (!stageId) continue
+      stageCountMap.set(stageId, (stageCountMap.get(stageId) ?? 0) + 1)
+      const dealValue = Number((lead as unknown as { deal_value: number | null }).deal_value) || 0
+      stageValueMap.set(stageId, (stageValueMap.get(stageId) ?? 0) + dealValue)
     }
 
     const funnel = (funnelResult.data ?? []).map(stage => ({
@@ -108,6 +112,7 @@ export async function GET(request: Request) {
       name: stage.name,
       position: stage.position,
       count: stageCountMap.get(stage.id) ?? 0,
+      value: stageValueMap.get(stage.id) ?? 0,
     }))
 
     // Por fonte
