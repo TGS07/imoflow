@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { HelpButton } from '@/components/help/HelpButton'
 import { redirect } from 'next/navigation'
@@ -113,7 +114,14 @@ export default async function DashboardPage() {
   }
 
   const typeColors: Record<string, string> = { chamada: '#3B82F6', visita: '#F59E0B', email: '#8B5CF6', reuniao: '#10B981', tarefa: '#EF4444', nota: '#6B7280' }
-  const typeIcons: Record<string, string> = { chamada: '📞', visita: '🏠', email: '✉', reuniao: '🤝', tarefa: '✓', nota: '📝' }
+  const typeIconSvgs: Record<string, ReactNode> = {
+    chamada: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+    visita: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+    email: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>,
+    reuniao: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+    tarefa: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+    nota: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>,
+  }
 
   // Próximo evento de hoje (ainda por acontecer e não concluído)
   const nowTs = new Date().getTime()
@@ -159,8 +167,9 @@ export default async function DashboardPage() {
           {nextActivity ? (
             <Link href="/activities" className="card card-hover" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center', textDecoration: 'none', background: 'var(--gold-glow)', border: '1px solid rgba(176,125,46,0.30)' }}>
               <div className="section-label" style={{ color: 'var(--gold)', marginBottom: 4 }}>A seguir</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>
-                {typeIcons[nextActivity.type] ?? '📝'} {nextActivity.title}
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ display: 'inline-flex', color: 'var(--gold)', flexShrink: 0 }}>{typeIconSvgs[nextActivity.type] ?? typeIconSvgs.nota}</span>
+                {nextActivity.title}
               </div>
               <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 3 }}>
                 {nextActivity.due_date && new Date(nextActivity.due_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
@@ -257,8 +266,9 @@ export default async function DashboardPage() {
                         {i < (todayActivities?.length ?? 0) - 1 && <div style={{ width: 1, flex: 1, background: 'var(--border)', marginTop: 6, minHeight: 20 }} />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: 'var(--text)', lineHeight: 1.5, textDecoration: a.completed ? 'line-through' : 'none' }}>
-                          {typeIcons[a.type] ?? '📝'} {a.title}
+                        <div style={{ color: 'var(--text)', lineHeight: 1.5, textDecoration: a.completed ? 'line-through' : 'none', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ display: 'inline-flex', color, flexShrink: 0 }}>{typeIconSvgs[a.type] ?? typeIconSvgs.nota}</span>
+                          {a.title}
                           {a.leads?.[0]?.name && (
                             <span> — <strong style={{ color: 'var(--gold)', fontWeight: 600 }}>{a.leads[0].name}</strong></span>
                           )}
@@ -273,7 +283,9 @@ export default async function DashboardPage() {
                 })}
                 {(todayActivities ?? []).length === 0 && (
                   <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--muted)' }}>
-                    <div style={{ fontSize: 22, marginBottom: 6 }}>☀️</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    </div>
                     <p style={{ fontSize: 'var(--fs-sm)', margin: 0 }}>Dia livre — sem atividades agendadas.</p>
                   </div>
                 )}
