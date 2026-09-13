@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { FileObject } from '@supabase/storage-js'
 
 /**
  * Uploads a file to a Supabase Storage bucket.
@@ -10,13 +11,13 @@ export async function uploadFile(
   bucket: string,
   path: string,
   file: File | Blob
-): Promise<{ path: string } | { error: string }> {
+): Promise<{ data: { path: string } | null; error: string | null }> {
   const { data, error } = await supabase.storage
     .from(bucket)
     .upload(path, file, { upsert: false })
 
-  if (error) return { error: error.message }
-  return { path: data.path }
+  if (error) return { data: null, error: error.message }
+  return { data: { path: data.path }, error: null }
 }
 
 /**
@@ -24,27 +25,33 @@ export async function uploadFile(
  * Note: this always returns a URL, even for private buckets — access to the
  * underlying file is still gated by the bucket's RLS policies.
  */
-export function getPublicUrl(supabase: SupabaseClient, bucket: string, path: string): string {
-  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl
+export function getPublicUrl(
+  supabase: SupabaseClient,
+  bucket: string,
+  path: string
+): { data: { publicUrl: string } | null; error: string | null } {
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path)
+  return { data, error: null }
 }
 
-/**
- * Deletes a file from a Supabase Storage bucket.
- */
 export async function deleteFile(
   supabase: SupabaseClient,
   bucket: string,
   path: string
-): Promise<{ error: string } | { success: true }> {
-  const { error } = await supabase.storage.from(bucket).remove([path])
+): Promise<{ data: FileObject[] | null; error: string | null }> {
+  const { data, error } = await supabase.storage.from(bucket).remove([path])
 
-  if (error) return { error: error.message }
-  return { success: true }
+  if (error) return { data: null, error: error.message }
+  return { data, error: null }
 }
 
-/**
- * Lists files in a Supabase Storage bucket under the given prefix (folder).
- */
-export async function listFiles(supabase: SupabaseClient, bucket: string, prefix: string) {
-  return supabase.storage.from(bucket).list(prefix)
+export async function listFiles(
+  supabase: SupabaseClient,
+  bucket: string,
+  prefix: string
+): Promise<{ data: FileObject[] | null; error: string | null }> {
+  const { data, error } = await supabase.storage.from(bucket).list(prefix)
+
+  if (error) return { data: null, error: error.message }
+  return { data, error: null }
 }
