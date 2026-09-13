@@ -9,6 +9,7 @@ import { LinkContactModal } from '@/components/leads/LinkContactModal'
 import { Icon } from '@/components/ui/Icon'
 import { REGULAR_INTERVAL_PRESETS } from '@/lib/contacts/special-dates'
 import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
+import { DocumentList } from '@/components/shared/DocumentList'
 
 const EXTRAS_SUGERIDOS = ['vista mar', 'garagem', 'piscina', 'jardim', 'varanda', 'elevador', 'ar condicionado', 'lareira']
 const TIPOLOGIAS = ['T0', 'T1', 'T2', 'T3', 'T4', 'T5+']
@@ -540,6 +541,11 @@ export default function LeadPage() {
               <p style={{ fontSize: 12, color: 'var(--muted)' }}>Sem atividades ainda.</p>
             )}
           </div>
+        </div>
+
+        {/* Documents */}
+        <div className="card" style={{ padding: '14px 18px', marginTop: 20 }}>
+          <DocumentList entityType="lead" entityId={id} />
         </div>
 
         {/* Notes */}

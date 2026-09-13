@@ -11,6 +11,8 @@ import { SuggestedBuyers } from '@/components/properties/SuggestedBuyers'
 import { NearbyConsultants } from '@/components/properties/NearbyConsultants'
 import { PropertyConsultants } from '@/components/properties/PropertyConsultants'
 import { SendEmailModal } from '@/components/leads/SendEmailModal'
+import { PhotoGallery } from '@/components/properties/PhotoGallery'
+import { DocumentList } from '@/components/shared/DocumentList'
 
 const TYPES: { value: PropertyType; label: string }[] = [
   { value: 'apartamento', label: 'Apartamento' },
@@ -81,7 +83,7 @@ export default function PropertyPage() {
     title: '', reference: '', type: 'apartamento' as PropertyType, status: 'disponivel' as PropertyStatus,
     price: '', area_m2: '', typology: '', bedrooms: '', bathrooms: '', floor: '',
     condition: '' as string, address: '', city: '', zone: '', postal_code: '',
-    description: '', notes: '', features: '', photos: '', idealista_url: '',
+    description: '', notes: '', features: '', idealista_url: '',
     area_util_m2: '', construction_year: '', energy_certificate: '', parking_spaces: '', has_elevator: false as boolean | null,
   })
 
@@ -99,7 +101,6 @@ export default function PropertyPage() {
       zone: data.zone ?? '', postal_code: data.postal_code ?? '',
       description: data.description ?? '', notes: data.notes ?? '',
       features: (data.features ?? []).join(', '),
-      photos: (data.photos ?? []).join('\n'),
       idealista_url: data.idealista_url ?? '',
       area_util_m2: data.area_util_m2?.toString() ?? '',
       construction_year: data.construction_year?.toString() ?? '',
@@ -140,7 +141,6 @@ export default function PropertyPage() {
         parking_spaces: form.parking_spaces ? Number(form.parking_spaces) : null,
         has_elevator: form.has_elevator,
         features: form.features ? form.features.split(',').map(f => f.trim()).filter(Boolean) : [],
-        photos: form.photos ? form.photos.split('\n').map(u => u.trim()).filter(Boolean) : [],
       }),
     })
     if (res.ok) { setEditing(false); fetchProperty() }
@@ -354,16 +354,15 @@ export default function PropertyPage() {
             </div>
 
             <div>
-              <div style={labelStyle}>Fotos (URLs)</div>
-              {editing ? <textarea style={{ ...inputStyle, minHeight: 60, resize: 'vertical' as const }} value={form.photos} onChange={e => setForm(p => ({ ...p, photos: e.target.value }))} placeholder="Uma URL por linha" /> : (
-                property.photos && property.photos.length > 0 ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                    {property.photos.map((url, i) => (
-                      <img key={i} src={url} alt={`Foto ${i + 1}`} style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
-                    ))}
-                  </div>
-                ) : <span style={{ fontSize: 12, color: 'var(--muted)' }}>Sem fotos</span>
-              )}
+              <PhotoGallery
+                propertyId={property.id}
+                photos={property.photos ?? []}
+                onPhotosChange={(photos) => setProperty(p => p ? { ...p, photos } : p)}
+              />
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              <DocumentList entityType="property" entityId={property.id} />
             </div>
 
             <div style={{ marginTop: 12 }}>

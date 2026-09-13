@@ -4,6 +4,7 @@ type IconName =
   | 'whatsapp' | 'team' | 'plus' | 'pencil' | 'trash' | 'close'
   | 'send' | 'bell' | 'check' | 'x' | 'chevron-down' | 'logout' | 'phone'
   | 'search' | 'command' | 'help' | 'sun' | 'moon' | 'sparkle'
+  | 'file' | 'file-pdf' | 'file-image' | 'upload' | 'download'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   dashboard: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
@@ -37,6 +38,11 @@ const PATHS: Record<IconName, React.ReactNode> = {
   sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" /></>,
   moon: <path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z" />,
   sparkle: <><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2Z" /></>,
+  file: <><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v5h5" /></>,
+  'file-pdf': <><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v5h5" /><path d="M9 17.5v-4h1.2a1.3 1.3 0 0 1 0 2.6H9M13 17.5v-4h1.4a1.3 1.3 0 0 1 0 2.6H13v1.4M17 13.5h-1.5v4" /></>,
+  'file-image': <><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v5h5" /><circle cx="10" cy="14" r="1.2" /><path d="m8 18 2.5-2.8 2 1.8 2-2.5L17 18" /></>,
+  upload: <><path d="M12 16V4M8 8l4-4 4 4" /><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" /></>,
+  download: <><path d="M12 4v12M8 12l4 4 4-4" /><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" /></>,
 }
 
 type Props = {
