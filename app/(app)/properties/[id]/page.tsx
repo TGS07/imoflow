@@ -12,6 +12,7 @@ import { NearbyConsultants } from '@/components/properties/NearbyConsultants'
 import { PropertyConsultants } from '@/components/properties/PropertyConsultants'
 import { SendEmailModal } from '@/components/leads/SendEmailModal'
 import { PhotoGallery } from '@/components/properties/PhotoGallery'
+import { DocumentList } from '@/components/shared/DocumentList'
 
 const TYPES: { value: PropertyType; label: string }[] = [
   { value: 'apartamento', label: 'Apartamento' },
@@ -358,6 +359,10 @@ export default function PropertyPage() {
                 photos={property.photos ?? []}
                 onPhotosChange={(photos) => setProperty(p => p ? { ...p, photos } : p)}
               />
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              <DocumentList entityType="property" entityId={property.id} />
             </div>
 
             <div style={{ marginTop: 12 }}>

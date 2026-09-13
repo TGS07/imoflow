@@ -13,6 +13,7 @@ import { ContactIdealistaPreferences } from '@/components/contacts/ContactIdeali
 import { SellerProperties } from '@/components/contacts/SellerProperties'
 import { ConsultantProperties } from '@/components/contacts/ConsultantProperties'
 import { REGULAR_INTERVAL_PRESETS } from '@/lib/contacts/special-dates'
+import { DocumentList } from '@/components/shared/DocumentList'
 
 export type LeadSummary = {
   id: string
@@ -697,6 +698,10 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                 d.idealista_url ? <a href={d.idealista_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--fs-base)', color: 'var(--gold)', textDecoration: 'none', wordBreak: 'break-all' }}>{d.idealista_url}</a> : fieldValue(null),
                 <input className="input" value={d.idealista_url ?? ''} onChange={e => setDetail('idealista_url', e.target.value)} />
               )}
+            </div>
+
+            <div className="card" style={{ padding: 24 }}>
+              <DocumentList entityType="person" entityId={id} />
             </div>
 
             <div className="card" style={{ padding: 24 }}>
