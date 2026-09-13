@@ -1,10 +1,54 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { HelpButton } from '@/components/help/HelpButton'
+import { Icon } from '@/components/ui/Icon'
 import { StageNotificationsModal } from '@/components/pipeline/StageNotificationsModal'
 import { PipelineStage, CustomField, Pipeline } from '@/types'
 
 const COLORS = ['#3B82F6', '#F59E0B', '#8B5CF6', '#F97316', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E']
+const SWATCH_COLORS = ['#3B82F6', '#2563EB', '#8B5CF6', '#7C3AED', '#EC4899', '#EF4444', '#F59E0B', '#F97316', '#10B981', '#059669', '#06B6D4', '#6B7280']
+
+type PipelineTemplate = {
+  name: string
+  stages: { name: string; color: string; probability: number; is_won?: boolean; is_lost?: boolean }[]
+}
+
+const PIPELINE_TEMPLATES: PipelineTemplate[] = [
+  {
+    name: 'Vendas',
+    stages: [
+      { name: 'Novo Lead', color: '#3B82F6', probability: 10 },
+      { name: 'Contacto', color: '#06B6D4', probability: 20 },
+      { name: 'Visita', color: '#8B5CF6', probability: 40 },
+      { name: 'Proposta', color: '#F59E0B', probability: 60 },
+      { name: 'Negociação', color: '#F97316', probability: 80 },
+      { name: 'Ganho', color: '#10B981', probability: 100, is_won: true },
+      { name: 'Perdido', color: '#EF4444', probability: 0, is_lost: true },
+    ],
+  },
+  {
+    name: 'Arrendamento',
+    stages: [
+      { name: 'Novo', color: '#3B82F6', probability: 10 },
+      { name: 'Visita', color: '#8B5CF6', probability: 30 },
+      { name: 'Documentação', color: '#F59E0B', probability: 60 },
+      { name: 'Contrato', color: '#F97316', probability: 80 },
+      { name: 'Ativo', color: '#10B981', probability: 100, is_won: true },
+      { name: 'Cancelado', color: '#EF4444', probability: 0, is_lost: true },
+    ],
+  },
+  {
+    name: 'Compra',
+    stages: [
+      { name: 'Prospeção', color: '#3B82F6', probability: 10 },
+      { name: 'Análise', color: '#06B6D4', probability: 25 },
+      { name: 'Proposta', color: '#F59E0B', probability: 50 },
+      { name: 'Escritura', color: '#F97316', probability: 80 },
+      { name: 'Concluído', color: '#10B981', probability: 100, is_won: true },
+      { name: 'Cancelado', color: '#EF4444', probability: 0, is_lost: true },
+    ],
+  },
+]
 const FIELD_TYPES = [
   { value: 'text', label: 'Texto' },
   { value: 'number', label: 'Número' },
@@ -25,6 +69,7 @@ export default function PipelineSettingsPage() {
   const [newFieldOptions, setNewFieldOptions] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
   const [notifStage, setNotifStage] = useState<PipelineStage | null>(null)
+  const [editingColor, setEditingColor] = useState<string | null>(null)
   // etapas com avisos ativos (para o 🔔 dourado) — derivado das regras da agência
   const [notifiedStageIds, setNotifiedStageIds] = useState<Set<string>>(new Set())
 
@@ -66,6 +111,35 @@ export default function PipelineSettingsPage() {
   }
 
   useEffect(() => { loadNotifiedStages() }, [])
+
+  async function applyTemplate(template: PipelineTemplate) {
+    if (!selectedPipelineId) return
+    if (stages.length > 0 && !confirm(`Isto vai substituir todas as etapas atuais pelas do template "${template.name}". Continuar?`)) return
+    // Delete existing stages
+    for (const stage of stages) {
+      await fetch(`/api/pipeline-stages/${stage.id}`, { method: 'DELETE' })
+    }
+    // Create new stages from template
+    const newStages: PipelineStage[] = []
+    for (let i = 0; i < template.stages.length; i++) {
+      const t = template.stages[i]
+      const res = await fetch('/api/pipeline-stages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: t.name,
+          color: t.color,
+          probability: t.probability,
+          pipeline_id: selectedPipelineId,
+          is_won: t.is_won ?? false,
+          is_lost: t.is_lost ?? false,
+          position: i,
+        }),
+      })
+      if (res.ok) newStages.push(await res.json())
+    }
+    setStages(newStages)
+  }
 
   async function addStage(e: React.FormEvent) {
     e.preventDefault()
@@ -150,12 +224,13 @@ export default function PipelineSettingsPage() {
           onSaved={loadNotifiedStages}
         />
       )}
-      <div className="page-pad" style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <h1 className="font-display" style={{ fontSize: 20 }}>Configurações do Pipeline <HelpButton section="settings-pipeline" /></h1>
-        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Personaliza as etapas e campos do teu CRM</p>
-      </div>
+      <div className="page-enter" style={{ padding: 'var(--space-6) var(--space-8)', maxWidth: 720 }}>
+        <div style={{ marginBottom: 'var(--space-6)' }}>
+          <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Configurações do Pipeline <HelpButton section="settings-pipeline" /></h1>
+          <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>Personaliza as etapas e campos do teu CRM</p>
+        </div>
 
-      <div className="page-pad" style={{ padding: '28px 32px', maxWidth: 720 }}>
+        <div>
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 22, marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
             <div className="font-display" style={{ fontSize: 16 }}>Etapas da Pipeline</div>
@@ -166,6 +241,26 @@ export default function PipelineSettingsPage() {
             )}
           </div>
 
+          {stages.length === 0 && selectedPipelineId && (
+            <div style={{ marginBottom: 16, padding: 16, background: 'var(--item-bg)', border: '1px solid var(--border)', borderRadius: 10 }}>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>Começar com um template:</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {PIPELINE_TEMPLATES.map(t => (
+                  <button
+                    key={t.name}
+                    type="button"
+                    onClick={() => applyTemplate(t)}
+                    className="btn-ghost"
+                    style={{ fontSize: 12, padding: '6px 14px', borderRadius: 8, cursor: 'pointer' }}
+                  >
+                    <Icon name="pipeline" size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
             {stages.map((stage, i) => (
               <div key={stage.id} className="stage-row" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8 }}>
@@ -173,12 +268,30 @@ export default function PipelineSettingsPage() {
                   <button onClick={() => moveStage(i, -1)} disabled={i === 0} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: i === 0 ? 'default' : 'pointer', fontSize: 10, opacity: i === 0 ? 0.3 : 1, padding: 0 }}>▲</button>
                   <button onClick={() => moveStage(i, 1)} disabled={i === stages.length - 1} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: i === stages.length - 1 ? 'default' : 'pointer', fontSize: 10, opacity: i === stages.length - 1 ? 0.3 : 1, padding: 0 }}>▼</button>
                 </div>
-                <input
-                  type="color"
-                  value={stage.color}
-                  onChange={e => updateStage(stage.id, { color: e.target.value })}
-                  style={{ width: 24, height: 24, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
-                />
+                <div style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditingColor(editingColor === stage.id ? null : stage.id)}
+                    style={{ width: 24, height: 24, borderRadius: '50%', background: stage.color, border: '2px solid var(--border)', cursor: 'pointer', padding: 0 }}
+                    title="Escolher cor"
+                  />
+                  {editingColor === stage.id && (
+                    <div style={{ position: 'absolute', top: 32, left: 0, zIndex: 20, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 10, boxShadow: 'var(--shadow-md)' }}>
+                      <div className="color-swatch-grid">
+                        {SWATCH_COLORS.map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            className={`color-swatch${stage.color === c ? ' active' : ''}`}
+                            style={{ background: c }}
+                            onClick={() => { updateStage(stage.id, { color: c }); setEditingColor(null) }}
+                            title={c}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <input
                   style={{ ...inputStyle, flex: 1 }}
                   value={stage.name}
@@ -257,6 +370,7 @@ export default function PipelineSettingsPage() {
             )}
           </form>
         </div>
+      </div>
       </div>
     </>
   )

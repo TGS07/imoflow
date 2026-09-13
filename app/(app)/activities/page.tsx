@@ -1,10 +1,11 @@
 'use client'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { HelpButton } from '@/components/help/HelpButton'
 import { Activity, ActivityType } from '@/types'
 import Link from 'next/link'
 import { CalendarTimeGrid } from '@/components/activities/CalendarTimeGrid'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
+import { QuickAddFAB } from '@/components/activities/QuickAddFAB'
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
   chamada: '#3B82F6',
@@ -508,6 +509,10 @@ export default function ActivitiesPage() {
           </div>
         </div>
       </div>
+
+      <Suspense fallback={null}>
+        <QuickAddFAB onCreated={fetchActivities} />
+      </Suspense>
     </div>
   )
 }

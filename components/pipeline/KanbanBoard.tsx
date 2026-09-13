@@ -8,8 +8,15 @@ import { useRouter } from 'next/navigation'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { CardPropertyModal } from '@/components/pipeline/CardPropertyModal'
 import { CardHoverPreview } from '@/components/pipeline/CardHoverPreview'
+import { Icon } from '@/components/ui/Icon'
 import type { ContactPropertyCandidate } from '@/lib/pipeline/resolve-contact-property'
 import { cardFieldValue, daysInStage, type PipelineCardFields } from '@/lib/pipeline/card-fields'
+
+function daysPillColor(days: number): string {
+  if (days < 7) return 'kanban-days-green'
+  if (days <= 14) return 'kanban-days-amber'
+  return 'kanban-days-red'
+}
 
 function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, onEditProperty, onHoverStart, onHoverEnd }: { lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void; onEditProperty?: (lead: Lead) => void; onHoverStart?: (lead: Lead) => void; onHoverEnd?: () => void }) {
   const router = useRouter()
@@ -64,8 +71,8 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
         }}
         onMouseEnter={() => onHoverStart?.(lead)}
         onMouseLeave={() => onHoverEnd?.()}
-        className="card card-hover"
-        style={{ background: 'var(--surface)', borderRadius: 8, padding: '12px 14px', cursor: 'grab', marginBottom: 8, boxShadow: isDragging ? 'var(--shadow-md)' : undefined }}
+        className="kanban-card card-hover"
+        style={isDragging ? { boxShadow: 'var(--shadow-md)' } : undefined}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
           <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#0D0D0F', flexShrink: 0 }}>
@@ -75,35 +82,42 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           {lead.people?.types && (
             <ContactTypeChips types={lead.people.types} size={8} />
           )}
-          {/* Ao pousar o rato num destes ícones, cancela o temporizador do preview — sem isto, o preview podia aparecer por cima do botão antes do clique. */}
-          <button
-            onClick={duplicateCard}
-            disabled={duplicating}
-            onMouseEnter={() => onHoverEnd?.()}
-            title="Duplicar card"
-            className="icon-btn"
-            style={{ width: 20, height: 20, fontSize: 11, flexShrink: 0 }}
-          >
-            ⧉
-          </button>
-          <button
-            onClick={e => { e.stopPropagation(); onEditProperty?.(lead) }}
-            onMouseEnter={() => onHoverEnd?.()}
-            title="Imóvel do card"
-            className="icon-btn"
-            style={{ width: 20, height: 20, fontSize: 11, flexShrink: 0 }}
-          >
-            🏠
-          </button>
+          <div className="kanban-card-actions">
+            <button
+              onClick={duplicateCard}
+              disabled={duplicating}
+              onMouseEnter={() => onHoverEnd?.()}
+              title="Duplicar card"
+              className="icon-btn"
+              style={{ width: 20, height: 20, flexShrink: 0 }}
+            >
+              <Icon name="form" size={12} />
+            </button>
+            <button
+              onClick={e => { e.stopPropagation(); onEditProperty?.(lead) }}
+              onMouseEnter={() => onHoverEnd?.()}
+              title="Imóvel do card"
+              className="icon-btn"
+              style={{ width: 20, height: 20, flexShrink: 0 }}
+            >
+              <Icon name="home" size={12} />
+            </button>
+          </div>
         </div>
         {secondaryText && secondaryText !== primaryText && (
           <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, whiteSpace: 'normal', wordBreak: 'break-word' as const }}>{secondaryText}</div>
         )}
         {lead.people?.name && lead.people.name !== lead.name && lead.people.name !== primaryText && (
-          <div style={{ fontSize: 10, color: 'var(--gold)', marginBottom: 4, opacity: 0.8 }}>👤 {lead.people.name}</div>
+          <div style={{ fontSize: 10, color: 'var(--gold)', marginBottom: 4, opacity: 0.8 }}>
+            <Icon name="people" size={10} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} />
+            {lead.people.name}
+          </div>
         )}
         {!promoted.has('property') && lead.properties && (
-          <div style={{ fontSize: 10, color: '#10B981', marginBottom: 4, opacity: 0.8 }}>🏠 {lead.properties.reference ?? lead.properties.title}</div>
+          <div style={{ fontSize: 10, color: '#10B981', marginBottom: 4, opacity: 0.8 }}>
+            <Icon name="home" size={10} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} />
+            {lead.properties.reference ?? lead.properties.title}
+          </div>
         )}
         {(() => {
           const parts = [
@@ -116,18 +130,18 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
         })()}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {!promoted.has('value') && lead.deal_value ? (
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+            <div className="kanban-card-value">
               {(lead.deal_value / 1000).toFixed(0)}K€
             </div>
           ) : !promoted.has('value') && lead.budget ? (
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+            <div className="kanban-card-value">
               {(lead.budget / 1000).toFixed(0)}K€
             </div>
           ) : (
             <div />
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span title="Dias nesta fase" style={{ fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 999, background: 'var(--border)', color: 'var(--muted)' }}>
+            <span title="Dias nesta fase" className={`kanban-days-pill ${daysPillColor(daysInStage(lead))}`}>
               {daysInStage(lead)}d
             </span>
             {lead.expected_close_date && (
@@ -253,13 +267,13 @@ export function KanbanBoard({ initialLeads, stages, onOpenContact, cardFields, o
           const columnTotal = getColumnTotal(stage.id)
           return (
             <div key={stage.id} id={stage.id} style={{ minWidth: 300, width: 300, flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <div className="kanban-col-header">
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: stage.color }} />
                 <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>{stage.name}</span>
-                <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--muted)', background: 'var(--border)', padding: '1px 7px', borderRadius: 10 }}>{stageLeads.length}</span>
+                <span className="kanban-col-count">{stageLeads.length}</span>
               </div>
               {columnTotal > 0 && (
-                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8, paddingLeft: 16 }}>
+                <div className="kanban-col-total">
                   {(columnTotal / 1000).toFixed(0)}K€
                   {stage.probability < 100 && (
                     <span style={{ opacity: 0.6 }}> · {((columnTotal * stage.probability / 100) / 1000).toFixed(0)}K€ pond.</span>

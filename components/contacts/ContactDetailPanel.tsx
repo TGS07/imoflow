@@ -433,6 +433,9 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
               <button onClick={save} className="btn btn-primary">Guardar alterações</button>
             </>
           )}
+          <Link href={`/activities?create=true&entity_type=person&entity_id=${id}`} className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }}>
+            Agendar
+          </Link>
           <button onClick={deletePerson} className="btn btn-danger">Eliminar</button>
         </div>
       </div>
