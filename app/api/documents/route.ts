@@ -64,10 +64,13 @@ export async function GET(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const withUrls = await Promise.all((documents ?? []).map(async (doc) => {
-    const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(doc.file_path, SIGNED_URL_TTL)
-    return { ...doc, url: signed?.signedUrl ?? null }
-  }))
+  const paths = (documents ?? []).map(doc => doc.file_path)
+  const { data: signedUrls } = paths.length > 0
+    ? await supabase.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL)
+    : { data: [] as { path: string | null; signedUrl: string }[] | null }
+
+  const urlByPath = new Map((signedUrls ?? []).map(s => [s.path, s.signedUrl]))
+  const withUrls = (documents ?? []).map(doc => ({ ...doc, url: urlByPath.get(doc.file_path) ?? null }))
 
   return NextResponse.json(withUrls)
 }
