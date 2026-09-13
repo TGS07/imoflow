@@ -154,7 +154,7 @@ export default function PropertiesPage() {
   }
 
   return (
-    <div className="page-enter">
+    <div className="page-enter" style={{ padding: 'var(--space-6) var(--space-8)' }}>
       {showForm && (
         <div className="modal-backdrop" onClick={() => setShowForm(false)}>
           <div className="modal" style={{ width: 520, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
@@ -253,15 +253,13 @@ export default function PropertiesPage() {
         </div>
       )}
 
-      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
         <div>
-          <h1 className="font-display" style={{ fontSize: 20 }}>Imóveis <HelpButton section="properties" /></h1>
-          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{properties.length} imóveis</p>
+          <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Imóveis <HelpButton section="properties" /></h1>
+          <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>{properties.length} imóveis</p>
         </div>
         <button onClick={() => setShowForm(true)} className="btn btn-primary">+ Novo Imóvel</button>
       </div>
-
-      <div className="page-pad" style={{ padding: '20px 32px' }}>
         <div
           className="filter-bar"
           style={{
@@ -359,7 +357,6 @@ export default function PropertiesPage() {
           })}
         </div>
         )}
-      </div>
     </div>
   )
 }

@@ -136,7 +136,7 @@ export default function PeoplePage() {
   const filtering = search.trim().length > 0 || activeTypes.length > 0 || JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS)
 
   return (
-    <div className="page-enter">
+    <div className="page-enter" style={{ padding: 'var(--space-6) var(--space-8)' }}>
       {showModal && (
         <NewContactModal
           onClose={() => setShowModal(false)}
@@ -144,18 +144,18 @@ export default function PeoplePage() {
         />
       )}
 
-      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div>
-          <h1 className="font-display" style={{ fontSize: 20 }}>Contactos <HelpButton section="people" /></h1>
-          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{visible.length} contactos</p>
-          {duplicateCount > 0 && (
-            <a href="/people/duplicates" style={{ fontSize: 12, color: '#B45309', fontWeight: 600, textDecoration: 'none' }}>⚠ {duplicateCount} duplicado(s)</a>
-          )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
+          <div>
+            <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Contactos <HelpButton section="people" /></h1>
+            <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>{visible.length} contactos</p>
+            {duplicateCount > 0 && (
+              <a href="/people/duplicates" style={{ fontSize: 'var(--fs-sm)', color: 'var(--amber)', fontWeight: 600, textDecoration: 'none' }}>⚠ {duplicateCount} duplicado(s)</a>
+            )}
+          </div>
+          <button onClick={() => setShowModal(true)} className="btn btn-primary">+ Novo Contacto</button>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn btn-primary">+ Novo Contacto</button>
-      </div>
 
-      <div className="page-pad" style={{ padding: '20px 32px' }}>
+        <div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
           <button
             onClick={() => setActiveTypes([])}

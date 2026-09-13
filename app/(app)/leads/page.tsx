@@ -6,6 +6,7 @@ import { Lead, PipelineStage } from '@/types'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
+import { Icon } from '@/components/ui/Icon'
 
 const PAGE_SIZE = 10
 
@@ -79,80 +80,85 @@ export default function LeadsPage() {
   return (
     <>
       {showModal && <NewLeadModal onClose={() => setShowModal(false)} onCreated={fetchLeads} />}
-      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div>
-          <h1 className="font-display" style={{ fontSize: 20 }}>Leads <HelpButton section="leads" /></h1>
-          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{leads.length} leads</p>
+      <div className="page-enter" style={{ padding: 'var(--space-6) var(--space-8)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
+          <div>
+            <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Leads <HelpButton section="leads" /></h1>
+            <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>{leads.length} leads</p>
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+            <button onClick={() => {}} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="send" size={14} />
+              Exportar
+            </button>
+            <button onClick={() => setShowModal(true)} className="btn btn-primary">
+              <Icon name="plus" size={14} /> Novo Lead
+            </button>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => {}} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Exportar
-          </button>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
-            + Novo Lead
-          </button>
-        </div>
-      </div>
 
-      {personFilter && (
-        <div className="page-enter page-pad" style={{ padding: '14px 32px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 6, background: 'var(--gold-glow)', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            Filtrado por contacto
-            <button onClick={() => router.push('/leads')} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1 }}>✕</button>
-          </span>
-        </div>
-      )}
-      <div className="page-enter page-pad" style={{ padding: '20px 32px', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <input
-          placeholder="Pesquisar por nome, email ou telefone..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="input"
-          style={{ flex: 1, minWidth: 220, background: 'var(--card)' }}
-        />
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setStageFilter('')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 999,
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-              background: stageFilter === '' ? 'var(--gold)' : 'transparent',
-              color: stageFilter === '' ? 'white' : 'var(--muted)',
-              border: `1px solid ${stageFilter === '' ? 'var(--gold)' : 'var(--border)'}`,
-            }}
-          >
-            Todos
-          </button>
-          {stages.filter(s => !s.is_lost).map(s => (
+        {personFilter && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
+            <span className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              Filtrado por contacto
+              <button onClick={() => router.push('/leads')} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 'var(--fs-sm)', padding: 0, lineHeight: 1 }}>
+                <Icon name="close" size={10} />
+              </button>
+            </span>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
+          <div style={{ flex: 1, minWidth: 220, position: 'relative' }}>
+            <Icon name="search" size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }} />
+            <input
+              placeholder="Pesquisar por nome, email ou telefone..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="input"
+              style={{ width: '100%', paddingLeft: 34, background: 'var(--surface)' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
             <button
-              key={s.id}
-              onClick={() => setStageFilter(s.id)}
+              onClick={() => setStageFilter('')}
               style={{
                 padding: '6px 14px',
-                borderRadius: 999,
-                fontSize: 12,
+                borderRadius: 'var(--radius-full)',
+                fontSize: 'var(--fs-sm)',
                 fontWeight: 600,
                 cursor: 'pointer',
-                background: stageFilter === s.id ? 'var(--gold)' : 'transparent',
-                color: stageFilter === s.id ? 'white' : 'var(--muted)',
-                border: `1px solid ${stageFilter === s.id ? 'var(--gold)' : 'var(--border)'}`,
+                background: stageFilter === '' ? 'var(--gold)' : 'transparent',
+                color: stageFilter === '' ? 'white' : 'var(--muted)',
+                border: `1px solid ${stageFilter === '' ? 'var(--gold)' : 'var(--border)'}`,
+                transition: 'all 0.15s var(--ease)',
               }}
             >
-              {s.name}
+              Todos
             </button>
-          ))}
+            {stages.filter(s => !s.is_lost).map(s => (
+              <button
+                key={s.id}
+                onClick={() => setStageFilter(s.id)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: 'var(--fs-sm)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  background: stageFilter === s.id ? 'var(--gold)' : 'transparent',
+                  color: stageFilter === s.id ? 'white' : 'var(--muted)',
+                  border: `1px solid ${stageFilter === s.id ? 'var(--gold)' : 'var(--border)'}`,
+                  transition: 'all 0.15s var(--ease)',
+                }}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="page-pad" style={{ padding: '0 32px 32px' }}>
+        <div>
         {!loading && leads.length === 0 ? (
           <div className="card" style={{ overflow: 'hidden' }}>
             {debouncedSearch || stageFilter ? (
@@ -225,16 +231,16 @@ export default function LeadsPage() {
             </tbody>
           </table>
           {!loading && leads.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderTop: '1px solid var(--border)', flexWrap: 'wrap', gap: 10 }}>
-              <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-3) var(--space-4)', borderTop: '1px solid var(--border)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+              <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)' }}>
                 A mostrar {pageStart}-{pageEnd} de {leads.length} leads
               </span>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="btn btn-ghost"
-                  style={{ padding: '4px 10px', fontSize: 12, opacity: currentPage === 1 ? 0.4 : 1 }}
+                  className="btn btn-ghost btn-sm"
+                  style={{ opacity: currentPage === 1 ? 0.4 : 1 }}
                 >
                   ‹
                 </button>
@@ -245,13 +251,14 @@ export default function LeadsPage() {
                     style={{
                       width: 28,
                       height: 28,
-                      borderRadius: 6,
-                      fontSize: 12,
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--fs-sm)',
                       fontWeight: 600,
                       cursor: 'pointer',
                       background: p === currentPage ? 'var(--gold)' : 'transparent',
                       color: p === currentPage ? 'white' : 'var(--muted)',
                       border: `1px solid ${p === currentPage ? 'var(--gold)' : 'var(--border)'}`,
+                      transition: 'all 0.15s var(--ease)',
                     }}
                   >
                     {p}
@@ -260,8 +267,8 @@ export default function LeadsPage() {
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="btn btn-ghost"
-                  style={{ padding: '4px 10px', fontSize: 12, opacity: currentPage === totalPages ? 0.4 : 1 }}
+                  className="btn btn-ghost btn-sm"
+                  style={{ opacity: currentPage === totalPages ? 0.4 : 1 }}
                 >
                   ›
                 </button>
@@ -270,6 +277,7 @@ export default function LeadsPage() {
           )}
         </div>
         )}
+      </div>
       </div>
     </>
   )

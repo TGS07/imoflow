@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts'
 import type { ReportsData, ReportPeriod } from '@/types'
+import { Icon } from '@/components/ui/Icon'
 
 const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
   { value: '7d', label: '7 dias' },
@@ -64,80 +65,79 @@ export default function ReportsPage() {
 
   return (
     <>
-      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div>
-          <h1 className="font-display" style={{ fontSize: 20 }}>Relatórios <HelpButton section="reports" /></h1>
-          <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Métricas de performance do pipeline</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
-            role="group"
-            aria-label="Selecionar período"
-            style={{ display: 'flex', gap: 2, background: 'var(--bg)', borderRadius: 10, padding: 3, border: '1px solid var(--border)' }}
-          >
-            {PERIOD_OPTIONS.map(o => (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => setPeriod(o.value)}
-                aria-pressed={period === o.value}
-                style={{
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '6px 14px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  borderRadius: 8,
-                  transition: 'background 0.15s ease, color 0.15s ease',
-                  background: period === o.value ? 'var(--gold)' : 'transparent',
-                  color: period === o.value ? '#fff' : 'var(--muted)',
-                }}
-              >
-                {o.label}
-              </button>
-            ))}
+      <div className="page-enter" style={{ padding: 'var(--space-6) var(--space-8)', maxWidth: 1100 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
+          <div>
+            <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Relatórios <HelpButton section="reports" /></h1>
+            <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>Métricas de performance do pipeline</p>
           </div>
-          <button onClick={() => {}} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Exportar
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            <div
+              role="group"
+              aria-label="Selecionar período"
+              style={{ display: 'flex', gap: 2, background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: 3, border: '1px solid var(--border)' }}
+            >
+              {PERIOD_OPTIONS.map(o => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => setPeriod(o.value)}
+                  aria-pressed={period === o.value}
+                  style={{
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '6px 14px',
+                    fontSize: 'var(--fs-sm)',
+                    fontWeight: 600,
+                    borderRadius: 8,
+                    transition: 'background 0.15s var(--ease), color 0.15s var(--ease)',
+                    background: period === o.value ? 'var(--gold)' : 'transparent',
+                    color: period === o.value ? '#fff' : 'var(--muted)',
+                  }}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => {}} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="send" size={14} />
+              Exportar
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="page-enter page-pad" style={{ padding: '28px 32px', maxWidth: 1100 }}>
-
-      {error && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 16 }}>{error}</p>}
+      {error && <p style={{ color: 'var(--red)', fontSize: 'var(--fs-base)', marginBottom: 'var(--space-4)' }}>{error}</p>}
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }} className="kpi-grid">
-          {[0, 1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 90, borderRadius: 10 }} />)}
+        <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}>
+          {[0, 1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 90, borderRadius: 'var(--radius-sm)' }} />)}
         </div>
       ) : (
         <>
-          {/* KPI Cards */}
-          <div className="stats-grid stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+          <div className="stats-grid stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}>
             {[
-              { label: 'LEADS NOVOS', value: kpis?.total_leads ?? 0, color: 'var(--text)' },
-              { label: 'VISITAS REALIZADAS', value: kpis?.total_leads ?? 0, color: 'var(--text)' },
-              { label: 'PROPOSTAS ENVIADAS', value: kpis?.won_leads ?? 0, color: 'var(--gold)' },
-              { label: 'VALOR PIPELINE', value: formatCurrency(kpis?.pipeline_value ?? 0), color: 'var(--text)' },
+              { label: 'LEADS NOVOS', value: kpis?.total_leads ?? 0, icon: 'leads' as const },
+              { label: 'VISITAS REALIZADAS', value: kpis?.total_leads ?? 0, icon: 'home' as const },
+              { label: 'PROPOSTAS ENVIADAS', value: kpis?.won_leads ?? 0, icon: 'send' as const },
+              { label: 'VALOR PIPELINE', value: formatCurrency(kpis?.pipeline_value ?? 0), icon: 'chart' as const },
             ].map(item => (
-              <div key={item.label} className="card" style={{ padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: 0, left: 14, right: 14, height: 2, background: 'linear-gradient(90deg, #C9A84C, #8B6F30)', borderRadius: '0 0 2px 2px' }} />
-                <p className="section-label" style={{ marginBottom: 10 }}>{item.label}</p>
-                <p className="font-display" style={{ fontSize: 26, color: item.color, letterSpacing: '-0.02em' }}>{item.value}</p>
+              <div key={item.label} className="card" style={{ padding: 'var(--space-4) var(--space-6)', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(to right, transparent, var(--gold-bright), transparent)', opacity: 0.45 }} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-3)' }}>
+                  <span className="section-label">{item.label}</span>
+                  <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--gold-glow)', border: '1px solid rgba(176,125,46,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold)' }}>
+                    <Icon name={item.icon} size={15} />
+                  </div>
+                </div>
+                <p className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.05 }}>{item.value}</p>
               </div>
             ))}
           </div>
 
           {/* Gráficos — linha 1 */}
-          <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-            <div className="card" style={{ padding: '20px 24px' }}>
-              <div style={{ marginBottom: 16 }}>
+          <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+            <div className="card" style={{ padding: 'var(--space-4) var(--space-6)' }}>
+              <div style={{ marginBottom: 'var(--space-4)' }}>
                 <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', fontWeight: 700 }}>Leads por Semana</p>
                 <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>Novos leads captados por semana</p>
               </div>
@@ -152,8 +152,8 @@ export default function ReportsPage() {
               </ResponsiveContainer>
             </div>
 
-            <div className="card" style={{ padding: '20px 24px' }}>
-              <div style={{ marginBottom: 16 }}>
+            <div className="card" style={{ padding: 'var(--space-4) var(--space-6)' }}>
+              <div style={{ marginBottom: 'var(--space-4)' }}>
                 <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', fontWeight: 700 }}>Leads por Etapa</p>
                 <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>Distribuição atual do pipeline</p>
               </div>
@@ -189,9 +189,9 @@ export default function ReportsPage() {
           </div>
 
           {/* Gráficos — linha 2 */}
-          <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-            <div className="card" style={{ padding: '20px 24px' }}>
-              <div style={{ marginBottom: 16 }}>
+          <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+            <div className="card" style={{ padding: 'var(--space-4) var(--space-6)' }}>
+              <div style={{ marginBottom: 'var(--space-4)' }}>
                 <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', fontWeight: 700 }}>Leads por Fonte</p>
                 <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>De onde vêm os leads do período</p>
               </div>
@@ -217,8 +217,8 @@ export default function ReportsPage() {
               </ResponsiveContainer>
             </div>
 
-            <div className="card" style={{ padding: '20px 24px' }}>
-              <div style={{ marginBottom: 16 }}>
+            <div className="card" style={{ padding: 'var(--space-4) var(--space-6)' }}>
+              <div style={{ marginBottom: 'var(--space-4)' }}>
                 <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', fontWeight: 700 }}>Performance por Agente</p>
                 <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>Leads ganhas por agente no período</p>
               </div>
@@ -240,7 +240,7 @@ export default function ReportsPage() {
 
           {/* Tabela de desempenho do pipeline */}
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '20px 24px 4px' }}>
+            <div style={{ padding: 'var(--space-4) var(--space-6) var(--space-1)' }}>
               <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', fontWeight: 700 }}>Desempenho do Pipeline</p>
               <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, marginBottom: 12 }}>Resumo por etapa no período selecionado</p>
             </div>
@@ -275,7 +275,7 @@ export default function ReportsPage() {
                           <td>{stage.count}</td>
                           <td>{formatCurrency(stage.value)}</td>
                           <td>
-                            <span className="badge-green" style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, display: 'inline-block' }}>
+                            <span className="badge badge-green">
                               {rate}%
                             </span>
                           </td>

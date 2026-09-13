@@ -224,12 +224,13 @@ export default function PipelineSettingsPage() {
           onSaved={loadNotifiedStages}
         />
       )}
-      <div className="page-pad" style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <h1 className="font-display" style={{ fontSize: 20 }}>Configurações do Pipeline <HelpButton section="settings-pipeline" /></h1>
-        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Personaliza as etapas e campos do teu CRM</p>
-      </div>
+      <div className="page-enter" style={{ padding: 'var(--space-6) var(--space-8)', maxWidth: 720 }}>
+        <div style={{ marginBottom: 'var(--space-6)' }}>
+          <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Configurações do Pipeline <HelpButton section="settings-pipeline" /></h1>
+          <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>Personaliza as etapas e campos do teu CRM</p>
+        </div>
 
-      <div className="page-pad" style={{ padding: '28px 32px', maxWidth: 720 }}>
+        <div>
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 22, marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
             <div className="font-display" style={{ fontSize: 16 }}>Etapas da Pipeline</div>
@@ -369,6 +370,7 @@ export default function PipelineSettingsPage() {
             )}
           </form>
         </div>
+      </div>
       </div>
     </>
   )
