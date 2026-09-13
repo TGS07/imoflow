@@ -3,6 +3,7 @@ import { uploadFile, getPublicUrl, deleteFile } from '@/lib/supabase/storage'
 import { NextResponse } from 'next/server'
 
 const BUCKET = 'property-photos'
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB, matches bucket limit
 
 async function getAuthorizedProperty(id: string) {
   const supabase = await createClient()
@@ -24,6 +25,12 @@ async function getAuthorizedProperty(id: string) {
     .single()
 
   if (error || !property) return { supabase, user, profile, property: null, errorResponse: NextResponse.json({ error: 'Property not found' }, { status: 404 }) }
+
+  // Defence in depth: RLS should already scope this, but never trust that alone —
+  // if the property belongs to a different agency, respond exactly as if it didn't exist.
+  if (property.agency_id !== profile.agency_id) {
+    return { supabase, user, profile, property: null, errorResponse: NextResponse.json({ error: 'Property not found' }, { status: 404 }) }
+  }
 
   return { supabase, user, profile, property, errorResponse: null }
 }
@@ -51,6 +58,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const formData = await request.formData()
   const files = formData.getAll('files').filter((f): f is File => f instanceof File)
   if (files.length === 0) return NextResponse.json({ error: 'Nenhum ficheiro enviado' }, { status: 400 })
+
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) {
+      return NextResponse.json({ error: 'Tipo de ficheiro inválido' }, { status: 400 })
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'Ficheiro demasiado grande' }, { status: 400 })
+    }
+  }
 
   const newUrls: string[] = []
   for (const file of files) {
