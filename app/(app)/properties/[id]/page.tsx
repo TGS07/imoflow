@@ -215,6 +215,9 @@ export default function PropertyPage() {
               <button onClick={save} className="btn btn-primary">Guardar</button>
             </>
           )}
+          <Link href={`/activities?create=true&entity_type=property&entity_id=${id}`} className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }}>
+            Agendar
+          </Link>
           <button onClick={deleteProperty} className="btn btn-danger">Eliminar</button>
         </div>
       </div>

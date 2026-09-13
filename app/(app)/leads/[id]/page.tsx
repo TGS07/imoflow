@@ -270,6 +270,9 @@ export default function LeadPage() {
           <button onClick={() => setShowEmail(true)} className="btn btn-ghost btn-sm">
             <Icon name="mail" size={13} /> Email
           </button>
+          <Link href={`/activities?create=true&entity_type=lead&entity_id=${id}`} className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }}>
+            <Icon name="calendar" size={13} /> Agendar
+          </Link>
           <button onClick={archiveLead} className="btn btn-danger btn-sm">
             <Icon name="close" size={12} /> Arquivar
           </button>
