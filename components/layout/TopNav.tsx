@@ -111,6 +111,7 @@ export function TopNav({ userName, userInitials, userRole, userTheme }: Props) {
                   { href: '/settings/templates', label: 'Templates' },
                   { href: '/settings/agency', label: 'Agência' },
                   { href: '/settings/team', label: 'Equipa' },
+                  { href: '/settings/billing', label: 'Faturação' },
                 ].map((item) => (
                   <Link
                     key={item.href}
