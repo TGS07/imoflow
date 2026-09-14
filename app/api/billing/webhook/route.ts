@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { stripe } from '@/lib/stripe/client'
+import { getStripe } from '@/lib/stripe/client'
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 
@@ -21,6 +21,7 @@ function getAgencyIdFromSubscription(subscription: Stripe.Subscription): string 
 }
 
 export async function POST(request: Request) {
+  const stripe = getStripe()
   const signature = request.headers.get('stripe-signature')
   if (!signature) {
     return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 })
