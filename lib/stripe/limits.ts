@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getPlan, type PlanLimits } from './plans'
+import { getPlan } from './plans'
 
 export type LimitResource = 'leads' | 'people' | 'properties' | 'members' | 'automations'
 
@@ -39,7 +39,7 @@ export async function checkLimit(
   if (agencyError) throw agencyError
 
   const plan = getPlan(agency?.plan as string | null)
-  const limit = plan.limits[resource as keyof PlanLimits]
+  const limit = plan.limits[resource]
 
   if (limit === Infinity) {
     return { allowed: true, current: 0, limit: Infinity }

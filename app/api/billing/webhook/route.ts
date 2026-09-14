@@ -38,6 +38,13 @@ export async function POST(request: Request) {
 
   const supabase = createServiceClient()
 
+  // Se alguma escrita à BD falhar, devolvemos um status non-2xx no final para
+  // que o Stripe reentregue o evento (política de retries dele) em vez de o
+  // considerar entregue com sucesso — caso contrário uma falha transitória
+  // deixaria a agency permanentemente dessincronizada do estado real da
+  // subscription (ex: cliente paga mas fica preso em 'free').
+  let dbWriteFailed = false
+
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
@@ -60,7 +67,10 @@ export async function POST(request: Request) {
         })
         .eq('id', agencyId)
 
-      if (error) console.error('[stripe webhook] falha ao atualizar agency após checkout', error)
+      if (error) {
+        console.error('[stripe webhook] falha ao atualizar agency após checkout', error)
+        dbWriteFailed = true
+      }
       break
     }
 
@@ -97,7 +107,10 @@ export async function POST(request: Request) {
         })
         .eq('id', agencyId)
 
-      if (error) console.error('[stripe webhook] falha ao atualizar agency após subscription.updated', error)
+      if (error) {
+        console.error('[stripe webhook] falha ao atualizar agency após subscription.updated', error)
+        dbWriteFailed = true
+      }
       break
     }
 
@@ -129,13 +142,20 @@ export async function POST(request: Request) {
         })
         .eq('id', agencyId)
 
-      if (error) console.error('[stripe webhook] falha ao atualizar agency após subscription.deleted', error)
+      if (error) {
+        console.error('[stripe webhook] falha ao atualizar agency após subscription.deleted', error)
+        dbWriteFailed = true
+      }
       break
     }
 
     default:
       // Eventos não tratados são ignorados propositadamente.
       break
+  }
+
+  if (dbWriteFailed) {
+    return NextResponse.json({ error: 'Falha ao gravar alterações na base de dados' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })
