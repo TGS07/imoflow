@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('agencies')
-    .select('id, name, email, email_from_name, email_reply_to, followup_first_days, followup_second_days')
+    .select('id, name, email, logo_url, email_from_name, email_reply_to, followup_first_days, followup_second_days, onboarding_completed, onboarding_state')
     .eq('id', profile.agency_id)
     .single()
 
@@ -38,6 +38,8 @@ export async function PATCH(request: Request) {
   if (profile.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   let body: {
+    name?: string
+    logo_url?: string | null
     email_from_name?: string | null
     email_reply_to?: string | null
     followup_first_days?: number
@@ -50,6 +52,16 @@ export async function PATCH(request: Request) {
   }
 
   const updates: Record<string, string | number | null> = {}
+  if ('name' in body) {
+    const name = body.name?.trim() || ''
+    if (!name || name.length > 200) {
+      return NextResponse.json({ error: 'name inválido (1–200 caracteres)' }, { status: 400 })
+    }
+    updates.name = name
+  }
+  if ('logo_url' in body) {
+    updates.logo_url = body.logo_url?.trim() || null
+  }
   if ('email_from_name' in body) {
     updates.email_from_name = body.email_from_name?.trim() || null
   }
@@ -83,7 +95,7 @@ export async function PATCH(request: Request) {
     .from('agencies')
     .update(updates)
     .eq('id', profile.agency_id)
-    .select('id, name, email, email_from_name, email_reply_to, followup_first_days, followup_second_days')
+    .select('id, name, email, logo_url, email_from_name, email_reply_to, followup_first_days, followup_second_days, onboarding_completed, onboarding_state')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
