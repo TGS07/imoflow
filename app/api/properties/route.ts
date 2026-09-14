@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { checkLimit } from '@/lib/stripe/limits'
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -49,6 +50,14 @@ export async function POST(request: Request) {
     .single()
 
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+
+  const limitCheck = await checkLimit(supabase, profile.agency_id, 'properties')
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: `Atingiu o limite de ${limitCheck.limit} properties do seu plano. Faça upgrade para continuar.` },
+      { status: 403 }
+    )
+  }
 
   const body = await request.json()
   const { data, error } = await supabase

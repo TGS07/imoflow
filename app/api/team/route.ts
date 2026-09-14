@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { NextResponse } from 'next/server'
+import { checkLimit } from '@/lib/stripe/limits'
 
 export async function GET() {
   const supabase = await createClient()
@@ -74,6 +75,14 @@ export async function POST(request: Request) {
   }
   if (role !== 'admin' && role !== 'agent') {
     return NextResponse.json({ error: 'role deve ser admin ou agent' }, { status: 400 })
+  }
+
+  const limitCheck = await checkLimit(supabase, profile.agency_id, 'members')
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: `Atingiu o limite de ${limitCheck.limit} members do seu plano. Faça upgrade para continuar.` },
+      { status: 403 }
+    )
   }
 
   const service = createServiceClient()
