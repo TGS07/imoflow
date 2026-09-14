@@ -31,13 +31,20 @@ export async function GET() {
   const planId = (agency.plan as PlanId | null) ?? 'free'
   const plan = getPlan(planId)
 
+  // Passamos `planId` (já carregado acima) a `checkLimit` para que cada
+  // chamada salte o `SELECT plan FROM agencies` e faça só a contagem —
+  // evita repetir a mesma query 5 vezes (uma por resource).
   const results = await Promise.all(
     RESOURCES.map(async (resource) => {
-      const result = await checkLimit(supabase, profile.agency_id, resource)
+      const result = await checkLimit(supabase, profile.agency_id, resource, planId)
       return { resource, ...result }
     })
   )
 
+  // Nota: `limit: Infinity` não é serializável em JSON — `JSON.stringify`
+  // converte-o em `null`. O cliente trata isso corretamente por já usar
+  // `Number.isFinite(row.limit)` (que também é `false` para `null`), mas
+  // fica aqui documentado para não ser confundido com um bug.
   return NextResponse.json({
     plan: planId,
     planName: plan.name,
