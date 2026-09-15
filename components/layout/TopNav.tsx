@@ -13,6 +13,7 @@ const navItems: { href: string; icon: IconName; label: string }[] = [
   { href: '/activities', icon: 'calendar', label: 'Atividades' },
   { href: '/people', icon: 'people', label: 'Contactos' },
   { href: '/properties', icon: 'home', label: 'Imóveis' },
+  { href: '/recommendations', icon: 'sparkle', label: 'Recomendações' },
   { href: '/reports', icon: 'chart', label: 'Relatórios' },
 ]
 
@@ -27,10 +28,18 @@ export function TopNav({ userName, userInitials, userRole, userTheme }: Props) {
   const pathname = usePathname()
   const [isMac, setIsMac] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [pendingRecs, setPendingRecs] = useState(0)
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.platform) || /Mac/.test(navigator.userAgent))
   }, [])
+
+  useEffect(() => {
+    fetch('/api/recommendations/count')
+      .then(r => r.json())
+      .then(d => setPendingRecs(d.count ?? 0))
+      .catch(() => {})
+  }, [pathname])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -63,9 +72,31 @@ export function TopNav({ userName, userInitials, userRole, userTheme }: Props) {
                 key={item.href}
                 href={item.href}
                 className={`topnav-link${active ? ' active' : ''}`}
+                style={item.href === '/recommendations' ? { position: 'relative' } : undefined}
               >
                 <Icon name={item.icon} size={16} />
                 <span>{item.label}</span>
+                {item.href === '/recommendations' && pendingRecs > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: 2,
+                    right: 2,
+                    background: '#DC2626',
+                    color: '#FFFFFF',
+                    borderRadius: 20,
+                    fontSize: 9,
+                    fontWeight: 700,
+                    minWidth: 15,
+                    height: 15,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 3px',
+                    lineHeight: 1,
+                  }}>
+                    {pendingRecs > 9 ? '9+' : pendingRecs}
+                  </span>
+                )}
               </Link>
             )
           })}

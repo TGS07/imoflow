@@ -14,6 +14,7 @@ const mainTabs: { href: string; icon: IconName; label: string }[] = [
 
 const moreItems: { href: string; icon: IconName; label: string; adminOnly?: boolean }[] = [
   { href: '/properties', icon: 'home', label: 'Imóveis' },
+  { href: '/recommendations', icon: 'sparkle', label: 'Recomendações' },
   { href: '/reports', icon: 'chart', label: 'Relatórios' },
   { href: '/settings/pipeline', icon: 'settings', label: 'Definições', adminOnly: true },
   { href: '/help', icon: 'help', label: 'Ajuda' },
