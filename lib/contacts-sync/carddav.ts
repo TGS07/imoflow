@@ -4,8 +4,6 @@ export interface RawVCard {
   data: string
 }
 
-const BASE = 'https://contacts.icloud.com'
-
 function authHeaders(username: string, password: string, extra?: Record<string, string>): Record<string, string> {
   return {
     Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
@@ -15,54 +13,44 @@ function authHeaders(username: string, password: string, extra?: Record<string, 
   }
 }
 
-async function propfind(url: string, username: string, password: string, body: string, depth = '0'): Promise<string> {
+async function davRequest(
+  method: string,
+  url: string,
+  username: string,
+  password: string,
+  body: string,
+  depth = '0'
+): Promise<string> {
   const res = await fetch(url, {
-    method: 'PROPFIND',
+    method,
     headers: authHeaders(username, password, { Depth: depth }),
     body,
   })
   if (!res.ok && res.status !== 207) {
-    throw new Error(`PROPFIND ${url} returned ${res.status} ${res.statusText}`)
+    throw new Error(`${method} ${url} returned ${res.status} ${res.statusText}`)
   }
   return res.text()
 }
 
-async function davReport(url: string, username: string, password: string, body: string): Promise<string> {
-  const res = await fetch(url, {
-    method: 'REPORT',
-    headers: authHeaders(username, password, { Depth: '1' }),
-    body,
-  })
-  if (!res.ok && res.status !== 207) {
-    throw new Error(`REPORT ${url} returned ${res.status} ${res.statusText}`)
-  }
-  return res.text()
+function findHrefInXml(xml: string): string | null {
+  const match = xml.match(/<(?:[a-zA-Z0-9_-]+:)?href[^>]*>([^<]+)</)
+  return match ? match[1].trim() : null
 }
 
-function extractHrefs(xml: string, tag: string): string[] {
-  const pattern = new RegExp(`<${tag}[^>]*>\\s*<(?:d:|D:|DAV:)?href>([^<]+)<`, 'gi')
-  const results: string[] = []
-  let m
-  while ((m = pattern.exec(xml)) !== null) {
-    results.push(m[1])
-  }
-  return results
-}
-
-function extractHref(xml: string, tag: string): string | null {
-  const hrefs = extractHrefs(xml, tag)
-  return hrefs[0] ?? null
+function resolveUrl(base: string, href: string): string {
+  if (href.startsWith('http://') || href.startsWith('https://')) return href
+  return `${base}${href}`
 }
 
 function extractResponseVCards(xml: string): RawVCard[] {
   const cards: RawVCard[] = []
-  const responsePattern = /<(?:d:|D:|DAV:)?response>([\s\S]*?)<\/(?:d:|D:|DAV:)?response>/gi
+  const responsePattern = /<(?:[a-zA-Z0-9_-]+:)?response>([\s\S]*?)<\/(?:[a-zA-Z0-9_-]+:)?response>/gi
   let rm
   while ((rm = responsePattern.exec(xml)) !== null) {
     const block = rm[1]
-    const hrefMatch = block.match(/<(?:d:|D:|DAV:)?href>([^<]+)</)
-    const etagMatch = block.match(/<(?:d:|D:|DAV:)?getetag>([^<]+)</)
-    const dataMatch = block.match(/<(?:card:|C:)?address-data[^>]*>([\s\S]*?)<\/(?:card:|C:)?address-data>/)
+    const hrefMatch = block.match(/<(?:[a-zA-Z0-9_-]+:)?href[^>]*>([^<]+)</)
+    const etagMatch = block.match(/<(?:[a-zA-Z0-9_-]+:)?getetag[^>]*>([^<]+)</)
+    const dataMatch = block.match(/<(?:[a-zA-Z0-9_-]+:)?address-data[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9_-]+:)?address-data>/)
 
     if (hrefMatch && dataMatch) {
       const data = dataMatch[1]
@@ -83,51 +71,62 @@ function extractResponseVCards(xml: string): RawVCard[] {
 }
 
 export async function fetchAllVCards(username: string, appPassword: string): Promise<RawVCard[]> {
-  const principalXml = await propfind(BASE, username, appPassword,
+  const BASE = 'https://contacts.icloud.com'
+
+  // Step 1: discover principal
+  const principalXml = await davRequest('PROPFIND', BASE, username, appPassword,
     '<?xml version="1.0" encoding="UTF-8"?>' +
     '<d:propfind xmlns:d="DAV:"><d:prop><d:current-user-principal/></d:prop></d:propfind>'
   )
-  const principalPath = extractHref(principalXml, 'current-user-principal')
-  if (!principalPath) throw new Error('Could not discover principal URL')
+  const principalBlock = principalXml.match(/<(?:[a-zA-Z0-9_-]+:)?current-user-principal[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9_-]+:)?current-user-principal>/i)
+  const principalHref = principalBlock ? findHrefInXml(principalBlock[1]) : null
+  if (!principalHref) throw new Error('Could not discover principal URL')
+  const principalUrl = resolveUrl(BASE, principalHref)
 
-  const homeXml = await propfind(`${BASE}${principalPath}`, username, appPassword,
+  // Step 2: discover addressbook home
+  const homeXml = await davRequest('PROPFIND', principalUrl, username, appPassword,
     '<?xml version="1.0" encoding="UTF-8"?>' +
     '<d:propfind xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">' +
     '<d:prop><card:addressbook-home-set/></d:prop></d:propfind>'
   )
-  const homePath = extractHref(homeXml, 'addressbook-home-set')
-  if (!homePath) throw new Error('Could not discover addressbook home')
+  const homeBlock = homeXml.match(/<(?:[a-zA-Z0-9_-]+:)?addressbook-home-set[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9_-]+:)?addressbook-home-set>/i)
+  const homeHref = homeBlock ? findHrefInXml(homeBlock[1]) : null
+  if (!homeHref) throw new Error('Could not discover addressbook home')
+  const homeUrl = resolveUrl(BASE, homeHref)
 
-  const booksXml = await propfind(`${BASE}${homePath}`, username, appPassword,
+  // Step 3: list address books
+  const booksXml = await davRequest('PROPFIND', homeUrl, username, appPassword,
     '<?xml version="1.0" encoding="UTF-8"?>' +
-    '<d:propfind xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">' +
-    '<d:prop><d:resourcetype/></d:prop></d:propfind>',
+    '<d:propfind xmlns:d="DAV:"><d:prop><d:resourcetype/></d:prop></d:propfind>',
     '1'
   )
 
-  const responseHrefPattern = /<(?:d:|D:|DAV:)?response>[\s\S]*?<(?:d:|D:|DAV:)?href>([^<]+)<[\s\S]*?<\/(?:d:|D:|DAV:)?response>/gi
-  const bookPaths: string[] = []
+  const bookUrls: string[] = []
+  const responsePattern = /<(?:[a-zA-Z0-9_-]+:)?response>([\s\S]*?)<\/(?:[a-zA-Z0-9_-]+:)?response>/gi
   let bm
-  while ((bm = responseHrefPattern.exec(booksXml)) !== null) {
-    const href = bm[1]
-    if (href !== homePath && href.startsWith(homePath)) {
-      bookPaths.push(href)
+  while ((bm = responsePattern.exec(booksXml)) !== null) {
+    const href = findHrefInXml(bm[1])
+    if (!href) continue
+    const fullUrl = resolveUrl(homeUrl, href)
+    if (fullUrl !== homeUrl && fullUrl.startsWith(homeUrl.replace(/\/$/, ''))) {
+      bookUrls.push(fullUrl)
     }
   }
 
+  // Step 4: fetch vCards from each address book
   const cards: RawVCard[] = []
-
-  for (const bookPath of bookPaths) {
+  for (const bookUrl of bookUrls) {
     try {
-      const vcardXml = await davReport(`${BASE}${bookPath}`, username, appPassword,
+      const vcardXml = await davRequest('REPORT', bookUrl, username, appPassword,
         '<?xml version="1.0" encoding="UTF-8"?>' +
         '<card:addressbook-query xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">' +
         '<d:prop><d:getetag/><card:address-data/></d:prop>' +
-        '</card:addressbook-query>'
+        '</card:addressbook-query>',
+        '1'
       )
       cards.push(...extractResponseVCards(vcardXml))
     } catch {
-      // skip address books that fail (e.g. groups)
+      // skip address books that fail
     }
   }
 
