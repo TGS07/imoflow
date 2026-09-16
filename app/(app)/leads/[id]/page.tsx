@@ -10,6 +10,33 @@ import { Icon } from '@/components/ui/Icon'
 import { REGULAR_INTERVAL_PRESETS } from '@/lib/contacts/special-dates'
 import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 import { DocumentList } from '@/components/shared/DocumentList'
+import { toast } from '@/lib/toast'
+
+type PortalActivityRow = {
+  id: string
+  action: 'view' | 'favorite' | 'request_visit'
+  created_at: string
+  property_id: string | null
+  properties?: { title: string } | null
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'agora mesmo'
+  if (mins < 60) return `há ${mins} min`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `há ${hours}h`
+  return `há ${Math.floor(hours / 24)}d`
+}
+
+function portalActivityLabel(a: PortalActivityRow): string {
+  const propertyTitle = a.properties?.title
+  if (a.action === 'view') return 'Visualizou o portal'
+  if (a.action === 'favorite') return propertyTitle ? `Favoritou ${propertyTitle}` : 'Favoritou um imóvel'
+  if (a.action === 'request_visit') return propertyTitle ? `Pediu uma visita a ${propertyTitle}` : 'Pediu uma visita'
+  return 'Atividade no portal'
+}
 
 const EXTRAS_SUGERIDOS = ['vista mar', 'garagem', 'piscina', 'jardim', 'varanda', 'elevador', 'ar condicionado', 'lareira']
 const TIPOLOGIAS = ['T0', 'T1', 'T2', 'T3', 'T4', 'T5+']
@@ -73,6 +100,15 @@ export default function LeadPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [members, setMembers] = useState<{ id: string; name: string }[]>([])
   const [customInterval, setCustomInterval] = useState('')
+  const [portalToken, setPortalToken] = useState<string | null>(null)
+  const [portalUrl, setPortalUrl] = useState<string | null>(null)
+  const [portalLoaded, setPortalLoaded] = useState(false)
+  const [portalActivating, setPortalActivating] = useState(false)
+  const [portalRegenerating, setPortalRegenerating] = useState(false)
+  const [portalCopied, setPortalCopied] = useState(false)
+  const [showPortalActivity, setShowPortalActivity] = useState(false)
+  const [portalActivity, setPortalActivity] = useState<PortalActivityRow[]>([])
+  const [portalActivityLoading, setPortalActivityLoading] = useState(false)
 
   useEffect(() => {
     fetch('/api/team/members')
@@ -141,6 +177,85 @@ export default function LeadPage() {
   }, [id, activityFilter])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  useEffect(() => {
+    fetch(`/api/leads/${id}/portal`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { portal_token: string | null; portal_url: string | null } | null) => {
+        if (d) {
+          setPortalToken(d.portal_token)
+          setPortalUrl(d.portal_url)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setPortalLoaded(true))
+  }, [id])
+
+  async function activatePortal() {
+    setPortalActivating(true)
+    try {
+      const res = await fetch(`/api/leads/${id}/portal`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      if (res.ok) {
+        const d = await res.json()
+        setPortalToken(d.portal_token)
+        setPortalUrl(d.portal_url)
+        toast('Portal ativado.', 'success')
+      } else {
+        toast('Não foi possível ativar o portal.', 'error')
+      }
+    } catch {
+      toast('Erro de rede ao ativar o portal.', 'error')
+    } finally {
+      setPortalActivating(false)
+    }
+  }
+
+  async function regeneratePortalToken() {
+    if (!confirm('Regenerar o link invalida o link atual — o cliente deixa de conseguir aceder ao portal com o link anterior. Continuar?')) return
+    setPortalRegenerating(true)
+    try {
+      const res = await fetch(`/api/leads/${id}/portal`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ regenerate: true }) })
+      if (res.ok) {
+        const d = await res.json()
+        setPortalToken(d.portal_token)
+        setPortalUrl(d.portal_url)
+        toast('Link do portal regenerado.', 'success')
+      } else {
+        toast('Não foi possível regenerar o link.', 'error')
+      }
+    } catch {
+      toast('Erro de rede ao regenerar o link.', 'error')
+    } finally {
+      setPortalRegenerating(false)
+    }
+  }
+
+  async function copyPortalUrl() {
+    if (!portalUrl) return
+    await navigator.clipboard.writeText(portalUrl)
+    setPortalCopied(true)
+    toast('Link do portal copiado.', 'success')
+    setTimeout(() => setPortalCopied(false), 2000)
+  }
+
+  async function togglePortalActivity() {
+    const next = !showPortalActivity
+    setShowPortalActivity(next)
+    if (next) {
+      setPortalActivityLoading(true)
+      try {
+        const res = await fetch(`/api/leads/${id}/portal`)
+        if (res.ok) {
+          const d = await res.json()
+          setPortalActivity(d.activity ?? [])
+        }
+      } catch {
+        // silencioso
+      } finally {
+        setPortalActivityLoading(false)
+      }
+    }
+  }
 
   async function updateStage(stageId: string) {
     await fetch(`/api/leads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stage_id: stageId }) })
@@ -546,6 +661,68 @@ export default function LeadPage() {
         {/* Documents */}
         <div className="card" style={{ padding: '14px 18px', marginTop: 20 }}>
           <DocumentList entityType="lead" entityId={id} />
+        </div>
+
+        {/* Portal de cliente */}
+        <div className="card" style={{ overflow: 'hidden', marginTop: 20 }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <div className="font-display" style={{ fontSize: 14 }}>Portal de cliente</div>
+            {portalLoaded && portalToken && (
+              <button type="button" onClick={togglePortalActivity} className="btn btn-ghost btn-sm">
+                {showPortalActivity ? 'Ocultar atividade' : 'Ver atividade'}
+              </button>
+            )}
+          </div>
+          <div style={{ padding: 18 }}>
+            {!portalLoaded ? (
+              <div className="skeleton" style={{ height: 40 }} />
+            ) : !portalToken ? (
+              <>
+                <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
+                  Cria um link público para este lead ver os imóveis recomendados, o seu progresso e pedir visitas — sem precisar de conta.
+                </p>
+                <button type="button" onClick={activatePortal} disabled={portalActivating} className="btn btn-primary btn-sm">
+                  {portalActivating ? 'A ativar…' : 'Ativar portal'}
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+                  <input
+                    readOnly
+                    value={portalUrl ?? ''}
+                    onFocus={e => e.target.select()}
+                    style={{ flex: 1, minWidth: 220, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)' }}
+                  />
+                  <button type="button" onClick={copyPortalUrl} className="btn btn-ghost btn-sm">
+                    {portalCopied ? 'Copiado ✓' : 'Copiar'}
+                  </button>
+                </div>
+                <button type="button" onClick={regeneratePortalToken} disabled={portalRegenerating} className="btn btn-danger btn-sm">
+                  {portalRegenerating ? 'A regenerar…' : 'Regenerar link'}
+                </button>
+              </>
+            )}
+
+            {showPortalActivity && (
+              <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid var(--border)' }}>
+                {portalActivityLoading ? (
+                  <div className="skeleton" style={{ height: 60 }} />
+                ) : portalActivity.length === 0 ? (
+                  <p style={{ fontSize: 12, color: 'var(--muted)' }}>Ainda sem atividade registada no portal.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {portalActivity.map(a => (
+                      <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12 }}>
+                        <span style={{ color: 'var(--text)' }}>{portalActivityLabel(a)}</span>
+                        <span style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>{timeAgo(a.created_at)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Notes */}
