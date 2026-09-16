@@ -1058,6 +1058,7 @@ textarea.input { resize: vertical; line-height: 1.6; }
   display: flex;
   align-items: center;
   justify-content: space-around;
+  width: 100%;
   height: 100%;
 }
 
@@ -1290,6 +1291,15 @@ textarea.input { resize: vertical; line-height: 1.6; }
   }
 }
 
+@media (max-width: 640px) {
+  /* Onboarding wizard stepper: only the active step's label is shown,
+     so the 4 steps fit without clipping/overflow on narrow screens. */
+  .onboarding-stepper { padding-left: 16px !important; padding-right: 16px !important; gap: 4px !important; }
+  .onboarding-step-label { display: none; }
+  .onboarding-step-label-active { display: inline !important; }
+  .onboarding-step-content { padding: 20px 16px 24px !important; }
+}
+
 @media (max-width: 1024px) {
   .topnav-link span { display: none; }
 }
@@ -1306,7 +1316,7 @@ textarea.input { resize: vertical; line-height: 1.6; }
 
   /* TopNav v2 mobile */
   .mobile-nav { display: flex; }
-  .topnav-links span { display: none; }
+  .topnav-links { display: none; }
   .topnav-search span, .topnav-search kbd { display: none; }
   .app-content-v2 { padding-bottom: 56px; }
   .topnav-logo-text { display: none; }

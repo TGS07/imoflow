@@ -263,9 +263,9 @@ export function OnboardingWizard() {
   return (
     <Card style={{ width: '100%', maxWidth: 640, padding: 0, overflow: 'hidden' }}>
       {/* Stepper header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '24px 32px 0' }}>
+      <div className="onboarding-stepper" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '24px 32px 0' }}>
         {STEP_LABELS.map((label, i) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', flex: i < STEP_LABELS.length - 1 ? 1 : undefined, gap: 8 }}>
+          <div key={label} style={{ display: 'flex', alignItems: 'center', flex: i < STEP_LABELS.length - 1 ? 1 : undefined, gap: 8, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
               <div
                 style={{
@@ -279,7 +279,10 @@ export function OnboardingWizard() {
               >
                 {i < step ? <Icon name="check" size={13} /> : i + 1}
               </div>
-              <span style={{ fontSize: 12, fontWeight: i === step ? 600 : 500, color: i === step ? 'var(--text)' : 'var(--muted)' }}>
+              <span
+                className={i === step ? 'onboarding-step-label onboarding-step-label-active' : 'onboarding-step-label'}
+                style={{ fontSize: 12, fontWeight: i === step ? 600 : 500, color: i === step ? 'var(--text)' : 'var(--muted)' }}
+              >
                 {label}
               </span>
             </div>
@@ -290,7 +293,7 @@ export function OnboardingWizard() {
         ))}
       </div>
 
-      <div style={{ padding: '28px 32px 32px' }}>
+      <div className="onboarding-step-content" style={{ padding: '28px 32px 32px' }}>
         {step === 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div>
