@@ -8,8 +8,8 @@ interface SyncResult {
 }
 
 const SIGLA_TO_TYPE: Record<string, string> = {
-  CC: 'cliente_comprador',
-  CV: 'cliente_vendedor',
+  CC: 'comprador',
+  CV: 'vendedor',
   SCC: 'contabilista',
   SR: 'remodelacoes',
 }
