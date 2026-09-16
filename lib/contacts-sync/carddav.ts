@@ -57,6 +57,7 @@ function extractResponseVCards(xml: string): RawVCard[] {
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
+        .replace(/&#\d+;/g, '')
         .trim()
       if (data.includes('BEGIN:VCARD')) {
         cards.push({

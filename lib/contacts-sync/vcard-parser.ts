@@ -30,25 +30,43 @@ function extractValue(line: string): string {
   return colonIdx >= 0 ? line.substring(colonIdx + 1).trim() : line.trim()
 }
 
+function cleanStr(s: string): string {
+  return s.replace(/&#\d+;/g, '').replace(/[\r\n]/g, '').trim()
+}
+
 function decodeName(vcard: string): string {
   const fnLine = getField(vcard, 'FN')
-  if (fnLine) return extractValue(fnLine.includes(':') ? fnLine : `:${fnLine}`)
+  if (fnLine) return cleanStr(extractValue(fnLine.includes(':') ? fnLine : `:${fnLine}`))
 
   const nLine = getField(vcard, 'N')
   if (nLine) {
     const val = extractValue(nLine.includes(':') ? nLine : `:${nLine}`)
-    const parts = val.split(';').map((p) => p.trim()).filter(Boolean)
+    const parts = val.split(';').map((p) => cleanStr(p)).filter(Boolean)
     return parts.length >= 2 ? `${parts[1]} ${parts[0]}` : parts.join(' ')
   }
 
   return ''
 }
 
+function normalizePhone(raw: string): string {
+  let num = raw.replace(/^tel:/i, '').replace(/[^\d+]/g, '')
+  if (num.startsWith('+351')) num = num.slice(4)
+  else if (num.startsWith('00351')) num = num.slice(5)
+  if (num.startsWith('+') && num.length > 1) {
+    const digits = num.slice(1)
+    if (digits.startsWith('351') && digits.length >= 12) num = digits.slice(3)
+    else num = digits
+  }
+  num = num.replace(/^0+/, '')
+  if (/^[239]\d{8}$/.test(num)) return num
+  return raw.replace(/^tel:/i, '').replace(/[^\d+]/g, '')
+}
+
 function parsePhones(vcard: string): string[] {
   const lines = getAllFields(vcard, 'TEL')
   return lines.map((l) => {
     const val = extractValue(l.includes(':') ? l : `:${l}`)
-    return val.replace(/[^\d+]/g, '')
+    return normalizePhone(val)
   }).filter(Boolean)
 }
 
@@ -105,7 +123,12 @@ export function cleanName(name: string, siglas: string[]): string {
     const escaped = s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     cleaned = cleaned.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), '')
   }
-  return cleaned.replace(/\s+/g, ' ').replace(/^[\s,.-]+|[\s,.-]+$/g, '').trim()
+  return cleaned
+    .replace(/&#\d+;/g, '')
+    .replace(/[\r\n]/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s,./\-_|:;]+|[\s,./\-_|:;]+$/g, '')
+    .trim()
 }
 
 export function parseVCard(vcard: string): ParsedContact | null {
