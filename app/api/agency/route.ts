@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('agencies')
-    .select('id, name, email, logo_url, email_from_name, email_reply_to, followup_first_days, followup_second_days, onboarding_completed, onboarding_state')
+    .select('id, name, email, logo_url, email_from_name, email_reply_to, followup_first_days, followup_second_days, onboarding_completed, onboarding_state, plan, feed_token')
     .eq('id', profile.agency_id)
     .single()
 
@@ -95,7 +95,7 @@ export async function PATCH(request: Request) {
     .from('agencies')
     .update(updates)
     .eq('id', profile.agency_id)
-    .select('id, name, email, logo_url, email_from_name, email_reply_to, followup_first_days, followup_second_days, onboarding_completed, onboarding_state')
+    .select('id, name, email, logo_url, email_from_name, email_reply_to, followup_first_days, followup_second_days, onboarding_completed, onboarding_state, plan, feed_token')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

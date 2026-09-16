@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { HelpButton } from '@/components/help/HelpButton'
 import { Icon } from '@/components/ui/Icon'
+import { toast } from '@/lib/toast'
 
 type AgencyData = {
   id: string
@@ -12,6 +14,8 @@ type AgencyData = {
   followup_first_days: number
   followup_second_days: number
   whatsapp_configured?: boolean
+  plan?: string | null
+  feed_token?: string | null
 }
 
 export default function AgencySettingsPage() {
@@ -24,6 +28,9 @@ export default function AgencySettingsPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [feedToken, setFeedToken] = useState<string | null>(null)
+  const [feedCopied, setFeedCopied] = useState(false)
+  const [feedRegenerating, setFeedRegenerating] = useState(false)
 
   useEffect(() => {
     fetch('/api/agency')
@@ -34,6 +41,7 @@ export default function AgencySettingsPage() {
         setReplyTo(d.email_reply_to ?? '')
         setFirstDays(String(d.followup_first_days ?? 7))
         setSecondDays(String(d.followup_second_days ?? 30))
+        setFeedToken(d.feed_token ?? null)
       })
       .catch(() => setError('Erro ao carregar dados da agência.'))
       .finally(() => setLoading(false))
@@ -66,6 +74,35 @@ export default function AgencySettingsPage() {
       setError('Erro de rede ao guardar.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const feedUrl = feedToken && typeof window !== 'undefined' ? `${window.location.origin}/api/feed/${feedToken}` : ''
+
+  async function copyFeedUrl() {
+    if (!feedUrl) return
+    await navigator.clipboard.writeText(feedUrl)
+    setFeedCopied(true)
+    toast('Link do feed copiado.', 'success')
+    setTimeout(() => setFeedCopied(false), 2000)
+  }
+
+  async function regenerateFeedToken() {
+    if (!confirm('Regenerar o token invalida o link atual — qualquer portal já configurado com ele deixa de receber o feed. Continuar?')) return
+    setFeedRegenerating(true)
+    try {
+      const res = await fetch('/api/agency/feed-token', { method: 'POST' })
+      if (!res.ok) {
+        toast('Não foi possível regenerar o token.', 'error')
+        return
+      }
+      const d = await res.json()
+      setFeedToken(d.feed_token)
+      toast('Token regenerado.', 'success')
+    } catch {
+      toast('Erro de rede ao regenerar o token.', 'error')
+    } finally {
+      setFeedRegenerating(false)
     }
   }
 
@@ -155,6 +192,72 @@ export default function AgencySettingsPage() {
           variável <code style={{ color: 'var(--text)' }}>EMAIL_FROM</code> no servidor.
         </p>
       </div>
+
+      {!loading && agency && (
+        <div className="card" style={{ padding: 20, marginTop: 16 }}>
+          <h3 className="font-display" style={{ fontSize: 15, marginBottom: 4 }}>Feed XML de imóveis</h3>
+          {agency.plan === 'pro' ? (
+            <>
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
+                Usa este link para importar os teus imóveis em portais imobiliários (ex: CASA, SAPO). O feed
+                inclui apenas os imóveis com estado <strong>disponível</strong> e atualiza-se automaticamente.
+              </p>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+                <input
+                  readOnly
+                  value={feedUrl}
+                  onFocus={e => e.target.select()}
+                  style={{ flex: 1, minWidth: 220, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 7, padding: '8px 12px', fontSize: 12, color: 'var(--text)' }}
+                />
+                <button type="button" onClick={copyFeedUrl} className="btn btn-ghost btn-sm">
+                  {feedCopied ? 'Copiado ✓' : 'Copiar'}
+                </button>
+              </div>
+              <button type="button" onClick={regenerateFeedToken} disabled={feedRegenerating} className="btn btn-danger btn-sm">
+                {feedRegenerating ? 'A regenerar…' : 'Regenerar token'}
+              </button>
+            </>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 'var(--space-4)',
+                padding: 'var(--space-4) var(--space-5)',
+                borderRadius: 'var(--radius)',
+                background: 'var(--gold-glow)',
+                border: '1px solid rgba(176,125,46,0.3)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 9,
+                    background: 'var(--gold)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#0D0D0F',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon name="zap" size={15} />
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text)' }}>
+                  O feed XML de imóveis é uma funcionalidade <strong>Pro</strong>. Faz upgrade para gerares um
+                  link de importação para portais como CASA e SAPO.
+                </div>
+              </div>
+              <Link href="/settings/billing" className="btn btn-primary btn-sm" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+                Ver planos
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
