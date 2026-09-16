@@ -1291,6 +1291,15 @@ textarea.input { resize: vertical; line-height: 1.6; }
   }
 }
 
+@media (max-width: 640px) {
+  /* Onboarding wizard stepper: only the active step's label is shown,
+     so the 4 steps fit without clipping/overflow on narrow screens. */
+  .onboarding-stepper { padding-left: 16px !important; padding-right: 16px !important; gap: 4px !important; }
+  .onboarding-step-label { display: none; }
+  .onboarding-step-label-active { display: inline !important; }
+  .onboarding-step-content { padding: 20px 16px 24px !important; }
+}
+
 @media (max-width: 1024px) {
   .topnav-link span { display: none; }
 }

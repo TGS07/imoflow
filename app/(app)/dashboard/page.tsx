@@ -7,6 +7,7 @@ import { daysSince, followupStatus } from '@/lib/contacts/followup'
 import { matchSpecialDatesToday } from '@/lib/contacts/special-dates'
 import { Icon } from '@/components/ui/Icon'
 import { UpgradeBanner } from '@/components/billing/UpgradeBanner'
+import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -150,6 +151,7 @@ export default async function DashboardPage() {
       </div>
 
       <UpgradeBanner />
+      <OnboardingChecklist />
 
       {lastSync && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-full)', background: 'var(--surface)', border: '1px solid var(--border)', marginBottom: 'var(--space-6)', fontSize: 'var(--fs-sm)', color: 'var(--muted)', width: 'fit-content', boxShadow: 'var(--shadow-sm)' }}>

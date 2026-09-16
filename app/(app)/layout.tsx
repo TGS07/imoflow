@@ -9,9 +9,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from('users')
-    .select('name, avatar_initials, role, theme')
+    .select('name, avatar_initials, role, theme, agencies(onboarding_completed)')
     .eq('id', user.id)
     .single()
+
+  const agency = profile?.agencies as unknown as { onboarding_completed: boolean } | null
+  if (agency?.onboarding_completed === false) redirect('/onboarding')
 
   return (
     <AppShell
