@@ -1,3 +1,9 @@
+import type { Database } from './database'
+
+// Usado para o cast de `agencies(onboarding_completed)` no join de `users` —
+// partilhado entre app/(app)/layout.tsx e app/onboarding/page.tsx.
+export type AgencyOnboardingStatus = Pick<Database['public']['Tables']['agencies']['Row'], 'onboarding_completed'>
+
 export type Agency = {
   id: string
   name: string
@@ -227,4 +233,4 @@ export type { ReportPeriod, ReportKpis, ReportFunnelEntry, ReportSourceEntry, Re
 export type { WebFormField, WebForm } from './web-form'
 export type { WhatsAppTemplate, WhatsAppMessage } from './whatsapp'
 export { WEB_FORM_FIELD_LABELS, OPTIONAL_FORM_FIELDS } from './web-form'
-export type { ContactDetails, ContactTemperature, ContactInteraction, ContactInteractionType, ContactSpecialDate } from './contact'
+export type { ContactDetails, ContactInteraction, ContactInteractionType, ContactSpecialDate } from './contact'

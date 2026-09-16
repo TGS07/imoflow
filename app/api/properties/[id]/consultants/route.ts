@@ -32,6 +32,9 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   }
 
   const matches = (consultants ?? [])
+    // Nota: ver comentário equivalente em matches/route.ts — `Person` já é um
+    // tipo nomeado mais refinado do que a linha bruta de `people` em
+    // types/database.ts, por isso mantém-se em vez de derivar de `Database`.
     .map(p => p as unknown as Person)
     .filter(p => {
       const zone = p.details?.working_zone ? norm(p.details.working_zone) : null

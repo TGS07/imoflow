@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
+import type { AgencyOnboardingStatus } from '@/types'
 
 export default async function OnboardingPage() {
   const supabase = await createClient()
@@ -13,7 +14,7 @@ export default async function OnboardingPage() {
     .eq('id', user.id)
     .single()
 
-  const agencyRow = profile?.agencies as unknown as { onboarding_completed: boolean } | null
+  const agencyRow = profile?.agencies as unknown as AgencyOnboardingStatus | null
   if (agencyRow?.onboarding_completed) redirect('/dashboard')
 
   return (

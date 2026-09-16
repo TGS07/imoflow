@@ -8,6 +8,16 @@ import { matchSpecialDatesToday } from '@/lib/contacts/special-dates'
 import { Icon } from '@/components/ui/Icon'
 import { UpgradeBanner } from '@/components/billing/UpgradeBanner'
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
+import type { Database } from '@/types/database'
+
+// Shape do join `agencies(followup_first_days, followup_second_days)` — usado
+// só nesta página.
+type AgencyFollowupSettings = Pick<Database['public']['Tables']['agencies']['Row'], 'followup_first_days' | 'followup_second_days'>
+
+// Shape do join `pipeline_stages(id, name, color, probability, is_won, is_lost)`
+// usado em várias queries `leads(...)` desta página — mesmas colunas em todos
+// os pontos, por isso um único tipo partilhado localmente.
+type LeadStageJoin = Pick<Database['public']['Tables']['pipeline_stages']['Row'], 'id' | 'name' | 'color' | 'probability' | 'is_won' | 'is_lost'>
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -30,7 +40,7 @@ export default async function DashboardPage() {
       .eq('assigned_to', user.id),
   ])
 
-  const agencyRow = profile?.agencies as unknown as { followup_first_days: number; followup_second_days: number } | null
+  const agencyRow = profile?.agencies as unknown as AgencyFollowupSettings | null
   const agencyFirst = agencyRow?.followup_first_days ?? 7
   const agencySecond = agencyRow?.followup_second_days ?? 30
   const specialIcons: Record<string, string> = { Natal: '🎄', Páscoa: '🐣', Aniversário: '🎂' }
@@ -66,12 +76,12 @@ export default async function DashboardPage() {
   const allLeads = leads ?? []
   const allStages = stages ?? []
   const activeLeads = allLeads.filter(l => {
-    const s = l.pipeline_stages as unknown as { is_won: boolean; is_lost: boolean } | null
+    const s = l.pipeline_stages as unknown as LeadStageJoin | null
     return s && !s.is_won && !s.is_lost
   }).length
 
   const wonLeads = allLeads.filter(l => {
-    const s = l.pipeline_stages as unknown as { is_won: boolean } | null
+    const s = l.pipeline_stages as unknown as LeadStageJoin | null
     return s?.is_won
   })
   const closedThisMonth = wonLeads.filter(l => {
@@ -82,18 +92,18 @@ export default async function DashboardPage() {
 
   const pipelineTotal = allLeads
     .filter(l => {
-      const s = l.pipeline_stages as unknown as { is_won: boolean; is_lost: boolean } | null
+      const s = l.pipeline_stages as unknown as LeadStageJoin | null
       return s && !s.is_won && !s.is_lost
     })
     .reduce((sum, l) => sum + (l.deal_value ?? l.budget ?? 0), 0)
 
   const pipelineWeighted = allLeads
     .filter(l => {
-      const s = l.pipeline_stages as unknown as { is_won: boolean; is_lost: boolean; probability: number } | null
+      const s = l.pipeline_stages as unknown as LeadStageJoin | null
       return s && !s.is_won && !s.is_lost
     })
     .reduce((sum, l) => {
-      const s = l.pipeline_stages as unknown as { probability: number }
+      const s = l.pipeline_stages as unknown as LeadStageJoin
       return sum + ((l.deal_value ?? l.budget ?? 0) * s.probability / 100)
     }, 0)
 
@@ -257,7 +267,7 @@ export default async function DashboardPage() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                 {recentLeads.map(lead => {
-                  const leadStage = (lead.pipeline_stages as unknown as { name: string; color: string } | null)
+                  const leadStage = (lead.pipeline_stages as unknown as LeadStageJoin | null)
                   const color = leadStage?.color ?? '#666'
                   const label = leadStage?.name ?? '—'
                   return (
