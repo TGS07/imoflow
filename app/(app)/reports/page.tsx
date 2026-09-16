@@ -66,12 +66,12 @@ export default function ReportsPage() {
   return (
     <>
       <div className="page-enter" style={{ padding: 'var(--space-6) var(--space-8)', maxWidth: 1100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)', marginBottom: 'var(--space-6)' }}>
           <div>
             <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Relatórios <HelpButton section="reports" /></h1>
             <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>Métricas de performance do pipeline</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
             <div
               role="group"
               aria-label="Selecionar período"
