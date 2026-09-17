@@ -67,6 +67,11 @@ export async function POST(request: Request) {
     subscription_data: {
       metadata: { agency_id: agency.id },
     },
+    // Managed Payments (Stripe como merchant of record) vem ativado por
+    // omissão na conta e exige tax_code no produto, que não configurámos —
+    // desativamos aqui para usar o modelo direto (Stripe apenas processa
+    // o pagamento, sem responsabilidades fiscais assumidas pela Stripe).
+    managed_payments: { enabled: false },
   })
 
   if (!session.url) {
