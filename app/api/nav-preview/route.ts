@@ -1,10 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({})
+  if (!user) {
+    return NextResponse.json({ _debug: 'no-user' })
+  }
 
   const { data: profile } = await supabase
     .from('users')
@@ -12,7 +16,9 @@ export async function GET() {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.agency_id) return NextResponse.json({})
+  if (!profile?.agency_id) {
+    return NextResponse.json({ _debug: 'no-agency', userId: user.id })
+  }
 
   const agencyId = profile.agency_id
   const now = new Date()
