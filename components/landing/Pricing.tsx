@@ -15,21 +15,22 @@ const PLANS: Plan[] = [
   {
     name: 'Free',
     price: 'Grátis',
-    description: 'Para começar a organizar a sua atividade sem custos.',
+    description: 'Para experimentar o ImoFlow sem custos.',
     features: [
-      'Até 20 leads ativos',
+      'Até 5 leads ativos',
       '1 utilizador',
+      'Até 3 imóveis',
       'Pipeline e fichas de imóveis',
-      'Upload de documentos básico',
     ],
     cta: 'Criar conta grátis',
   },
   {
     name: 'Pro',
-    price: 'Contacta-nos',
+    price: '90€',
+    priceSuffix: '/mês',
     description: 'Para agências que querem escalar sem limites.',
     features: [
-      'Leads ilimitados',
+      'Leads, contactos e imóveis ilimitados',
       'Até 10 utilizadores',
       'Automações avançadas',
       'Integração com portais (Idealista)',

@@ -1,10 +1,15 @@
 // Definição dos planos e respetivos limites de uso.
 // Mantém consistência com o que está prometido publicamente em
-// components/landing/Pricing.tsx (Free: até 20 leads, 1 utilizador;
+// components/landing/Pricing.tsx (Free: até 5 leads, 1 utilizador;
 // Pro: ilimitado, até 10 utilizadores, automações avançadas).
 //
 // `Infinity` é usado para "ilimitado" — lib/stripe/limits.ts trata este
 // valor como um atalho para não precisar de contar linhas na BD.
+
+// Preço fixo mostrado na landing page e em /settings/billing — não vem da
+// Stripe (decisão deliberada: mais simples de manter, atualizar aqui e no
+// preço/produto da Stripe manualmente se algum dia mudar).
+export const PRO_PRICE_DISPLAY = '90€/mês'
 
 export type PlanId = 'free' | 'pro'
 
@@ -27,11 +32,11 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Free',
     priceId: null,
     limits: {
-      leads: 20,
-      people: 20,
-      properties: 10,
+      leads: 5,
+      people: 5,
+      properties: 3,
       members: 1,
-      automations: 3,
+      automations: 0,
     },
   },
   pro: {
