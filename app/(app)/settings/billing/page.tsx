@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { HelpButton } from '@/components/help/HelpButton'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
+import { PRO_PRICE_DISPLAY } from '@/lib/stripe/plans'
 
 type UsageRow = {
   resource: string
@@ -149,22 +150,25 @@ export default function BillingSettingsPage() {
 
             {actionError && <div style={{ fontSize: 12, color: 'var(--red)' }}>{actionError}</div>}
 
-            <div style={{ paddingTop: 4 }}>
+            <div style={{ paddingTop: 4, display: 'flex', alignItems: 'center', gap: 14 }}>
               {isPro ? (
                 <Button onClick={handleManage} loading={actionLoading} variant="soft">
                   Gerir subscrição
                 </Button>
               ) : (
-                <Button onClick={handleUpgrade} loading={actionLoading} variant="primary">
-                  Upgrade para Pro
-                </Button>
+                <>
+                  <Button onClick={handleUpgrade} loading={actionLoading} variant="primary">
+                    Upgrade para Pro
+                  </Button>
+                  <span style={{ fontSize: 13, color: 'var(--muted)' }}>{PRO_PRICE_DISPLAY}</span>
+                </>
               )}
             </div>
           </div>
 
           <div className="card" style={{ padding: 20, marginTop: 16, background: 'var(--surface)' }}>
             <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.7, margin: 0 }}>
-              <strong style={{ color: 'var(--gold)' }}>Plano Pro:</strong> leads, contactos, imóveis e automações
+              <strong style={{ color: 'var(--gold)' }}>Plano Pro — {PRO_PRICE_DISPLAY}:</strong> leads, contactos, imóveis e automações
               ilimitados, até 10 membros de equipa. Gere a tua subscrição (fatura, cartão, cancelamento) a
               qualquer momento através do botão acima.
             </p>
