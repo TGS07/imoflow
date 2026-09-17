@@ -22,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <ErrorBoundary>
       <AppShell
         userName={profile?.name ?? user.email ?? ''}
+        userEmail={user.email ?? ''}
         userInitials={profile?.avatar_initials ?? 'XX'}
         userRole={profile?.role === 'admin' ? 'admin' : 'agent'}
         userTheme={profile?.theme === 'dark' ? 'dark' : 'light'}

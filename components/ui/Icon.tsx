@@ -5,6 +5,9 @@ type IconName =
   | 'send' | 'bell' | 'check' | 'x' | 'chevron-down' | 'logout' | 'phone'
   | 'search' | 'command' | 'help' | 'sun' | 'moon' | 'sparkle'
   | 'file' | 'file-pdf' | 'file-image' | 'upload' | 'download'
+  | 'user' | 'palette' | 'keyboard' | 'message' | 'crown'
+  | 'plug' | 'robot' | 'template' | 'credit-card' | 'arrow-right'
+  | 'chevron-right' | 'user-plus' | 'home-plus' | 'calendar-plus'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   dashboard: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
@@ -43,6 +46,20 @@ const PATHS: Record<IconName, React.ReactNode> = {
   'file-image': <><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v5h5" /><circle cx="10" cy="14" r="1.2" /><path d="m8 18 2.5-2.8 2 1.8 2-2.5L17 18" /></>,
   upload: <><path d="M12 16V4M8 8l4-4 4 4" /><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" /></>,
   download: <><path d="M12 4v12M8 12l4 4 4-4" /><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" /></>,
+  user: <><circle cx="12" cy="8" r="4" /><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" /></>,
+  palette: <><circle cx="13.5" cy="6.5" r="1.5" /><circle cx="17.5" cy="10.5" r="1.5" /><circle cx="8.5" cy="7.5" r="1.5" /><circle cx="6.5" cy="12" r="1.5" /><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2v-1a2 2 0 0 1 2-2h1c1.1 0 2-.9 2-2a10 10 0 0 0-7-10Z" /></>,
+  keyboard: <><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" /></>,
+  message: <><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z" /></>,
+  crown: <path d="m2 17 3-8 4 4 3-9 3 9 4-4 3 8H2Z" />,
+  plug: <><path d="M12 22v-5" /><path d="M9 8V2M15 8V2" /><path d="M18 8v4a6 6 0 0 1-12 0V8h12Z" /></>,
+  robot: <><rect x="3" y="8" width="18" height="12" rx="2" /><path d="M12 2v6" /><circle cx="12" cy="2" r="1" /><circle cx="9" cy="14" r="1.5" /><circle cx="15" cy="14" r="1.5" /></>,
+  template: <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 3v18" /></>,
+  'credit-card': <><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></>,
+  'arrow-right': <path d="M5 12h14M12 5l7 7-7 7" />,
+  'chevron-right': <path d="m9 6 6 6-6 6" />,
+  'user-plus': <><circle cx="10" cy="8" r="4" /><path d="M4 20c0-3.5 2.7-6 6-6s6 2.5 6 6" /><path d="M19 8v6M22 11h-6" /></>,
+  'home-plus': <><path d="M3.5 10.5 12 3.5l8.5 7" /><path d="M5.5 9.5V20a1 1 0 0 0 1 1h4" /><path d="M18.5 9.5V13" /><path d="M17 16v4M15 18h4" /></>,
+  'calendar-plus': <><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M12 14v3M10.5 15.5h3" /></>,
 }
 
 type Props = {
