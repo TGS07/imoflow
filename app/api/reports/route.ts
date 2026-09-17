@@ -1,6 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import type { ReportsData, ReportPeriod, LeadSource } from '@/types'
+import type { Database } from '@/types/database'
+
+// Shape do join `pipeline_stages(is_won, is_lost)` em `leadsResult` abaixo.
+type LeadStageWinLoss = Pick<Database['public']['Tables']['pipeline_stages']['Row'], 'is_won' | 'is_lost'>
+// Shape do join `pipeline_stages(is_won)` em `agentResult` abaixo (select mais restrito).
+type LeadStageWonOnly = Pick<Database['public']['Tables']['pipeline_stages']['Row'], 'is_won'>
+type LeadStageId = Pick<Database['public']['Tables']['leads']['Row'], 'stage_id'>
+type LeadDealValue = Pick<Database['public']['Tables']['leads']['Row'], 'deal_value'>
+type UserName = Pick<Database['public']['Tables']['users']['Row'], 'name'>
 
 function getCutoff(period: ReportPeriod): string {
   const now = new Date()
@@ -78,7 +87,7 @@ export async function GET(request: Request) {
     const leads = leadsResult.data ?? []
     const totalLeads = leads.length
     const wonLeads = leads.filter(l => {
-      const ps = l.pipeline_stages as unknown as { is_won: boolean } | null
+      const ps = l.pipeline_stages as unknown as LeadStageWinLoss | null
       return ps?.is_won === true
     })
     const wonCount = wonLeads.length
@@ -87,7 +96,7 @@ export async function GET(request: Request) {
       : 0
 
     const pipelineValue = leads.reduce((sum, l) => {
-      const ps = l.pipeline_stages as unknown as { is_lost: boolean } | null
+      const ps = l.pipeline_stages as unknown as LeadStageWinLoss | null
       if (ps?.is_lost) return sum
       return sum + (Number(l.deal_value) || 0)
     }, 0)
@@ -100,10 +109,10 @@ export async function GET(request: Request) {
     const stageCountMap = new Map<string, number>()
     const stageValueMap = new Map<string, number>()
     for (const lead of leads) {
-      const stageId = (lead as unknown as { stage_id: string }).stage_id
+      const stageId = (lead as unknown as LeadStageId).stage_id
       if (!stageId) continue
       stageCountMap.set(stageId, (stageCountMap.get(stageId) ?? 0) + 1)
-      const dealValue = Number((lead as unknown as { deal_value: number | null }).deal_value) || 0
+      const dealValue = Number((lead as unknown as LeadDealValue).deal_value) || 0
       stageValueMap.set(stageId, (stageValueMap.get(stageId) ?? 0) + dealValue)
     }
 
@@ -148,10 +157,10 @@ export async function GET(request: Request) {
     // Nota: não equivale a "fechados no período" pois não existe campo won_at no schema.
     const agentMap = new Map<string, { name: string; count: number }>()
     for (const lead of (agentResult.data ?? [])) {
-      const ps = lead.pipeline_stages as unknown as { is_won: boolean } | null
+      const ps = lead.pipeline_stages as unknown as LeadStageWonOnly | null
       if (!ps?.is_won) continue
       const userId = lead.assigned_to as string
-      const userName = (lead.users as unknown as { name: string } | null)?.name ?? 'Desconhecido'
+      const userName = (lead.users as unknown as UserName | null)?.name ?? 'Desconhecido'
       const existing = agentMap.get(userId)
       if (existing) {
         existing.count++

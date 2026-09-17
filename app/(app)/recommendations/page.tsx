@@ -38,6 +38,11 @@ export default async function RecommendationsPage() {
           Imóveis do Idealista que encaixam nas preferências dos seus leads
         </p>
       </div>
+      {/* Nota: `Match` (RecommendationsCarousel.tsx) já é um tipo nomeado que
+          espelha exatamente as colunas e joins selecionados acima
+          (idealista_listings, leads) — tighten-lo via Database exigiria
+          reconstruir os joins aninhados com Pick<> em vários níveis para um
+          ganho de clareza marginal, por isso mantém-se como está. */}
       <RecommendationsCarousel matches={(matches ?? []) as unknown as Match[]} />
     </div>
   )

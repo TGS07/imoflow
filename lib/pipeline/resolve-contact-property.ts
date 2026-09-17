@@ -1,13 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
-export type ContactPropertyCandidate = {
-  id: string
-  reference: string | null
-  title: string
-  zone: string | null
-  typology: string | null
-  price: number | null
-}
+export type ContactPropertyCandidate = Pick<
+  Database['public']['Tables']['properties']['Row'],
+  'id' | 'reference' | 'title' | 'zone' | 'typology' | 'price'
+>
+
+// Shape do join `property_consultants(properties(...))` usado abaixo — a
+// tabela `property_consultants` em si não tem uma coluna `properties`; este
+// tipo espelha o relacionamento devolvido pelo Supabase para o select aninhado.
+type PropertyConsultantJoin = { properties: ContactPropertyCandidate | null }
 
 // Imóveis já associados a uma pessoa como vendedora, compradora candidata ou
 // consultora — candidatos a ligar ao criar um card de pipeline para ela.
@@ -31,7 +33,7 @@ export async function resolveContactPropertyCandidates(
   if (!data) return []
   const seller = (data.properties_as_seller ?? []) as ContactPropertyCandidate[]
   const buyer = (data.properties_as_buyer ?? []) as ContactPropertyCandidate[]
-  const consultant = ((data.property_consultants ?? []) as unknown as { properties: ContactPropertyCandidate | null }[])
+  const consultant = ((data.property_consultants ?? []) as unknown as PropertyConsultantJoin[])
     .map(pc => pc.properties)
     .filter((p): p is ContactPropertyCandidate => !!p)
 

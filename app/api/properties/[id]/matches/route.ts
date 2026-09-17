@@ -32,6 +32,11 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const propType = norm(property.type)
 
   const matches = (buyers ?? []).map(p => {
+    // Nota: `Person` (types/index.ts) já é um tipo nomeado mais refinado do que
+    // a linha bruta da tabela `people` em types/database.ts — `financial_capacity`,
+    // `details` e `types` aqui são tipados (CapacityBand, ContactDetails,
+    // ContactTypeKey[]) em vez do texto/jsonb cru da BD. Derivar este cast de
+    // `Database` seria uma regressão de tipagem, por isso mantém-se `Person`.
     const person = p as unknown as Person
     let score = 0
     const reasons: string[] = []

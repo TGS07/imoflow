@@ -2,6 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { createNotification } from '@/lib/notifications'
 import { triggerAutomations } from '@/lib/automations/engine'
+import type { Database } from '@/types/database'
+
+// Shape do join `pipeline_stages(name)` usado em `beforeQuery` abaixo.
+type StageNameOnly = Pick<Database['public']['Tables']['pipeline_stages']['Row'], 'name'>
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -98,7 +102,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   if (before && leadData.stage_id && leadData.stage_id !== before.stage_id && before.assigned_to && before.agency_id) {
     const newStageName = data.pipeline_stages?.name ?? 'desconhecida'
-    const oldStageName = (before.pipeline_stages as unknown as { name: string } | null)?.name ?? 'desconhecida'
+    const oldStageName = (before.pipeline_stages as unknown as StageNameOnly | null)?.name ?? 'desconhecida'
     await createNotification({
       userId: before.assigned_to,
       agencyId: before.agency_id,

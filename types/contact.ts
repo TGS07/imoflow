@@ -1,8 +1,6 @@
 // types/contact.ts
 import type { ContactTypeKey, CapacityBand } from '@/lib/contacts/constants'
 
-export type ContactTemperature = 'quente' | 'morno' | 'frio'
-
 export type ContactDetails = {
   // link do anúncio no Idealista — campo geral, independente do tipo (comprador/vendedor/investidor)
   idealista_url?: string
@@ -10,8 +8,6 @@ export type ContactDetails = {
   looking_for?: string
   search_zone?: string
   looking_price?: number
-  /** @deprecated substituído por `is_regular` no contacto; mantido só para dados antigos */
-  temperature?: ContactTemperature
   already_bought?: boolean
   // vendedor
   selling_property?: string
