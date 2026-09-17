@@ -2,19 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Icon, type IconName } from '@/components/ui/Icon'
 import { NotificationBell } from './NotificationBell'
 import { ThemeToggle } from './ThemeToggle'
 import { createClient } from '@/lib/supabase/client'
 
-const navItems: { href: string; icon: IconName; label: string }[] = [
+const navItems: { href: string; icon: IconName; label: string; previewKey?: string }[] = [
   { href: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
-  { href: '/pipeline', icon: 'pipeline', label: 'Pipeline' },
-  { href: '/activities', icon: 'calendar', label: 'Atividades' },
-  { href: '/people', icon: 'people', label: 'Contactos' },
-  { href: '/properties', icon: 'home', label: 'Imóveis' },
-  { href: '/recommendations', icon: 'sparkle', label: 'Recomendações' },
+  { href: '/pipeline', icon: 'pipeline', label: 'Pipeline', previewKey: 'pipeline' },
+  { href: '/activities', icon: 'calendar', label: 'Atividades', previewKey: 'activities' },
+  { href: '/people', icon: 'people', label: 'Contactos', previewKey: 'contacts' },
+  { href: '/properties', icon: 'home', label: 'Imóveis', previewKey: 'properties' },
+  { href: '/recommendations', icon: 'sparkle', label: 'Recomendações', previewKey: 'recommendations' },
   { href: '/reports', icon: 'chart', label: 'Relatórios' },
 ]
 
@@ -35,12 +35,145 @@ const quickAddItems: { href: string; icon: IconName; label: string; colorClass: 
   { href: '/activities?new=1', icon: 'calendar-plus', label: 'Nova atividade', colorClass: 'qi-act' },
 ]
 
+type NavPreviewData = {
+  pipeline?: { total: number; recent: { name: string; stage: string }[] }
+  activities?: { today: number; upcoming: { title: string; type: string; time: string }[] }
+  contacts?: { total: number; recent: { name: string; phone: string }[] }
+  properties?: { total: number; recent: { title: string; price: number; status: string }[] }
+  recommendations?: { pending: number }
+}
+
 type Props = {
   userName: string
   userEmail: string
   userInitials: string
   userRole: 'admin' | 'agent'
   userTheme: 'light' | 'dark'
+}
+
+function formatPrice(price: number | null): string {
+  if (!price) return '—'
+  return price.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+}
+
+const activityTypeLabels: Record<string, string> = {
+  call: 'Chamada',
+  meeting: 'Reunião',
+  visit: 'Visita',
+  email: 'Email',
+  task: 'Tarefa',
+  note: 'Nota',
+  whatsapp: 'WhatsApp',
+}
+
+function TabPreviewCard({ itemKey, data }: { itemKey: string; data: NavPreviewData }) {
+  if (itemKey === 'pipeline' && data.pipeline) {
+    const p = data.pipeline
+    return (
+      <div className="tn3-preview-card">
+        <div className="tn3-preview-header">
+          <Icon name="pipeline" size={14} />
+          <span>{p.total} negócio{p.total !== 1 ? 's' : ''} no pipeline</span>
+        </div>
+        {p.recent.length > 0 && (
+          <div className="tn3-preview-list">
+            {p.recent.map((l, i) => (
+              <div key={i} className="tn3-preview-row">
+                <span className="tn3-preview-name">{l.name}</span>
+                <span className="tn3-preview-meta">{l.stage}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="tn3-preview-foot">Ver pipeline →</div>
+      </div>
+    )
+  }
+
+  if (itemKey === 'activities' && data.activities) {
+    const a = data.activities
+    return (
+      <div className="tn3-preview-card">
+        <div className="tn3-preview-header">
+          <Icon name="calendar" size={14} />
+          <span>{a.today} atividade{a.today !== 1 ? 's' : ''} hoje</span>
+        </div>
+        {a.upcoming.length > 0 && (
+          <div className="tn3-preview-list">
+            {a.upcoming.map((act, i) => (
+              <div key={i} className="tn3-preview-row">
+                <span className="tn3-preview-time">{act.time}</span>
+                <span className="tn3-preview-name">{act.title}</span>
+                <span className="tn3-preview-tag">{activityTypeLabels[act.type] ?? act.type}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="tn3-preview-foot">Ver atividades →</div>
+      </div>
+    )
+  }
+
+  if (itemKey === 'contacts' && data.contacts) {
+    const c = data.contacts
+    return (
+      <div className="tn3-preview-card">
+        <div className="tn3-preview-header">
+          <Icon name="people" size={14} />
+          <span>{c.total} contacto{c.total !== 1 ? 's' : ''}</span>
+        </div>
+        {c.recent.length > 0 && (
+          <div className="tn3-preview-list">
+            {c.recent.map((ct, i) => (
+              <div key={i} className="tn3-preview-row">
+                <span className="tn3-preview-name">{ct.name}</span>
+                {ct.phone && <span className="tn3-preview-meta">{ct.phone}</span>}
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="tn3-preview-foot">Ver contactos →</div>
+      </div>
+    )
+  }
+
+  if (itemKey === 'properties' && data.properties) {
+    const pr = data.properties
+    return (
+      <div className="tn3-preview-card">
+        <div className="tn3-preview-header">
+          <Icon name="home" size={14} />
+          <span>{pr.total} imóve{pr.total !== 1 ? 'is' : 'l'}</span>
+        </div>
+        {pr.recent.length > 0 && (
+          <div className="tn3-preview-list">
+            {pr.recent.map((p, i) => (
+              <div key={i} className="tn3-preview-row">
+                <span className="tn3-preview-name">{p.title}</span>
+                <span className="tn3-preview-price">{formatPrice(p.price)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="tn3-preview-foot">Ver imóveis →</div>
+      </div>
+    )
+  }
+
+  if (itemKey === 'recommendations' && data.recommendations) {
+    const r = data.recommendations
+    return (
+      <div className="tn3-preview-card">
+        <div className="tn3-preview-header">
+          <Icon name="sparkle" size={14} />
+          <span>{r.pending} recomendaç{r.pending !== 1 ? 'ões pendentes' : 'ão pendente'}</span>
+        </div>
+        <div className="tn3-preview-foot">Ver recomendações →</div>
+      </div>
+    )
+  }
+
+  return null
 }
 
 export function TopNav({ userName, userEmail, userInitials, userRole, userTheme }: Props) {
@@ -53,6 +186,9 @@ export function TopNav({ userName, userEmail, userInitials, userRole, userTheme 
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [hoveredTab, setHoveredTab] = useState<string | null>(null)
+  const [previewData, setPreviewData] = useState<NavPreviewData | null>(null)
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const settingsRef = useRef<HTMLDivElement>(null)
   const quickAddRef = useRef<HTMLDivElement>(null)
@@ -67,6 +203,13 @@ export function TopNav({ userName, userEmail, userInitials, userRole, userTheme 
     fetch('/api/recommendations/count')
       .then(r => r.json())
       .then(d => setPendingRecs(d.count ?? 0))
+      .catch(() => {})
+  }, [pathname])
+
+  useEffect(() => {
+    fetch('/api/nav-preview')
+      .then(r => r.json())
+      .then(d => setPreviewData(d))
       .catch(() => {})
   }, [pathname])
 
@@ -91,6 +234,29 @@ export function TopNav({ userName, userEmail, userInitials, userRole, userTheme 
     router.push('/login')
     router.refresh()
   }
+
+  const handleTabHover = useCallback((key: string | undefined) => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    if (!key) {
+      setHoveredTab(null)
+      return
+    }
+    hoverTimerRef.current = setTimeout(() => setHoveredTab(key), 300)
+  }, [])
+
+  const handleTabLeave = useCallback(() => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    hoverTimerRef.current = setTimeout(() => setHoveredTab(null), 150)
+  }, [])
+
+  const handlePreviewEnter = useCallback(() => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+  }, [])
+
+  const handlePreviewLeave = useCallback(() => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    setHoveredTab(null)
+  }, [])
 
   return (
     <>
@@ -269,24 +435,39 @@ export function TopNav({ userName, userEmail, userInitials, userRole, userTheme 
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
-            <Link
+            <div
               key={item.href}
-              href={item.href}
-              className={`tn3-tab${active ? ' active' : ''}`}
-              role="tab"
-              aria-selected={active}
+              className="tn3-tab-wrap"
+              onMouseEnter={() => handleTabHover(item.previewKey)}
+              onMouseLeave={handleTabLeave}
             >
-              <Icon name={item.icon} size={16} />
-              <span>{item.label}</span>
-              {item.href === '/recommendations' && pendingRecs > 0 && (
-                <span className="tn3-tab-badge-red">
-                  {pendingRecs > 9 ? '9+' : pendingRecs}
-                </span>
+              <Link
+                href={item.href}
+                className={`tn3-tab${active ? ' active' : ''}`}
+                role="tab"
+                aria-selected={active}
+              >
+                <Icon name={item.icon} size={16} />
+                <span>{item.label}</span>
+                {item.href === '/recommendations' && pendingRecs > 0 && (
+                  <span className="tn3-tab-badge-red">
+                    {pendingRecs > 9 ? '9+' : pendingRecs}
+                  </span>
+                )}
+                {item.href === '/reports' && (
+                  <span className="tn3-tab-badge-new">novo</span>
+                )}
+              </Link>
+              {item.previewKey && hoveredTab === item.previewKey && previewData && (
+                <div
+                  className="tn3-preview-anchor"
+                  onMouseEnter={handlePreviewEnter}
+                  onMouseLeave={handlePreviewLeave}
+                >
+                  <TabPreviewCard itemKey={item.previewKey} data={previewData} />
+                </div>
               )}
-              {item.href === '/reports' && (
-                <span className="tn3-tab-badge-new">novo</span>
-              )}
-            </Link>
+            </div>
           )
         })}
       </div>

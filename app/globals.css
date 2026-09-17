@@ -1426,6 +1426,123 @@ textarea.input { resize: vertical; line-height: 1.6; }
   border-radius: 4px;
 }
 
+/* ---------- Tab Preview Cards ---------- */
+
+.tn3-tab-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.tn3-preview-anchor {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  padding-top: 6px;
+}
+
+.tn3-preview-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  min-width: 240px;
+  max-width: 300px;
+  overflow: hidden;
+  animation: tn3PreviewIn 0.2s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes tn3PreviewIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tn3-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+.tn3-preview-header svg {
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.tn3-preview-list {
+  padding: 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tn3-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11.5px;
+}
+.tn3-preview-row:last-child {
+  border-bottom: none;
+}
+
+.tn3-preview-name {
+  flex: 1;
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tn3-preview-meta {
+  color: var(--muted);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.tn3-preview-time {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 10.5px;
+  flex-shrink: 0;
+  min-width: 36px;
+}
+
+.tn3-preview-tag {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  background: var(--card-hover);
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.tn3-preview-price {
+  color: var(--green);
+  font-weight: 600;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.tn3-preview-foot {
+  padding: 8px 14px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--gold);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
 /* ---------- Breadcrumbs ---------- */
 
 .breadcrumbs {
