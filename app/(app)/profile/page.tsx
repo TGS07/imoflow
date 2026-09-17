@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { CalendarFeedCard } from '@/components/profile/CalendarFeedCard'
 import { PushToggle } from '@/components/profile/PushToggle'
+import { LogoutButton } from '@/components/profile/LogoutButton'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -14,6 +15,7 @@ export default async function ProfilePage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <PushToggle />
         <CalendarFeedCard />
+        <LogoutButton />
       </div>
     </div>
   )
