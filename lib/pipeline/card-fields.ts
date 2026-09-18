@@ -1,28 +1,59 @@
 import type { Lead, PipelineCardField } from '@/types'
 
-export type PipelineCardFields = { primary: PipelineCardField; secondary: PipelineCardField }
+export type PipelineCardFields = {
+  primary: PipelineCardField
+  secondary: PipelineCardField
+  all: PipelineCardField[]
+}
 
-// Valor de um campo configurável do card; null quando o lead não o tem.
+const PROPERTY_TYPE_SHORT: Record<string, string> = {
+  apartamento: 'AP',
+  moradia: 'M',
+  terreno: 'T',
+  loja: 'Loja',
+  escritorio: 'Esc.',
+  armazem: 'Arm.',
+  outro: 'Outro',
+}
+
 export function cardFieldValue(lead: Lead, field: PipelineCardField): string | null {
   switch (field) {
-    // O contacto ligado é a fonte da verdade para o nome — lead.name é só
-    // uma cópia guardada na criação, que fica desatualizada se o contacto
-    // for renomeado depois.
     case 'name': return lead.people?.name ?? lead.name
+    case 'phone': return lead.people?.phone ?? lead.phone
+    case 'email': return lead.people?.email ?? lead.email
     case 'zone': return lead.zone
     case 'typology': return lead.typology
     case 'property': return lead.properties ? (lead.properties.reference ?? lead.properties.title) : null
+    case 'property_ref': return lead.properties?.reference ?? null
+    case 'property_type': {
+      const raw = lead.properties?.type ?? lead.property_type
+      return raw ? (PROPERTY_TYPE_SHORT[raw] ?? raw) : null
+    }
     case 'value': {
       const v = lead.deal_value ?? lead.budget
       return v ? `${(v / 1000).toFixed(0)}K€` : null
     }
+    case 'call_status': return null
+    case 'source': return lead.source
+    case 'notes': return lead.notes
   }
 }
 
-// Dias desde que o lead entrou na etapa atual. `stage_entered_at` é
-// reposto automaticamente pela base de dados sempre que `stage_id` muda
-// (trigger `leads_set_stage_entered_at`), por isso nunca precisa de ser
-// calculado/atualizado manualmente no cliente — só lido.
 export function daysInStage(lead: Lead): number {
   return Math.floor((Date.now() - new Date(lead.stage_entered_at).getTime()) / 86400000)
+}
+
+export const CARD_FIELD_LABELS: Record<PipelineCardField, string> = {
+  name: 'Nome',
+  phone: 'Telefone',
+  email: 'Email',
+  zone: 'Zona',
+  typology: 'Tipologia',
+  property: 'Imóvel',
+  property_ref: 'Ref. Imóvel',
+  property_type: 'Tipo (AP/M/T)',
+  value: 'Valor',
+  call_status: 'Estado chamada',
+  source: 'Fonte',
+  notes: 'Notas',
 }

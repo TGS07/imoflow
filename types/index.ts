@@ -25,7 +25,7 @@ export type User = {
   theme: 'light' | 'dark'
 }
 
-export type PipelineCardField = 'name' | 'zone' | 'property' | 'typology' | 'value'
+export type PipelineCardField = 'name' | 'phone' | 'email' | 'zone' | 'property' | 'typology' | 'value' | 'property_type' | 'property_ref' | 'call_status' | 'source' | 'notes'
 
 export type Pipeline = {
   id: string
@@ -34,6 +34,7 @@ export type Pipeline = {
   position: number
   card_primary_field: PipelineCardField
   card_secondary_field: PipelineCardField
+  card_fields: PipelineCardField[] | null
   created_at: string
 }
 
@@ -181,6 +182,8 @@ export type Lead = {
   organization_id: string | null
   property_id: string | null
   pipeline_id: string | null
+  property_type: import('./index').PropertyType | null
+  special_dates: { label: string; date: string }[]
   is_regular: boolean
   regular_interval_days: number | null
   calendar_sync_enabled: boolean

@@ -272,13 +272,22 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     }
   }
 
+  const [changingStage, setChangingStage] = useState<string | null>(null)
+
   async function changeLeadStage(leadId: string, stageId: string) {
-    await fetch(`/api/leads/${leadId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stage_id: stageId }),
-    })
-    fetchPerson(); onChanged?.()
+    setChangingStage(leadId)
+    try {
+      const res = await fetch(`/api/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage_id: stageId }),
+      })
+      if (!res.ok) { alert('Erro ao mudar de fase.'); return }
+      await fetchPerson()
+      onChanged?.()
+    } finally {
+      setChangingStage(null)
+    }
   }
 
   async function deletePerson() {
@@ -743,7 +752,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                          <select className="input" style={{ width: 'auto', minWidth: 140 }} value={lead.stage_id} onChange={e => changeLeadStage(lead.id, e.target.value)}>
+                          <select className="input" style={{ width: 'auto', minWidth: 140, opacity: changingStage === lead.id ? 0.5 : 1 }} disabled={changingStage === lead.id} value={lead.stage_id} onChange={e => changeLeadStage(lead.id, e.target.value)}>
                             {stages.filter(s => !s.is_lost).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                           </select>
                           <Link href={`/leads/${lead.id}`} style={{ fontSize: 'var(--fs-xs)', color: 'var(--gold)', fontWeight: 600, textDecoration: 'none' }}>Ver negócio completo →</Link>

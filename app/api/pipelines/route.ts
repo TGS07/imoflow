@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-const CARD_FIELDS = ['name', 'zone', 'property', 'typology', 'value'] as const
+const CARD_FIELDS = ['name', 'phone', 'email', 'zone', 'property', 'typology', 'value', 'property_type', 'property_ref', 'call_status', 'source', 'notes'] as const
 function parseCardField(v: unknown): string | undefined {
   return typeof v === 'string' && (CARD_FIELDS as readonly string[]).includes(v) ? v : undefined
 }
@@ -55,6 +55,10 @@ export async function POST(request: Request) {
   const insert: Record<string, unknown> = { agency_id: profile.agency_id, name, position }
   if (cardPrimary) insert.card_primary_field = cardPrimary
   if (cardSecondary) insert.card_secondary_field = cardSecondary
+  if (Array.isArray(body.card_fields)) {
+    const valid = body.card_fields.filter((f: unknown) => typeof f === 'string' && (CARD_FIELDS as readonly string[]).includes(f))
+    if (valid.length > 0) insert.card_fields = valid
+  }
 
   const { data, error } = await supabase
     .from('pipelines')
