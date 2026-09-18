@@ -57,14 +57,9 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
     if (!val) return null
     shown.add(field)
 
-    let badgeStyle: React.CSSProperties = { fontSize: 11, padding: '2px 8px', borderRadius: 6, whiteSpace: 'nowrap' as const }
-
-    if (field === 'value') {
-      badgeStyle = { ...badgeStyle, fontWeight: 500, color: '#059669', background: '#ECFDF5' }
-    } else if (field === 'typology' || field === 'property_type') {
-      badgeStyle = { ...badgeStyle, color: '#3B82F6', background: '#EFF6FF' }
-    } else {
-      badgeStyle = { ...badgeStyle, color: 'var(--muted)', background: 'var(--surface)', border: '1px solid var(--border)' }
+    const badgeStyle: React.CSSProperties = {
+      fontSize: 11, padding: '2px 8px', borderRadius: 6, whiteSpace: 'nowrap' as const,
+      color: 'var(--muted)', background: 'var(--surface)', border: '1px solid var(--border)',
     }
 
     return <span key={field} style={badgeStyle}>{val}</span>
@@ -286,7 +281,7 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
   useEffect(() => { setLeads(initialLeads) }, [initialLeads])
   useEffect(() => { clearSelection() }, [currentPipelineId])
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 10, tolerance: 5 } }))
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
   const visibleStages = stages.filter(s => !s.is_lost)
   const otherPipelines = (pipelines ?? []).filter(p => p.id !== currentPipelineId)
 
