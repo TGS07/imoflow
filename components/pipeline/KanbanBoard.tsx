@@ -218,7 +218,7 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
   async function bulkMoveToStage(stageId: string) {
     const ids = [...selectedIds]
     const previous = [...leads]
-    setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, stage_id: stageId } : l))
+    setLeads(prev => prev.map(l => ids.includes(l.id) ? { ...l, stage_id: stageId, stage_entered_at: new Date().toISOString() } : l))
     clearSelection()
     const res = await fetch('/api/leads/bulk', {
       method: 'PATCH',
@@ -226,6 +226,33 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
       body: JSON.stringify({ ids, stage_id: stageId }),
     })
     if (!res.ok) setLeads(previous)
+  }
+
+  async function bulkMoveToPipeline(pipelineId: string) {
+    const ids = [...selectedIds]
+    const previous = [...leads]
+    setLeads(prev => prev.filter(l => !ids.includes(l.id)))
+    clearSelection()
+    const results = await Promise.all(
+      ids.map(id => fetch(`/api/leads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pipeline_id: pipelineId }),
+      }))
+    )
+    if (results.some(r => !r.ok)) setLeads(previous)
+    else onCardUpdated?.()
+  }
+
+  function selectColumn(stageId: string) {
+    const stageLeadIds = leads.filter(l => l.stage_id === stageId).map(l => l.id)
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      const allSelected = stageLeadIds.every(id => next.has(id))
+      if (allSelected) stageLeadIds.forEach(id => next.delete(id))
+      else stageLeadIds.forEach(id => next.add(id))
+      return next
+    })
   }
 
   async function bulkRemove() {
@@ -327,7 +354,7 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
     if (!targetStageId || targetStageId === draggedLead.stage_id) return
 
     const previous = [...leads]
-    setLeads(prev => prev.map(l => l.id === draggedLead.id ? { ...l, stage_id: targetStageId } : l))
+    setLeads(prev => prev.map(l => l.id === draggedLead.id ? { ...l, stage_id: targetStageId, stage_entered_at: new Date().toISOString() } : l))
     const res = await fetch(`/api/leads/${draggedLead.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -362,7 +389,7 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
             background: 'var(--card)', border: '1px solid var(--gold)', borderRadius: 10,
           }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)' }}>{selectedIds.size} selecionado{selectedIds.size > 1 ? 's' : ''}</span>
-            <div style={{ display: 'flex', gap: 6, flex: 1 }}>
+            <div style={{ display: 'flex', gap: 6, flex: 1, flexWrap: 'wrap' }}>
               <select
                 className="input"
                 style={{ width: 'auto', fontSize: 12 }}
@@ -372,7 +399,18 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
                 <option value="">Mover para fase…</option>
                 {visibleStages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
-              <button onClick={bulkRemove} className="btn btn-ghost btn-sm" style={{ fontSize: 12, color: '#EF4444' }}>Remover da pipeline</button>
+              {otherPipelines.length > 0 && (
+                <select
+                  className="input"
+                  style={{ width: 'auto', fontSize: 12 }}
+                  value=""
+                  onChange={e => { if (e.target.value) bulkMoveToPipeline(e.target.value) }}
+                >
+                  <option value="">Enviar para pipeline…</option>
+                  {otherPipelines.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              )}
+              <button onClick={bulkRemove} className="btn btn-ghost btn-sm" style={{ fontSize: 12, color: '#EF4444' }}>Remover</button>
             </div>
             <button onClick={clearSelection} className="icon-btn" title="Limpar seleção" style={{ width: 20, height: 20 }}>
               <Icon name="close" size={12} />
@@ -387,6 +425,15 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
             return (
               <div key={stage.id} id={stage.id} className="kanban-column">
                 <div className="kanban-col-header">
+                  {stageLeads.length > 0 && (
+                    <input
+                      type="checkbox"
+                      checked={stageLeads.length > 0 && stageLeads.every(l => selectedIds.has(l.id))}
+                      onChange={() => selectColumn(stage.id)}
+                      title="Selecionar toda a coluna"
+                      style={{ width: 12, height: 12, cursor: 'pointer', accentColor: 'var(--gold)', flexShrink: 0 }}
+                    />
+                  )}
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: stage.color }} />
                   <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>{stage.name}</span>
                   <span className="kanban-col-count">{stageLeads.length}</span>
