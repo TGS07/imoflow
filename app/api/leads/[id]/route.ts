@@ -54,7 +54,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   let beforeQuery = supabase
     .from('leads')
-    .select('stage_id, name, assigned_to, agency_id, pipeline_stages(name)')
+    .select('stage_id, pipeline_id, name, assigned_to, agency_id, pipeline_stages(name)')
     .eq('id', id)
     .eq('agency_id', profile.agency_id)
   if (profile.role === 'agent') beforeQuery = beforeQuery.eq('assigned_to', user.id)
@@ -70,6 +70,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       .eq('agency_id', profile.agency_id)
       .maybeSingle()
     if (!property) leadData.property_id = null
+  }
+
+  const VALID_PROPERTY_TYPES = ['apartamento', 'moradia', 'terreno', 'loja', 'escritorio', 'armazem', 'outro']
+  if (leadData.property_type !== undefined && leadData.property_type !== null && !VALID_PROPERTY_TYPES.includes(leadData.property_type)) {
+    delete leadData.property_type
+  }
+
+  if (leadData.special_dates !== undefined && !Array.isArray(leadData.special_dates)) {
+    delete leadData.special_dates
+  }
+
+  if (leadData.pipeline_id && leadData.pipeline_id !== before.pipeline_id) {
+    const { data: firstStage } = await supabase
+      .from('pipeline_stages')
+      .select('id')
+      .eq('pipeline_id', leadData.pipeline_id)
+      .order('position', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    if (firstStage) leadData.stage_id = firstStage.id
   }
 
   let updateQuery = supabase

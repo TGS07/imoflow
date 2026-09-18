@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { LeadSource, CustomField, Person, Organization, Property, Pipeline, ContactDetails } from '@/types'
+import { LeadSource, CustomField, Person, Organization, Property, Pipeline, ContactDetails, PropertyType } from '@/types'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
 import { ContactFormFields, type Member } from '@/components/contacts/ContactFormFields'
 import type { ContactTypeKey } from '@/lib/contacts/constants'
@@ -20,6 +20,16 @@ const SOURCES: { value: LeadSource; label: string }[] = [
   { value: 'facebook', label: '📘 Facebook' },
   { value: 'referencia', label: '👤 Referência' },
   { value: 'outro', label: '◯ Outro' },
+]
+
+const PROPERTY_TYPES: { value: PropertyType; label: string }[] = [
+  { value: 'apartamento', label: 'Apartamento (AP)' },
+  { value: 'moradia', label: 'Moradia (M)' },
+  { value: 'terreno', label: 'Terreno (T)' },
+  { value: 'loja', label: 'Loja' },
+  { value: 'escritorio', label: 'Escritório' },
+  { value: 'armazem', label: 'Armazém' },
+  { value: 'outro', label: 'Outro' },
 ]
 
 export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues, defaultPipelineIds }: Props) {
@@ -54,6 +64,10 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
   // Pessoa criada durante esta sessão do modal — evita duplicar o contacto
   // se uma tentativa anterior de submissão falhar a meio (ex: erro ao criar
   // uma das leads) e o utilizador tentar submeter outra vez.
+  const [propertyType, setPropertyType] = useState<PropertyType | ''>('')
+  const [specialDates, setSpecialDates] = useState<{ label: string; date: string }[]>([])
+  const [newDateLabel, setNewDateLabel] = useState('')
+  const [newDateValue, setNewDateValue] = useState('')
   const [createdPersonId, setCreatedPersonId] = useState<string | null>(null)
   // Leads já criadas nesta sessão do modal, por pipeline — mesma lógica do
   // createdPersonId: evita duplicar leads das pipelines já bem-sucedidas se
@@ -274,6 +288,8 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
             organization_id: selectedOrg?.id ?? null,
             property_id: selectedProp?.id ?? null,
             pipeline_id: pipelineId,
+            property_type: propertyType || null,
+            special_dates: specialDates.length > 0 ? specialDates : [],
             custom_fields: Object.keys(cfValues).length > 0 ? cfValues : undefined,
           }),
         })
@@ -476,6 +492,40 @@ export function NewLeadModal({ onClose, onCreated, initialPerson, initialValues,
               onChange={e => setForm(p => ({ ...p, notes: e.target.value }))}
               rows={3}
             />
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 10, fontWeight: 600 }}>Tipo de imóvel</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {PROPERTY_TYPES.map(pt => (
+                <label key={pt.value} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', background: propertyType === pt.value ? 'var(--gold-glow)' : 'var(--surface)', cursor: 'pointer' }}>
+                  <input type="radio" name="property_type" checked={propertyType === pt.value} onChange={() => setPropertyType(pt.value)} style={{ accentColor: 'var(--gold)' }} />
+                  {pt.label}
+                </label>
+              ))}
+              {propertyType && (
+                <button type="button" onClick={() => setPropertyType('')} className="btn btn-ghost btn-sm" style={{ fontSize: 11, padding: '4px 8px' }}>Limpar</button>
+              )}
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 10, fontWeight: 600 }}>Datas especiais</div>
+            {specialDates.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
+                {specialDates.map((sd, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px' }}>
+                    <span style={{ flex: 1, fontWeight: 500 }}>{sd.label} — {new Date(sd.date).toLocaleDateString('pt-PT')}</span>
+                    <button type="button" onClick={() => setSpecialDates(prev => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input style={{ ...inputStyle, flex: 2, minWidth: 100 }} placeholder="Ex: Visita, Escritura..." value={newDateLabel} onChange={e => setNewDateLabel(e.target.value)} />
+              <input type="date" style={{ ...inputStyle, flex: 1 }} value={newDateValue} onChange={e => setNewDateValue(e.target.value)} />
+              <button type="button" disabled={!newDateLabel.trim() || !newDateValue} onClick={() => { setSpecialDates(prev => [...prev, { label: newDateLabel.trim(), date: newDateValue }]); setNewDateLabel(''); setNewDateValue('') }} className="btn btn-soft btn-sm" style={{ height: 'auto', whiteSpace: 'nowrap' }}>+ Adicionar</button>
+            </div>
           </div>
 
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>

@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { useDroppable } from '@dnd-kit/core'
 import { HelpButton } from '@/components/help/HelpButton'
-import { Lead, PipelineStage, Pipeline } from '@/types'
+import { Lead, PipelineStage, Pipeline, PipelineCardField } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { PropertyPickerModal } from '@/components/pipeline/PropertyPickerModal'
@@ -177,8 +178,14 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
             key={selectedId}
             initialLeads={leads}
             stages={stages}
+            pipelines={pipelines}
+            currentPipelineId={selectedId}
             onOpenContact={(personId, leadId) => setOpenContact({ personId, leadId })}
-            cardFields={{ primary: selected?.card_primary_field ?? 'name', secondary: selected?.card_secondary_field ?? 'zone' }}
+            cardFields={{
+              primary: selected?.card_primary_field ?? 'name',
+              secondary: selected?.card_secondary_field ?? 'zone',
+              all: selected?.card_fields ?? [selected?.card_primary_field ?? 'name', selected?.card_secondary_field ?? 'zone'],
+            }}
             onDuplicated={() => selectedId && loadBoard(selectedId)}
             onCardUpdated={() => selectedId && loadBoard(selectedId)}
           />

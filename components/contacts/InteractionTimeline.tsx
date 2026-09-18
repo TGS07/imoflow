@@ -7,6 +7,14 @@ import { AudioRecorder } from '@/components/shared/AudioRecorder'
 const TYPES = [['chamada','Chamada'],['visita','Visita'],['email','Email'],['whatsapp','WhatsApp'],['nota','Nota']] as const
 const VALID_TYPES = TYPES.map(([v]) => v as string)
 
+const CALL_QUICK_OPTIONS = [
+  { label: 'Atendeu', note: 'Atendeu a chamada' },
+  { label: 'Não atendeu', note: 'Não atendeu a chamada' },
+  { label: 'Não atendeu 2x', note: 'Não atendeu a chamada (2ª tentativa)' },
+  { label: 'Caixa de correio', note: 'Chamada foi para caixa de correio' },
+  { label: 'Número errado', note: 'Número de telefone errado/inválido' },
+] as const
+
 export function InteractionTimeline({ personId, onLogged }: { personId: string; onLogged?: () => void }) {
   const [items, setItems] = useState<ContactInteraction[]>([])
   const [type, setType] = useState('chamada')
@@ -42,7 +50,7 @@ export function InteractionTimeline({ personId, onLogged }: { personId: string; 
   return (
     <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
       <div className="font-display" style={{ fontSize: 15, marginBottom: 14 }}>Interações</div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
         <select className="input" value={type} onChange={e => setType(e.target.value)} style={{ width: 130 }}>
           {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
@@ -58,6 +66,20 @@ export function InteractionTimeline({ personId, onLogged }: { personId: string; 
         </button>
         <button className="btn btn-primary" onClick={add} disabled={saving}>Registar</button>
       </div>
+      {type === 'chamada' && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+          {CALL_QUICK_OPTIONS.map(opt => (
+            <button
+              key={opt.label}
+              type="button"
+              className="chip"
+              disabled={saving}
+              onClick={() => { setNote(opt.note); setType('chamada') }}
+              style={{ fontSize: 11, padding: '4px 10px', cursor: 'pointer' }}
+            >{opt.label}</button>
+          ))}
+        </div>
+      )}
       {showRecorder && (
         <div style={{ border: '1px dashed var(--border)', borderRadius: 10, marginBottom: 14 }}>
           <AudioRecorder entity="interaction" hint="Descreve a interação em voz alta — a IA preenche o tipo e a nota para confirmares." onExtracted={applyVoice} />

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-const CARD_FIELDS = ['name', 'zone', 'property', 'typology', 'value'] as const
+const CARD_FIELDS = ['name', 'phone', 'email', 'zone', 'property', 'typology', 'value', 'property_type', 'property_ref', 'call_status', 'source', 'notes'] as const
 function parseCardField(v: unknown): string | undefined {
   return typeof v === 'string' && (CARD_FIELDS as readonly string[]).includes(v) ? v : undefined
 }
@@ -30,6 +30,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (cardPrimary) update.card_primary_field = cardPrimary
   if (cardSecondary) update.card_secondary_field = cardSecondary
+  if (Array.isArray(body.card_fields)) {
+    const valid = body.card_fields.filter((f: unknown) => typeof f === 'string' && (CARD_FIELDS as readonly string[]).includes(f))
+    if (valid.length > 0) update.card_fields = valid
+  }
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'Nada a atualizar' }, { status: 400 })
 
   const { data, error } = await supabase

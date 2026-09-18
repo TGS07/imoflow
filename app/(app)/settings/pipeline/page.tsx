@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { HelpButton } from '@/components/help/HelpButton'
 import { Icon } from '@/components/ui/Icon'
 import { StageNotificationsModal } from '@/components/pipeline/StageNotificationsModal'
@@ -57,6 +57,24 @@ const FIELD_TYPES = [
   { value: 'boolean', label: 'Sim/Não' },
   { value: 'currency', label: 'Moeda' },
 ]
+
+function BlurInput({ value, onCommit, style, type, min, max }: { value: string | number; onCommit: (v: string) => void; style?: React.CSSProperties; type?: string; min?: number; max?: number }) {
+  const [local, setLocal] = useState(String(value))
+  const prev = useRef(String(value))
+  useEffect(() => { setLocal(String(value)); prev.current = String(value) }, [value])
+  return (
+    <input
+      type={type}
+      min={min}
+      max={max}
+      style={style}
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={() => { if (local !== prev.current) onCommit(local) }}
+      onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+    />
+  )
+}
 
 export default function PipelineSettingsPage() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
@@ -292,18 +310,18 @@ export default function PipelineSettingsPage() {
                     </div>
                   )}
                 </div>
-                <input
+                <BlurInput
                   style={{ ...inputStyle, flex: 1 }}
                   value={stage.name}
-                  onChange={e => updateStage(stage.id, { name: e.target.value })}
+                  onCommit={v => updateStage(stage.id, { name: v })}
                 />
                 <div className="stage-prob hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--muted)', minWidth: 80 }}>
-                  <input
+                  <BlurInput
                     type="number"
                     min={0}
                     max={100}
                     value={stage.probability}
-                    onChange={e => updateStage(stage.id, { probability: Number(e.target.value) })}
+                    onCommit={v => updateStage(stage.id, { probability: Number(v) })}
                     style={{ ...inputStyle, width: 50, textAlign: 'center' as const }}
                   />
                   <span>%</span>
