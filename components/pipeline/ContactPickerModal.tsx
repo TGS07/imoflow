@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import type { Person } from '@/types'
+import { CONTACT_TYPES, type ContactTypeKey } from '@/lib/contacts/constants'
 
 type PropertyRef = { id: string; title: string; reference: string | null }
 type PersonWithProperties = Person & {
@@ -36,6 +37,7 @@ export function ContactPickerModal({ pipelineId, pipelineName, alreadyInIds, onC
 }) {
   const [people, setPeople] = useState<Person[]>([])
   const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState<ContactTypeKey | null>(null)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
   const [step, setStep] = useState<'select' | 'choose-property'>('select')
@@ -52,14 +54,18 @@ export function ContactPickerModal({ pipelineId, pipelineName, alreadyInIds, onC
   }, [])
 
   const filtered = useMemo(() => {
+    let result = people
+    if (typeFilter) {
+      result = result.filter(p => p.types?.includes(typeFilter))
+    }
     const term = search.trim().toLowerCase()
-    if (!term) return people
+    if (!term) return result
     const digits = term.replace(/\D/g, '')
-    return people.filter(p =>
+    return result.filter(p =>
       p.name.toLowerCase().includes(term) ||
       (digits && (() => { const stored = (p.phone ?? '').replace(/\D/g, ''); return !!stored && (stored.includes(digits) || digits.includes(stored)) })())
     )
-  }, [people, search])
+  }, [people, search, typeFilter])
 
   function toggle(id: string) {
     if (alreadyInIds.has(id)) return
@@ -169,6 +175,27 @@ export function ContactPickerModal({ pipelineId, pipelineName, alreadyInIds, onC
             <button onClick={onClose} aria-label="Fechar" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>✕</button>
           </div>
           <input className="input" placeholder="Pesquisar por nome ou telefone…" value={search} onChange={e => setSearch(e.target.value)} autoFocus />
+          <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+            {CONTACT_TYPES.map(ct => {
+              const active = typeFilter === ct.key
+              return (
+                <button
+                  key={ct.key}
+                  type="button"
+                  onClick={() => setTypeFilter(active ? null : ct.key)}
+                  style={{
+                    fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, cursor: 'pointer',
+                    border: `1px solid ${active ? ct.color : 'var(--border)'}`,
+                    background: active ? `${ct.color}18` : 'transparent',
+                    color: active ? ct.color : 'var(--muted)',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {ct.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <div style={{ overflowY: 'auto', flex: 1, minHeight: 0, padding: '8px 10px' }}>

@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 
 interface Notification {
@@ -30,12 +31,16 @@ function timeAgo(dateStr: string): string {
   return `há ${Math.floor(hours / 24)}d`
 }
 
+type PanelPos = { top?: number; bottom?: number; left?: number; right?: number }
+
 export function NotificationBell() {
   const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [panelPos, setPanelPos] = useState<PanelPos>({ top: 0, right: 0 })
 
   async function fetchNotifications() {
     try {
@@ -57,13 +62,51 @@ export function NotificationBell() {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
         setOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const computePosition = useCallback(() => {
+    const btn = wrapRef.current?.querySelector('button')
+    if (!btn) return
+    const rect = btn.getBoundingClientRect()
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const panelW = Math.min(360, vw - 24)
+    const panelMaxH = 480
+    const margin = 8
+
+    const inBottomHalf = rect.bottom > vh / 2
+
+    const pos: PanelPos = {}
+
+    if (inBottomHalf) {
+      pos.bottom = vh - rect.top + margin
+    } else {
+      pos.top = rect.bottom + margin
+    }
+
+    const spaceRight = vw - rect.left
+    if (spaceRight >= panelW + margin) {
+      pos.left = rect.left
+    } else {
+      pos.right = margin
+    }
+
+    setPanelPos(pos)
+  }, [])
+
+  useEffect(() => {
+    if (open) {
+      computePosition()
+      window.addEventListener('resize', computePosition)
+      return () => window.removeEventListener('resize', computePosition)
+    }
+  }, [open, computePosition])
 
   async function markAsRead(id: string) {
     await fetch(`/api/notifications/${id}/read`, { method: 'PATCH' })
@@ -83,8 +126,165 @@ export function NotificationBell() {
     if (n.link) router.push(n.link)
   }
 
+  const panel = open ? (
+    <div
+      ref={panelRef}
+      style={{
+        position: 'fixed',
+        ...(panelPos.top != null ? { top: panelPos.top } : {}),
+        ...(panelPos.bottom != null ? { bottom: panelPos.bottom } : {}),
+        ...(panelPos.left != null ? { left: panelPos.left } : {}),
+        ...(panelPos.right != null ? { right: panelPos.right } : {}),
+        width: 'min(360px, calc(100vw - 24px))',
+        maxHeight: 'min(480px, calc(100vh - 24px))',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 14,
+        boxShadow: '0 16px 48px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.10)',
+        zIndex: 9999,
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '14px 18px',
+        borderBottom: '1px solid var(--border)',
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Notificações</span>
+          {unreadCount > 0 && (
+            <span style={{
+              fontSize: 10,
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #C9A84C, #8B6F30)',
+              color: '#fff',
+              borderRadius: 10,
+              padding: '2px 7px',
+              minWidth: 18,
+              textAlign: 'center',
+            }}>
+              {unreadCount}
+            </span>
+          )}
+        </div>
+        {unreadCount > 0 && (
+          <button
+            onClick={markAllAsRead}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 11,
+              color: 'var(--gold)',
+              fontWeight: 500,
+              fontFamily: 'var(--font-body)',
+            }}
+          >
+            Marcar todas como lidas
+          </button>
+        )}
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        {notifications.length === 0 ? (
+          <div style={{ padding: '32px 18px', textAlign: 'center' }}>
+            <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.5 }}>🔔</div>
+            <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
+              Sem notificações de momento
+            </p>
+          </div>
+        ) : (
+          notifications.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => handleNotificationClick(n)}
+              style={{
+                display: 'flex',
+                gap: 12,
+                padding: '14px 18px',
+                width: '100%',
+                textAlign: 'left',
+                background: n.read ? 'transparent' : 'var(--gold-glow)',
+                border: 'none',
+                borderBottom: '1px solid var(--border)',
+                cursor: 'pointer',
+                transition: 'background 0.12s ease',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              <div style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                background: n.read ? 'var(--bg)' : 'rgba(176,125,46,0.12)',
+                border: n.read ? '1px solid var(--border)' : '1px solid rgba(176,125,46,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 15,
+                flexShrink: 0,
+              }}>
+                {TYPE_ICONS[n.type]}
+              </div>
+              <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}>
+                  <p style={{
+                    margin: 0,
+                    fontWeight: n.read ? 400 : 600,
+                    fontSize: 13,
+                    color: 'var(--text)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {n.title}
+                  </p>
+                  <span style={{ fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>
+                    {timeAgo(n.created_at)}
+                  </span>
+                </div>
+                <p style={{
+                  margin: '3px 0 0',
+                  fontSize: 12,
+                  color: 'var(--muted)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  lineHeight: 1.4,
+                }}>
+                  {n.body}
+                </p>
+                {!n.read && (
+                  <div style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: 'var(--gold)',
+                    position: 'absolute',
+                    right: 0,
+                    top: 0,
+                  }} />
+                )}
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  ) : null
+
   return (
-    <div ref={dropdownRef} style={{ position: 'relative' }}>
+    <div ref={wrapRef} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="notification-bell-btn"
@@ -132,153 +332,7 @@ export function NotificationBell() {
         )}
       </button>
 
-      {open && (
-        <div style={{
-          position: 'fixed',
-          right: 12,
-          top: 52,
-          width: 'min(360px, calc(100vw - 24px))',
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 14,
-          boxShadow: '0 16px 48px rgba(60,44,18,0.14), 0 4px 12px rgba(60,44,18,0.06)',
-          zIndex: 50,
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '14px 18px',
-            borderBottom: '1px solid var(--border)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>Notificações</span>
-              {unreadCount > 0 && (
-                <span style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  background: 'linear-gradient(135deg, #C9A84C, #8B6F30)',
-                  color: '#fff',
-                  borderRadius: 10,
-                  padding: '2px 7px',
-                  minWidth: 18,
-                  textAlign: 'center',
-                }}>
-                  {unreadCount}
-                </span>
-              )}
-            </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 11,
-                  color: 'var(--gold)',
-                  fontWeight: 500,
-                  fontFamily: 'var(--font-body)',
-                }}
-              >
-                Marcar todas como lidas
-              </button>
-            )}
-          </div>
-
-          <div style={{ maxHeight: 420, overflowY: 'auto' }}>
-            {notifications.length === 0 ? (
-              <div style={{ padding: '32px 18px', textAlign: 'center' }}>
-                <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.5 }}>🔔</div>
-                <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
-                  Sem notificações de momento
-                </p>
-              </div>
-            ) : (
-              notifications.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => handleNotificationClick(n)}
-                  style={{
-                    display: 'flex',
-                    gap: 12,
-                    padding: '14px 18px',
-                    width: '100%',
-                    textAlign: 'left',
-                    background: n.read ? 'transparent' : 'var(--gold-glow)',
-                    border: 'none',
-                    borderBottom: '1px solid var(--border)',
-                    cursor: 'pointer',
-                    transition: 'background 0.12s ease',
-                    fontFamily: 'var(--font-body)',
-                  }}
-                >
-                  <div style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
-                    background: n.read ? 'var(--bg)' : 'rgba(176,125,46,0.12)',
-                    border: n.read ? '1px solid var(--border)' : '1px solid rgba(176,125,46,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 15,
-                    flexShrink: 0,
-                  }}>
-                    {TYPE_ICONS[n.type]}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                    }}>
-                      <p style={{
-                        margin: 0,
-                        fontWeight: n.read ? 400 : 600,
-                        fontSize: 13,
-                        color: 'var(--text)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {n.title}
-                      </p>
-                      <span style={{ fontSize: 10, color: 'var(--muted)', flexShrink: 0 }}>
-                        {timeAgo(n.created_at)}
-                      </span>
-                    </div>
-                    <p style={{
-                      margin: '3px 0 0',
-                      fontSize: 12,
-                      color: 'var(--muted)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      lineHeight: 1.4,
-                    }}>
-                      {n.body}
-                    </p>
-                    {!n.read && (
-                      <div style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: 'var(--gold)',
-                        position: 'absolute',
-                        right: 18,
-                        marginTop: -14,
-                      }} />
-                    )}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+      {typeof document !== 'undefined' && panel && createPortal(panel, document.body)}
     </div>
   )
 }

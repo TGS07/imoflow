@@ -8,6 +8,7 @@ type IconName =
   | 'user' | 'palette' | 'keyboard' | 'message' | 'crown'
   | 'plug' | 'robot' | 'template' | 'credit-card' | 'arrow-right'
   | 'chevron-right' | 'user-plus' | 'home-plus' | 'calendar-plus'
+  | 'layout-top' | 'layout-side'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   dashboard: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
@@ -60,6 +61,8 @@ const PATHS: Record<IconName, React.ReactNode> = {
   'user-plus': <><circle cx="10" cy="8" r="4" /><path d="M4 20c0-3.5 2.7-6 6-6s6 2.5 6 6" /><path d="M19 8v6M22 11h-6" /></>,
   'home-plus': <><path d="M3.5 10.5 12 3.5l8.5 7" /><path d="M5.5 9.5V20a1 1 0 0 0 1 1h4" /><path d="M18.5 9.5V13" /><path d="M17 16v4M15 18h4" /></>,
   'calendar-plus': <><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M12 14v3M10.5 15.5h3" /></>,
+  'layout-top': <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></>,
+  'layout-side': <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /></>,
 }
 
 type Props = {

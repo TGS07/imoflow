@@ -102,12 +102,12 @@ export default function OrganizationsPage() {
         </div>
       )}
 
-      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div>
+      <div className="page-pad" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
           <h1 className="font-display" style={{ fontSize: 20 }}>Organizações <HelpButton section="organizations" /></h1>
           <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>{orgs.length} organizações</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn btn-primary">+ Nova Organização</button>
+        <button onClick={() => setShowForm(true)} className="btn btn-primary" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>+ Nova Organização</button>
       </div>
 
       <div className="page-pad" style={{ padding: '20px 32px' }}>

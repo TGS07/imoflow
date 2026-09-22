@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, type MouseEvent as ReactMouseEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Person } from '@/types'
@@ -296,6 +296,22 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     if (embedded) { onChanged?.(); onClose?.() } else { router.push('/people') }
   }
 
+  const [copiedField, setCopiedField] = useState<string | null>(null)
+  async function copyToClipboard(text: string, fieldKey: string, e: ReactMouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(fieldKey)
+      setTimeout(() => setCopiedField(prev => prev === fieldKey ? null : prev), 1500)
+    } catch {}
+  }
+
+  function stripCountryCode(phone: string): string {
+    const normalized = phone.replace(/\D/g, '')
+    if (normalized.startsWith('351') && normalized.length > 9) return normalized.slice(3)
+    return normalized
+  }
 
   if (!person) {
     return (
@@ -488,11 +504,33 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
               {cardTitle('Contacto')}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {field('Email',
-                  person.email ? <a href={`mailto:${person.email}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--fs-base)', color: 'var(--gold)', textDecoration: 'none' }}>{person.email}</a> : fieldValue(null),
+                  person.email ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <a href={`mailto:${person.email}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--fs-base)', color: 'var(--gold)', textDecoration: 'none', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</a>
+                      <button onClick={(e) => copyToClipboard(person.email!, 'email', e)} className="copy-field-btn" title="Copiar email" aria-label="Copiar email">
+                        {copiedField === 'email' ? (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                        )}
+                      </button>
+                    </div>
+                  ) : fieldValue(null),
                   <input className="input" type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
                 )}
                 {field('Telefone',
-                  person.phone ? <a href={`tel:${person.phone}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--fs-base)', color: 'var(--gold)', textDecoration: 'none' }}>{formatPhoneDisplay(person.phone)}</a> : fieldValue(null),
+                  person.phone ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <a href={`tel:${person.phone}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--fs-base)', color: 'var(--gold)', textDecoration: 'none' }}>{formatPhoneDisplay(person.phone)}</a>
+                      <button onClick={(e) => copyToClipboard(stripCountryCode(person.phone!), 'phone', e)} className="copy-field-btn" title="Copiar número (sem indicativo)" aria-label="Copiar número sem indicativo">
+                        {copiedField === 'phone' ? (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                        )}
+                      </button>
+                    </div>
+                  ) : fieldValue(null),
                   <input className="input" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} onBlur={() => setForm(p => ({ ...p, phone: p.phone.trim() ? formatPhoneDisplay(p.phone) : p.phone }))} />
                 )}
                 {field('Morada',

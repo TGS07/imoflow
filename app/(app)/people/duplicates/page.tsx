@@ -82,7 +82,7 @@ export default function DuplicatesPage() {
             {groups.map(group => (
               <div key={group.phone} className="card" style={{ padding: 18 }}>
                 <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>{formatPhoneDisplay(group.phone)}</div>
-                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${group.people.length}, 1fr)`, gap: 12 }}>
+                <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: `repeat(${group.people.length}, 1fr)`, gap: 12 }}>
                   {group.people.map(p => (
                     <div key={p.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</div>

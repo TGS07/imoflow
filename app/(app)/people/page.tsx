@@ -3,12 +3,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { HelpButton } from '@/components/help/HelpButton'
 import { useRouter } from 'next/navigation'
 import type { Person } from '@/types'
-import { CONTACT_TYPES, capacityMeta, type ContactTypeKey } from '@/lib/contacts/constants'
+import { CONTACT_TYPES, capacityMeta, contactTypeMeta, avatarColor, type ContactTypeKey } from '@/lib/contacts/constants'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { NewContactModal } from '@/components/contacts/NewContactModal'
 import { ContactFilters, EMPTY_FILTERS, applyContactFilters, type ContactFilterState } from '@/components/contacts/ContactFilters'
 import { buildWaLink, formatPhoneDisplay, normalizePhone } from '@/lib/whatsapp/utils'
+import { Icon } from '@/components/ui/Icon'
+
+const STALE_DAYS = 10
 
 function daysSince(iso: string | null): number | null {
   if (!iso) return null
@@ -22,62 +24,41 @@ function relativeContact(iso: string | null): string {
   return `Há ${d} dias`
 }
 
-
-function PreviewLine({ p }: { p: Person }) {
-  const dot = <span style={{ color: 'var(--border-strong)' }}> · </span>
+function SummaryLine({ p }: { p: Person }) {
+  const dot = ' · '
   const t = p.types ?? []
-  const dim: React.CSSProperties = { fontSize: 12, color: 'var(--muted)', marginTop: 4 }
 
   if (t.includes('vendedor') || (t.includes('investidor') && (p.details?.selling_property || p.details?.selling_zone))) {
-    const stale = p.details?.is_active_seller && (() => { const d = daysSince(p.last_interaction_at); return d == null || d > 10 })()
-    return (
-      <div style={{ ...dim, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span>
-          {p.details?.selling_property || '—'}
-          {p.details?.selling_zone && <>{dot}{p.details.selling_zone}</>}
-          {p.details?.selling_price != null && <>{dot}€{p.details.selling_price.toLocaleString('pt-PT')}</>}
-          {dot}Último contacto: {relativeContact(p.last_interaction_at)}
-        </span>
-        {stale && (
-          <span style={{ fontSize: 11, fontWeight: 600, color: '#EF4444', background: 'rgba(239,68,68,0.1)', borderRadius: 6, padding: '2px 8px' }}>
-            ⚠ Sem contacto há +10 dias
-          </span>
-        )}
-      </div>
-    )
+    const parts: string[] = []
+    if (p.details?.selling_property) parts.push(p.details.selling_property)
+    if (p.details?.selling_zone) parts.push(p.details.selling_zone)
+    if (p.details?.selling_price != null) parts.push(`€${p.details.selling_price.toLocaleString('pt-PT')}`)
+    return <span>{parts.join(dot) || '—'}</span>
   }
 
   if (t.includes('comprador') || t.includes('investidor')) {
-    return (
-      <div style={dim}>
-        {p.details?.looking_for || '—'}
-        {p.details?.search_zone && <>{dot}{p.details.search_zone}</>}
-        {capacityMeta(p.financial_capacity)?.label && <>{dot}{capacityMeta(p.financial_capacity)?.label}</>}
-      </div>
-    )
+    const parts: string[] = []
+    if (p.details?.looking_for) parts.push(p.details.looking_for)
+    if (p.details?.search_zone) parts.push(p.details.search_zone)
+    if (capacityMeta(p.financial_capacity)?.label) parts.push(capacityMeta(p.financial_capacity)!.label)
+    return <span>{parts.join(dot) || '—'}</span>
   }
 
   if (t.includes('consultor')) {
-    return (
-      <div style={dim}>
-        {p.details?.agency_name || '—'}
-        {p.details?.working_zone && <>{dot}{p.details.working_zone}</>}
-        {(p.email || p.phone) && <>{dot}{p.email ?? (p.phone ? formatPhoneDisplay(p.phone) : p.phone)}</>}
-      </div>
-    )
+    const parts: string[] = []
+    if (p.details?.agency_name) parts.push(p.details.agency_name)
+    if (p.details?.working_zone) parts.push(p.details.working_zone)
+    return <span>{parts.join(dot) || '—'}</span>
   }
 
   if (t.includes('servico')) {
-    return (
-      <div style={dim}>
-        {p.details?.service_type || '—'}
-        {p.details?.working_zone && <>{dot}{p.details.working_zone}</>}
-        {(p.email || p.phone) && <>{dot}{p.email ?? (p.phone ? formatPhoneDisplay(p.phone) : p.phone)}</>}
-      </div>
-    )
+    const parts: string[] = []
+    if (p.details?.service_type) parts.push(p.details.service_type)
+    if (p.details?.working_zone) parts.push(p.details.working_zone)
+    return <span>{parts.join(dot) || '—'}</span>
   }
 
-  return <div style={dim}>{p.email ?? (p.phone ? formatPhoneDisplay(p.phone) : p.phone) ?? '—'}</div>
+  return <span>—</span>
 }
 
 export default function PeoplePage() {
@@ -144,23 +125,34 @@ export default function PeoplePage() {
         />
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
-          <div>
-            <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Contactos <HelpButton section="people" /></h1>
-            <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>{visible.length} contactos</p>
+      {/* Header */}
+      <div className="contacts-header">
+        <div style={{ minWidth: 0 }}>
+          <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>
+            Contactos <HelpButton section="people" />
+          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 'var(--space-1)', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)' }}>{visible.length} contactos</span>
             {duplicateCount > 0 && (
-              <a href="/people/duplicates" style={{ fontSize: 'var(--fs-sm)', color: 'var(--amber)', fontWeight: 600, textDecoration: 'none' }}>⚠ {duplicateCount} duplicado(s)</a>
+              <a href="/people/duplicates" className="contacts-dup-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5.3" /><circle cx="18" cy="18" r="4" /><path d="M18 16v4" /><circle cx="18" cy="21.5" r=".3" /></svg>
+                {duplicateCount} duplicado{duplicateCount > 1 ? 's' : ''}
+              </a>
             )}
           </div>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">+ Novo Contacto</button>
         </div>
+        <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <Icon name="user-plus" size={15} />
+          <span className="contacts-btn-label">Novo Contacto</span>
+        </button>
+      </div>
 
-        <div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+      {/* Filters + Search row */}
+      <div className="contacts-toolbar">
+        <div className="contacts-chips">
           <button
             onClick={() => setActiveTypes([])}
             className={`chip${activeTypes.length === 0 ? ' active' : ''}`}
-            style={{ padding: '6px 14px' }}
           >
             Todos
           </button>
@@ -171,91 +163,200 @@ export default function PeoplePage() {
                 key={meta.key}
                 onClick={() => toggleType(meta.key)}
                 className="chip"
-                style={{ padding: '6px 14px', ...(active ? { background: `${meta.color}18`, color: meta.color, borderColor: `${meta.color}66` } : {}) }}
+                style={active ? { background: `${meta.color}18`, color: meta.color, borderColor: `${meta.color}66` } : undefined}
               >
                 {meta.plural}
               </button>
             )
           })}
         </div>
-
-        <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-          <input
-            className="input"
-            placeholder="Pesquisar por nome, telefone, zona…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ flex: 1 }}
-          />
-          <button onClick={() => setShowFilters(s => !s)} className="btn btn-ghost">Filtros</button>
+        <div className="contacts-search-row">
+          <div className="contacts-search-wrap">
+            <Icon name="search" size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
+            <input
+              className="contacts-search-input"
+              placeholder="Pesquisar…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <button onClick={() => setShowFilters(s => !s)} className="btn btn-ghost" style={{ fontSize: 12, padding: '6px 12px' }}>
+            <Icon name="settings" size={13} />
+            Filtros
+          </button>
         </div>
-
-        {showFilters && (
-          <ContactFilters value={filters} onChange={setFilters} onClose={() => setShowFilters(false)} />
-        )}
-
-        {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {[0, 1, 2, 3].map(i => (
-              <div key={i} className="skeleton" style={{ height: 72, borderRadius: 12 }} />
-            ))}
-          </div>
-        ) : visible.length === 0 ? (
-          <div className="card" style={{ overflow: 'hidden' }}>
-            {filtering ? (
-              <EmptyState illustration="search" title="Nenhum resultado" description="Não encontrámos contactos com esses critérios." />
-            ) : (
-              <EmptyState illustration="people" title="Ainda não tens contactos" description="Cria o teu primeiro contacto para começar a organizar compradores, vendedores e investidores." action={{ label: '+ Novo Contacto', onClick: () => setShowModal(true) }} />
-            )}
-          </div>
-        ) : (
-          <div className="stagger" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {visible.map(p => (
-              <div
-                key={p.id}
-                className="card"
-                onClick={() => router.push(`/people/${p.id}`)}
-                style={{ padding: 16, cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 12 }}
-              >
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                  {p.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
-                </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{p.name}</div>
-                    <ContactTypeChips types={p.types ?? []} />
-                  </div>
-                  <PreviewLine p={p} />
-                </div>
-                {p.phone && (
-                  <div className="quick-actions" style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                    <a
-                      href={`tel:${p.phone}`}
-                      onClick={e => e.stopPropagation()}
-                      aria-label="Ligar"
-                      title="Ligar"
-                      style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', textDecoration: 'none', fontSize: 14 }}
-                    >
-                      📞
-                    </a>
-                    <a
-                      href={buildWaLink(p.phone, `Olá ${p.name.split(' ')[0]}!`)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={e => e.stopPropagation()}
-                      aria-label="WhatsApp"
-                      title="WhatsApp"
-                      style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.3)', color: '#25D366', textDecoration: 'none', fontSize: 14 }}
-                    >
-                      💬
-                    </a>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {showFilters && (
+        <ContactFilters value={filters} onChange={setFilters} onClose={() => setShowFilters(false)} />
+      )}
+
+      {/* Content */}
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {[0, 1, 2, 3, 4].map(i => (
+            <div key={i} className="skeleton" style={{ height: 56, borderRadius: 0 }} />
+          ))}
+        </div>
+      ) : visible.length === 0 ? (
+        <div className="card" style={{ overflow: 'hidden' }}>
+          {filtering ? (
+            <EmptyState illustration="search" title="Nenhum resultado" description="Não encontrámos contactos com esses critérios." />
+          ) : (
+            <EmptyState illustration="people" title="Ainda não tens contactos" description="Cria o teu primeiro contacto para começar a organizar compradores, vendedores e investidores." action={{ label: '+ Novo Contacto', onClick: () => setShowModal(true) }} />
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="contacts-table-wrap">
+            <table className="contacts-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th className="contacts-col-type">Tipo</th>
+                  <th className="contacts-col-phone">Telefone</th>
+                  <th className="contacts-col-last">Último Contacto</th>
+                  <th className="contacts-col-actions">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map(p => {
+                  const days = daysSince(p.last_interaction_at)
+                  const stale = days != null && days > STALE_DAYS
+                  const initials = p.name.split(' ').map(n => n[0]).slice(0, 2).join('')
+                  const primaryType = (p.types ?? [])[0]
+                  const typeMeta = primaryType ? contactTypeMeta(primaryType) : null
+                  const ac = avatarColor(p.name, p.types)
+
+                  return (
+                    <tr key={p.id} onClick={() => router.push(`/people/${p.id}`)}>
+                      <td>
+                        <div className="contacts-name-cell">
+                          <div className="contacts-avatar" style={{ background: ac.bg, color: ac.text }}>{initials}</div>
+                          <div className="contacts-name-info">
+                            <span className="contacts-name">{p.name}</span>
+                            <span className="contacts-summary"><SummaryLine p={p} /></span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="contacts-col-type">
+                        {typeMeta ? (
+                          <span className="contacts-type-badge" style={{ background: `${typeMeta.color}18`, color: typeMeta.color, borderColor: `${typeMeta.color}33` }}>
+                            {typeMeta.label}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--muted)', fontSize: 12 }}>—</span>
+                        )}
+                      </td>
+                      <td className="contacts-col-phone" style={{ color: 'var(--muted)' }}>
+                        {p.phone ? formatPhoneDisplay(p.phone) : '—'}
+                      </td>
+                      <td className="contacts-col-last" style={stale ? undefined : { color: 'var(--muted)' }}>
+                        <span className={stale ? 'contacts-stale' : ''}>
+                          {relativeContact(p.last_interaction_at)}
+                          {stale && (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                              <path d="M12 9v4" /><path d="M12 17h.01" />
+                              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            </svg>
+                          )}
+                        </span>
+                      </td>
+                      <td className="contacts-col-actions">
+                        <div className="contacts-actions">
+                          {p.phone && (
+                            <a href={`tel:${p.phone}`} onClick={e => e.stopPropagation()} className="contacts-action-btn" title="Ligar">
+                              <Icon name="phone" size={14} />
+                            </a>
+                          )}
+                          {p.phone && (
+                            <a
+                              href={buildWaLink(p.phone, `Olá ${p.name.split(' ')[0]}!`)}
+                              target="_blank" rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              className="contacts-action-btn contacts-action-wa"
+                              title="WhatsApp"
+                            >
+                              <Icon name="whatsapp" size={14} />
+                            </a>
+                          )}
+                          {p.email && (
+                            <a href={`mailto:${p.email}`} onClick={e => e.stopPropagation()} className="contacts-action-btn" title="Email">
+                              <Icon name="mail" size={14} />
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="contacts-mobile-list">
+            {visible.map(p => {
+              const days = daysSince(p.last_interaction_at)
+              const stale = days != null && days > STALE_DAYS
+              const initials = p.name.split(' ').map(n => n[0]).slice(0, 2).join('')
+              const primaryType = (p.types ?? [])[0]
+              const typeMeta = primaryType ? contactTypeMeta(primaryType) : null
+              const ac = avatarColor(p.name, p.types)
+
+              return (
+                <div key={p.id} className="contacts-mobile-card" onClick={() => router.push(`/people/${p.id}`)}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <div className="contacts-avatar" style={{ background: ac.bg, color: ac.text }}>{initials}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span className="contacts-name">{p.name}</span>
+                        {typeMeta && (
+                          <span className="contacts-type-badge" style={{ background: `${typeMeta.color}18`, color: typeMeta.color, borderColor: `${typeMeta.color}33` }}>
+                            {typeMeta.label}
+                          </span>
+                        )}
+                      </div>
+                      <div className="contacts-summary" style={{ marginTop: 3 }}><SummaryLine p={p} /></div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, fontSize: 12, color: 'var(--muted)' }}>
+                        {p.phone && <span>{formatPhoneDisplay(p.phone)}</span>}
+                        <span className={stale ? 'contacts-stale' : ''}>
+                          {relativeContact(p.last_interaction_at)}
+                          {stale && <span style={{ marginLeft: 3 }}>⚠</span>}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="contacts-actions" style={{ marginTop: 10, justifyContent: 'flex-end' }}>
+                    {p.phone && (
+                      <a href={`tel:${p.phone}`} onClick={e => e.stopPropagation()} className="contacts-action-btn" title="Ligar">
+                        <Icon name="phone" size={14} />
+                      </a>
+                    )}
+                    {p.phone && (
+                      <a
+                        href={buildWaLink(p.phone, `Olá ${p.name.split(' ')[0]}!`)}
+                        target="_blank" rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="contacts-action-btn contacts-action-wa"
+                        title="WhatsApp"
+                      >
+                        <Icon name="whatsapp" size={14} />
+                      </a>
+                    )}
+                    {p.email && (
+                      <a href={`mailto:${p.email}`} onClick={e => e.stopPropagation()} className="contacts-action-btn" title="Email">
+                        <Icon name="mail" size={14} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
     </div>
   )
 }

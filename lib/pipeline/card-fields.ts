@@ -35,7 +35,7 @@ export function cardFieldValue(lead: Lead, field: PipelineCardField): string | n
     }
     case 'call_status': return null
     case 'source': return lead.source
-    case 'notes': return lead.notes
+    case 'notes': return lead.notes ?? lead.people?.notes ?? null
   }
 }
 

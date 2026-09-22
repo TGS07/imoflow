@@ -24,6 +24,13 @@ const SOURCE_LABELS: Record<string, string> = {
 
 const CHART_COLORS = ['#B07D2E', '#C9A84C', '#7A5520', '#D4A94F', '#8B6F30', '#A0894A']
 
+const TOOLTIP_STYLE = {
+  contentStyle: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 },
+  labelStyle: { color: 'var(--text)', fontWeight: 600, marginBottom: 2 },
+  itemStyle: { color: 'var(--text)' },
+  cursor: { fill: 'rgba(176,125,46,0.08)' },
+}
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-PT', {
     style: 'currency',
@@ -117,8 +124,8 @@ export default function ReportsPage() {
           <div className="stats-grid stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}>
             {[
               { label: 'LEADS NOVOS', value: kpis?.total_leads ?? 0, icon: 'leads' as const },
-              { label: 'VISITAS REALIZADAS', value: kpis?.total_leads ?? 0, icon: 'home' as const },
-              { label: 'PROPOSTAS ENVIADAS', value: kpis?.won_leads ?? 0, icon: 'send' as const },
+              { label: 'VISITAS REALIZADAS', value: (data?.funnel ?? []).filter(s => /visita/i.test(s.name)).reduce((sum, s) => sum + s.count, 0), icon: 'home' as const },
+              { label: 'PROPOSTAS ENVIADAS', value: (data?.funnel ?? []).filter(s => /proposta/i.test(s.name)).reduce((sum, s) => sum + s.count, 0), icon: 'send' as const },
               { label: 'VALOR PIPELINE', value: formatCurrency(kpis?.pipeline_value ?? 0), icon: 'chart' as const },
             ].map(item => (
               <div key={item.label} className="card" style={{ padding: 'var(--space-4) var(--space-6)', position: 'relative', overflow: 'hidden' }}>
@@ -146,7 +153,7 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="week" tick={{ fontSize: 11, fill: 'var(--muted)' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--muted)' }} allowDecimals={false} />
-                  <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }} formatter={(value) => [value, 'Leads']} />
+                  <Tooltip {...TOOLTIP_STYLE} formatter={(value) => [value, 'Leads']} />
                   <Bar dataKey="count" fill="#C9A84C" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -157,34 +164,42 @@ export default function ReportsPage() {
                 <p className="font-display" style={{ fontSize: 15, color: 'var(--text)', fontWeight: 700 }}>Leads por Etapa</p>
                 <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>Distribuição atual do pipeline</p>
               </div>
-              <div style={{ position: 'relative' }}>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={data?.funnel ?? []}
-                      dataKey="count"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={90}
-                      paddingAngle={3}
-                    >
-                      {(data?.funnel ?? []).map((entry, i) => (
-                        <Cell key={entry.stage_id} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }} formatter={(value) => [value, 'Leads']} />
-                    <Legend iconSize={10} iconType="circle" wrapperStyle={{ fontSize: 11 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{ position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                  <p className="font-display" style={{ fontSize: 22, color: 'var(--text)', letterSpacing: '-0.02em' }}>
-                    {(data?.funnel ?? []).reduce((sum, s) => sum + s.count, 0)}
-                  </p>
-                  <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total</p>
-                </div>
-              </div>
+              {(() => {
+                const activeFunnel = (data?.funnel ?? []).filter(s => s.count > 0)
+                const funnelTotal = activeFunnel.reduce((sum, s) => sum + s.count, 0)
+                return activeFunnel.length === 0 ? (
+                  <p style={{ fontSize: 12, color: 'var(--muted)', paddingTop: 16 }}>Sem dados no período.</p>
+                ) : (
+                  <div style={{ position: 'relative' }}>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie
+                          data={activeFunnel}
+                          dataKey="count"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={90}
+                          paddingAngle={3}
+                        >
+                          {activeFunnel.map((entry, i) => (
+                            <Cell key={entry.stage_id} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip {...TOOLTIP_STYLE} formatter={(value) => [value, 'Leads']} />
+                        <Legend iconSize={8} iconType="circle" wrapperStyle={{ fontSize: 11, lineHeight: '20px' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div style={{ position: 'absolute', top: '38%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                      <p className="font-display" style={{ fontSize: 22, color: 'var(--text)', letterSpacing: '-0.02em' }}>
+                        {funnelTotal}
+                      </p>
+                      <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total</p>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           </div>
 
@@ -211,7 +226,7 @@ export default function ReportsPage() {
                       <Cell key={entry.source} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }} />
+                  <Tooltip {...TOOLTIP_STYLE} />
                   <Legend iconSize={10} iconType="circle" wrapperStyle={{ fontSize: 11 }} />
                 </PieChart>
               </ResponsiveContainer>
@@ -230,7 +245,7 @@ export default function ReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'var(--muted)' }} />
                     <YAxis tick={{ fontSize: 11, fill: 'var(--muted)' }} allowDecimals={false} />
-                    <Tooltip contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }} formatter={(value) => [value, 'Ganhas']} />
+                    <Tooltip {...TOOLTIP_STYLE} formatter={(value) => [value, 'Ganhas']} />
                     <Bar dataKey="won_count" fill="#B07D2E" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -256,34 +271,37 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(data?.funnel ?? []).length === 0 ? (
-                    <tr className="table-row">
-                      <td colSpan={5} style={{ textAlign: 'center', color: 'var(--muted)' }}>Sem dados no período.</td>
-                    </tr>
-                  ) : (
-                    (data?.funnel ?? []).map((stage, i) => {
-                      const total = kpis?.total_leads ?? 0
-                      const rate = total > 0 ? Math.round((stage.count / total) * 100) : 0
-                      return (
-                        <tr key={stage.stage_id} className="table-row">
-                          <td>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: CHART_COLORS[i % CHART_COLORS.length], flexShrink: 0 }} />
-                              {stage.name}
-                            </span>
-                          </td>
-                          <td>{stage.count}</td>
-                          <td>{formatCurrency(stage.value)}</td>
-                          <td>
-                            <span className="badge badge-green">
-                              {rate}%
-                            </span>
-                          </td>
-                          <td>{kpis?.avg_close_days != null ? `${kpis.avg_close_days} dias` : '—'}</td>
-                        </tr>
-                      )
-                    })
-                  )}
+                  {(() => {
+                    const tableRows = (data?.funnel ?? []).filter(s => s.count > 0)
+                    return tableRows.length === 0 ? (
+                      <tr className="table-row">
+                        <td colSpan={5} style={{ textAlign: 'center', color: 'var(--muted)' }}>Sem dados no período.</td>
+                      </tr>
+                    ) : (
+                      tableRows.map((stage, i) => {
+                        const total = kpis?.total_leads ?? 0
+                        const rate = total > 0 ? Math.round((stage.count / total) * 100) : 0
+                        return (
+                          <tr key={stage.stage_id} className="table-row">
+                            <td>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: CHART_COLORS[i % CHART_COLORS.length], flexShrink: 0 }} />
+                                {stage.name}
+                              </span>
+                            </td>
+                            <td>{stage.count}</td>
+                            <td>{formatCurrency(stage.value)}</td>
+                            <td>
+                              <span className="badge badge-green">
+                                {rate}%
+                              </span>
+                            </td>
+                            <td>{kpis?.avg_close_days != null ? `${kpis.avg_close_days} dias` : '—'}</td>
+                          </tr>
+                        )
+                      })
+                    )
+                  })()}
                 </tbody>
               </table>
             </div>

@@ -5,8 +5,8 @@ import { Icon } from '@/components/ui/Icon'
 import { StageNotificationsModal } from '@/components/pipeline/StageNotificationsModal'
 import { PipelineStage, CustomField, Pipeline } from '@/types'
 
-const COLORS = ['#3B82F6', '#F59E0B', '#8B5CF6', '#F97316', '#10B981', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E']
-const SWATCH_COLORS = ['#3B82F6', '#2563EB', '#8B5CF6', '#7C3AED', '#EC4899', '#EF4444', '#F59E0B', '#F97316', '#10B981', '#059669', '#06B6D4', '#6B7280']
+const COLORS = ['#6B8DB5', '#C4A05A', '#8B7DB5', '#C48E5A', '#5A9E84', '#C47070', '#B57D8B', '#7B7DB5', '#5EA8A0', '#C46070']
+const SWATCH_COLORS = ['#6B8DB5', '#5A7A9E', '#8B7DB5', '#7B6DA0', '#B57D8B', '#C47070', '#C4A05A', '#C48E5A', '#5A9E84', '#4A8270', '#5EA8A0', '#6B7280']
 
 type PipelineTemplate = {
   name: string
@@ -17,35 +17,35 @@ const PIPELINE_TEMPLATES: PipelineTemplate[] = [
   {
     name: 'Vendas',
     stages: [
-      { name: 'Novo Lead', color: '#3B82F6', probability: 10 },
-      { name: 'Contacto', color: '#06B6D4', probability: 20 },
-      { name: 'Visita', color: '#8B5CF6', probability: 40 },
-      { name: 'Proposta', color: '#F59E0B', probability: 60 },
-      { name: 'Negociação', color: '#F97316', probability: 80 },
-      { name: 'Ganho', color: '#10B981', probability: 100, is_won: true },
-      { name: 'Perdido', color: '#EF4444', probability: 0, is_lost: true },
+      { name: 'Novo Lead', color: '#6B8DB5', probability: 10 },
+      { name: 'Contacto', color: '#5EA8A0', probability: 20 },
+      { name: 'Visita', color: '#8B7DB5', probability: 40 },
+      { name: 'Proposta', color: '#C4A05A', probability: 60 },
+      { name: 'Negociação', color: '#C48E5A', probability: 80 },
+      { name: 'Ganho', color: '#5A9E84', probability: 100, is_won: true },
+      { name: 'Perdido', color: '#C47070', probability: 0, is_lost: true },
     ],
   },
   {
     name: 'Arrendamento',
     stages: [
-      { name: 'Novo', color: '#3B82F6', probability: 10 },
-      { name: 'Visita', color: '#8B5CF6', probability: 30 },
-      { name: 'Documentação', color: '#F59E0B', probability: 60 },
-      { name: 'Contrato', color: '#F97316', probability: 80 },
-      { name: 'Ativo', color: '#10B981', probability: 100, is_won: true },
-      { name: 'Cancelado', color: '#EF4444', probability: 0, is_lost: true },
+      { name: 'Novo', color: '#6B8DB5', probability: 10 },
+      { name: 'Visita', color: '#8B7DB5', probability: 30 },
+      { name: 'Documentação', color: '#C4A05A', probability: 60 },
+      { name: 'Contrato', color: '#C48E5A', probability: 80 },
+      { name: 'Ativo', color: '#5A9E84', probability: 100, is_won: true },
+      { name: 'Cancelado', color: '#C47070', probability: 0, is_lost: true },
     ],
   },
   {
     name: 'Compra',
     stages: [
-      { name: 'Prospeção', color: '#3B82F6', probability: 10 },
-      { name: 'Análise', color: '#06B6D4', probability: 25 },
-      { name: 'Proposta', color: '#F59E0B', probability: 50 },
-      { name: 'Escritura', color: '#F97316', probability: 80 },
-      { name: 'Concluído', color: '#10B981', probability: 100, is_won: true },
-      { name: 'Cancelado', color: '#EF4444', probability: 0, is_lost: true },
+      { name: 'Prospeção', color: '#6B8DB5', probability: 10 },
+      { name: 'Análise', color: '#5EA8A0', probability: 25 },
+      { name: 'Proposta', color: '#C4A05A', probability: 50 },
+      { name: 'Escritura', color: '#C48E5A', probability: 80 },
+      { name: 'Concluído', color: '#5A9E84', probability: 100, is_won: true },
+      { name: 'Cancelado', color: '#C47070', probability: 0, is_lost: true },
     ],
   },
 ]
@@ -327,7 +327,7 @@ export default function PipelineSettingsPage() {
                   <span>%</span>
                 </div>
                 <div className="hide-mobile" style={{ display: 'flex', gap: 4, fontSize: 9 }}>
-                  {stage.is_won && <span style={{ padding: '2px 6px', borderRadius: 3, background: '#10B98122', color: '#10B981', fontWeight: 600 }}>WON</span>}
+                  {stage.is_won && <span style={{ padding: '2px 6px', borderRadius: 3, background: '#5A9E8422', color: '#5A9E84', fontWeight: 600 }}>WON</span>}
                   {stage.is_lost && <span style={{ padding: '2px 6px', borderRadius: 3, background: '#EF444422', color: '#EF4444', fontWeight: 600 }}>LOST</span>}
                 </div>
                 <button

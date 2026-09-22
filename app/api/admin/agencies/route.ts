@@ -55,12 +55,12 @@ export async function POST(request: Request) {
 
   // 2. Seed default pipeline stages
   await admin.from('pipeline_stages').insert([
-    { agency_id: agency.id, name: 'Lead',        color: '#3B82F6', position: 0, probability: 10,  is_won: false, is_lost: false },
-    { agency_id: agency.id, name: 'Visita',      color: '#F59E0B', position: 1, probability: 30,  is_won: false, is_lost: false },
-    { agency_id: agency.id, name: 'Proposta',    color: '#8B5CF6', position: 2, probability: 50,  is_won: false, is_lost: false },
-    { agency_id: agency.id, name: 'Negociacao',  color: '#F97316', position: 3, probability: 70,  is_won: false, is_lost: false },
-    { agency_id: agency.id, name: 'Fechado',     color: '#10B981', position: 4, probability: 100, is_won: true,  is_lost: false },
-    { agency_id: agency.id, name: 'Perdido',     color: '#EF4444', position: 5, probability: 0,   is_won: false, is_lost: true  },
+    { agency_id: agency.id, name: 'Lead',        color: '#6B8DB5', position: 0, probability: 10,  is_won: false, is_lost: false },
+    { agency_id: agency.id, name: 'Visita',      color: '#C4A05A', position: 1, probability: 30,  is_won: false, is_lost: false },
+    { agency_id: agency.id, name: 'Proposta',    color: '#8B7DB5', position: 2, probability: 50,  is_won: false, is_lost: false },
+    { agency_id: agency.id, name: 'Negociacao',  color: '#C48E5A', position: 3, probability: 70,  is_won: false, is_lost: false },
+    { agency_id: agency.id, name: 'Fechado',     color: '#5A9E84', position: 4, probability: 100, is_won: true,  is_lost: false },
+    { agency_id: agency.id, name: 'Perdido',     color: '#C47070', position: 5, probability: 0,   is_won: false, is_lost: true  },
   ])
 
   // 3. Criar utilizador no Auth

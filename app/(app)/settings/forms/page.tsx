@@ -41,8 +41,8 @@ export default function FormsPage() {
 
   const badgeStyle = (active: boolean): React.CSSProperties => ({
     display: 'inline-block', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600,
-    background: active ? '#10B98120' : '#6B728020',
-    color: active ? '#10B981' : '#6B7280',
+    background: active ? '#5A9E8420' : '#6B728020',
+    color: active ? '#5A9E84' : '#6B7280',
   })
 
   return (
@@ -86,7 +86,7 @@ export default function FormsPage() {
               <div className="settings-row-actions" style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button
                   onClick={() => copyLink(form.id)}
-                  style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: copied === form.id ? '#10B981' : 'var(--muted)', cursor: 'pointer' }}
+                  style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: copied === form.id ? '#5A9E84' : 'var(--muted)', cursor: 'pointer' }}
                 >
                   {copied === form.id ? 'Copiado!' : 'Copiar link'}
                 </button>

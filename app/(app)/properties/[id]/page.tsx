@@ -51,10 +51,10 @@ const ENERGY_CERTIFICATES: { value: string; label: string }[] = [
 ]
 
 const STATUS_COLORS: Record<PropertyStatus, string> = {
-  disponivel: '#10B981',
-  reservado: '#F59E0B',
-  vendido: '#8B5CF6',
-  arrendado: '#3B82F6',
+  disponivel: '#5A9E84',
+  reservado: '#C4A05A',
+  vendido: '#8B7DB5',
+  arrendado: '#6B8DB5',
 }
 
 type LeadSummary = {
@@ -227,7 +227,7 @@ export default function PropertyPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-              <div style={{ width: 48, height: 48, borderRadius: 8, background: 'linear-gradient(135deg, #10B981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏠</div>
+              <div style={{ width: 48, height: 48, borderRadius: 8, background: 'linear-gradient(135deg, #5A9E84, #4A8270)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏠</div>
               <div style={{ flex: 1 }}>
                 {editing ? (
                   <input style={inputStyle} value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
