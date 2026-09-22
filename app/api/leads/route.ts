@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('leads')
-    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), pipelines(name), people(id, name, email, phone, types, notes), organizations(id, name), properties(id, reference, title, price, type)')
+    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), pipelines(name), people(id, name, email, phone, types, notes), organizations(id, name), properties(id, reference, title, price, type), contacts(id, type, title, created_at)')
     .eq('agency_id', profile.agency_id)
     .order('created_at', { ascending: false })
 

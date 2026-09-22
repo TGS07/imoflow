@@ -33,7 +33,12 @@ export function cardFieldValue(lead: Lead, field: PipelineCardField): string | n
       const v = lead.deal_value ?? lead.budget
       return v ? `${(v / 1000).toFixed(0)}K€` : null
     }
-    case 'call_status': return null
+    case 'call_status': {
+      const calls = lead.contacts?.filter(c => c.type === 'chamada')
+      if (!calls?.length) return null
+      const last = calls.sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+      return last.title
+    }
     case 'source': return lead.source
     case 'notes': return lead.notes ?? lead.people?.notes ?? null
   }
