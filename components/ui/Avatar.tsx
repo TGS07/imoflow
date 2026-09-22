@@ -8,7 +8,7 @@ type Props = {
 function getColor(name: string): string {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  const colors = ['#B07D2E', '#059669', '#2563EB', '#7C3AED', '#DC2626', '#8C6B2E', '#C9A84C']
+  const colors = ['#4A3F2E', '#354F44', '#3A4F63', '#4A4260', '#5A3838', '#3E3828', '#4E4632']
   return colors[Math.abs(hash) % colors.length]
 }
 

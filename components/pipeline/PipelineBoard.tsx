@@ -1,7 +1,5 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { useDroppable } from '@dnd-kit/core'
-import { HelpButton } from '@/components/help/HelpButton'
 import { Lead, PipelineStage, Pipeline, PipelineCardField } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
@@ -73,8 +71,6 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
-  const tabBase = { height: 32, padding: '0 14px', borderRadius: 8 }
-
   return (
     <>
       {showNewLead && selectedId && (
@@ -120,49 +116,45 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
         />
       )}
 
-      <div className="page-pad" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ marginRight: 4 }}>
-            <h1 className="font-display" style={{ fontSize: 20 }}>Pipeline <HelpButton section="pipeline" /></h1>
-            {!loading && selected && (
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
-                {activeLeads.length} lead{activeLeads.length === 1 ? '' : 's'} ativo{activeLeads.length === 1 ? '' : 's'}
-                {pipelineValue > 0 && <> · {formatCompactEuro(pipelineValue)} em pipeline</>}
-              </div>
-            )}
-          </div>
+      <div className="page-pad pipeline-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px', background: 'var(--bg)', position: 'sticky', top: 0, zIndex: 10, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <h1 className="font-display" style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', margin: 0 }}>Pipeline</h1>
           {/* Seletor de pipelines */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
             {pipelines.map(p => (
-              <span key={p.id} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <button
-                  onClick={() => setSelectedId(p.id)}
-                  className={`chip${p.id === selectedId ? ' active' : ''}`}
-                  style={tabBase}
-                >
-                  {p.name}
-                </button>
-                {isAdmin && p.id === selectedId && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
-                    <button onClick={() => setPipelineModal({ mode: 'edit', pipeline: p })} title="Editar pipeline" className="icon-btn-sm">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                    </button>
-                    <button onClick={() => deletePipeline(p)} title="Eliminar pipeline" className="icon-btn-sm">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                    </button>
-                  </span>
-                )}
-              </span>
+              <button
+                key={p.id}
+                onClick={() => setSelectedId(p.id)}
+                className={`pipeline-tab${p.id === selectedId ? ' active' : ''}`}
+              >
+                {p.name}
+              </button>
             ))}
             {isAdmin && (
-              <button onClick={() => setPipelineModal({ mode: 'create' })} title="Nova pipeline" className="chip" style={tabBase}>+ Pipeline</button>
+              <button onClick={() => setPipelineModal({ mode: 'create' })} title="Nova pipeline" className="pipeline-tab" style={{ color: 'var(--muted)' }}>+</button>
             )}
           </div>
+          {isAdmin && selected && (
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <button onClick={() => setPipelineModal({ mode: 'edit', pipeline: selected })} title="Editar pipeline" className="icon-btn-sm">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+              </button>
+              <button onClick={() => deletePipeline(selected)} title="Eliminar pipeline" className="icon-btn-sm">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              </button>
+            </div>
+          )}
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button onClick={() => setShowContactPicker(true)} disabled={!selected} className="btn btn-ghost">+ Contactos</button>
-          <button onClick={() => setShowPicker(true)} disabled={!selected} className="btn btn-ghost">+ Imóveis</button>
-          <button onClick={() => setShowNewLead(true)} disabled={!selectedId} className="btn btn-primary">+ Novo Lead</button>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+          <button onClick={() => setShowPicker(true)} disabled={!selected} className="btn btn-ghost" style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            + Imóvel
+          </button>
+          <button onClick={() => setShowContactPicker(true)} disabled={!selected} className="btn btn-ghost" style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            + Contacto
+          </button>
+          <button onClick={() => setShowNewLead(true)} disabled={!selectedId} className="btn btn-primary" style={{ fontSize: 13, fontWeight: 600 }}>+ Lead</button>
         </div>
       </div>
 

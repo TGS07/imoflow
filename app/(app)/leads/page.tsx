@@ -81,17 +81,17 @@ export default function LeadsPage() {
     <>
       {showModal && <NewLeadModal onClose={() => setShowModal(false)} onCreated={fetchLeads} />}
       <div className="page-enter" style={{ padding: 'var(--space-6) var(--space-8)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
-          <div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 'var(--space-6)', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ minWidth: 0 }}>
             <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Leads <HelpButton section="leads" /></h1>
             <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>{leads.length} leads</p>
           </div>
-          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-3)', flexShrink: 0, flexWrap: 'wrap' }}>
             <button onClick={() => {}} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Icon name="send" size={14} />
               Exportar
             </button>
-            <button onClick={() => setShowModal(true)} className="btn btn-primary">
+            <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ whiteSpace: 'nowrap' }}>
               <Icon name="plus" size={14} /> Novo Lead
             </button>
           </div>
@@ -109,7 +109,7 @@ export default function LeadsPage() {
         )}
 
         <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
-          <div style={{ flex: 1, minWidth: 220, position: 'relative' }}>
+          <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
             <Icon name="search" size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }} />
             <input
               placeholder="Pesquisar por nome, email ou telefone..."

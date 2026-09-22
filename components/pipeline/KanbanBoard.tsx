@@ -12,11 +12,37 @@ import { Icon } from '@/components/ui/Icon'
 import type { ContactPropertyCandidate } from '@/lib/pipeline/resolve-contact-property'
 import { cardFieldValue, daysInStage, CARD_FIELD_LABELS, type PipelineCardFields } from '@/lib/pipeline/card-fields'
 
+const DAYS_GREEN_MAX = 5
+const DAYS_AMBER_MAX = 14
+
 function daysPillColor(days: number): string {
-  if (days < 7) return 'kanban-days-green'
-  if (days <= 14) return 'kanban-days-amber'
+  if (days <= DAYS_GREEN_MAX) return 'kanban-days-green'
+  if (days <= DAYS_AMBER_MAX) return 'kanban-days-amber'
   return 'kanban-days-red'
 }
+
+const AVATAR_GRADIENTS = [
+  'linear-gradient(135deg, #9B7B3C, #C9A84C)',
+  'linear-gradient(135deg, #6B8E6B, #8FBC8F)',
+  'linear-gradient(135deg, #7B6BA0, #A08BCF)',
+  'linear-gradient(135deg, #8B6B5B, #B8907E)',
+  'linear-gradient(135deg, #5B7B9B, #7BAACF)',
+  'linear-gradient(135deg, #9B5B6B, #CF8B9F)',
+  'linear-gradient(135deg, #7B8B5B, #A0B87E)',
+  'linear-gradient(135deg, #8B7B5B, #CFBA8B)',
+]
+
+function avatarGradient(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0
+  }
+  return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length]
+}
+
+const CHIP_FIELDS = new Set<PipelineCardField>(['zone', 'typology', 'property_type', 'call_status', 'source'])
+const CONTACT_FIELDS = new Set<PipelineCardField>(['phone', 'email'])
+const PROPERTY_FIELDS = new Set<PipelineCardField>(['property', 'property_ref'])
 
 function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, onEditProperty, onHoverStart, onHoverEnd, selected, onSelect, onRemove }: {
   lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void; onEditProperty?: (lead: Lead) => void; onHoverStart?: (lead: Lead) => void; onHoverEnd?: () => void
@@ -28,8 +54,7 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
   const initials = (lead.people?.name ?? lead.name).split(' ').map((n: string) => n[0]).slice(0, 2).join('')
 
   const fields = cardFields.all
-  const shown = new Set<PipelineCardField>()
-
+  const [notesExpanded, setNotesExpanded] = useState(false)
   const [duplicating, setDuplicating] = useState(false)
 
   async function duplicateCard(e: React.MouseEvent) {
@@ -51,27 +76,36 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
     } finally { setDuplicating(false) }
   }
 
-  function renderFieldBadge(field: PipelineCardField) {
-    if (shown.has(field)) return null
-    const val = cardFieldValue(lead, field)
-    if (!val) return null
-    shown.add(field)
-
-    const badgeStyle: React.CSSProperties = {
-      fontSize: 11, padding: '2px 8px', borderRadius: 6, whiteSpace: 'nowrap' as const,
-      color: 'var(--muted)', background: 'var(--surface)', border: '1px solid var(--border)',
-    }
-
-    return <span key={field} style={badgeStyle}>{val}</span>
-  }
-
   const nameVal = lead.people?.name ?? lead.name
-  const phoneVal = lead.people?.phone ?? lead.phone
-  shown.add('name')
-  if (phoneVal) shown.add('phone')
+  const rawValue = lead.deal_value ?? lead.budget ?? 0
+  const budgetVal = rawValue > 0
+    ? rawValue >= 1_000_000 ? `${(rawValue / 1_000_000).toFixed(1)}M€` : `${(rawValue / 1_000).toFixed(0)}K€`
+    : null
+  const days = daysInStage(lead)
 
-  const badges = fields.filter(f => f !== 'name' && f !== 'phone').map(renderFieldBadge).filter(Boolean)
-  const adaptiveFont = fields.length <= 4 ? 12 : 11
+  const contactRows: { field: PipelineCardField; icon: string; value: string }[] = []
+  const chipItems: { field: PipelineCardField; value: string }[] = []
+  const propertyRows: { field: PipelineCardField; value: string }[] = []
+  let notesVal: string | null = null
+  let showValue = false
+
+  for (const f of fields) {
+    if (f === 'name') continue
+    const val = cardFieldValue(lead, f)
+    if (!val) continue
+
+    if (CONTACT_FIELDS.has(f)) {
+      contactRows.push({ field: f, icon: f === 'phone' ? '📞' : '✉️', value: val })
+    } else if (CHIP_FIELDS.has(f)) {
+      chipItems.push({ field: f, value: val })
+    } else if (PROPERTY_FIELDS.has(f)) {
+      propertyRows.push({ field: f, value: val })
+    } else if (f === 'notes') {
+      notesVal = val
+    } else if (f === 'value') {
+      showValue = true
+    }
+  }
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
@@ -82,11 +116,10 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
         }}
         onMouseEnter={() => onHoverStart?.(lead)}
         onMouseLeave={() => onHoverEnd?.()}
-        className={`kanban-card card-hover${selected ? ' kanban-card-selected' : ''}`}
-        style={isDragging ? { boxShadow: 'var(--shadow-md)' } : undefined}
+        className={`kanban-card${selected ? ' kanban-card-selected' : ''}${isDragging ? ' kanban-card-dragging' : ''}`}
       >
-        {/* Header: checkbox + avatar + name + phone */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        {/* Row 1: checkbox + avatar + name + type badge + actions */}
+        <div className="kanban-card-top">
           {onSelect && (
             <input
               type="checkbox"
@@ -94,15 +127,11 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
               onChange={e => { e.stopPropagation(); onSelect(lead.id, e.target.checked) }}
               onClick={e => e.stopPropagation()}
               className="kanban-checkbox"
-              style={{ width: 14, height: 14, flexShrink: 0, cursor: 'pointer', accentColor: 'var(--gold)' }}
             />
           )}
-          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dim))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#0D0D0F', flexShrink: 0 }}>
-            {initials}
-          </div>
+          <div className="kanban-card-avatar" style={{ background: avatarGradient(nameVal) }}>{initials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 500, fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nameVal}</div>
-            {phoneVal && <div style={{ fontSize: 11, color: 'var(--muted)' }}>{phoneVal}</div>}
+            <div className="kanban-card-name" title={nameVal}>{nameVal}</div>
           </div>
           {lead.people?.types && <ContactTypeChips types={lead.people.types} size={8} />}
           <div className="kanban-card-actions">
@@ -126,34 +155,54 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           </div>
         </div>
 
-        {/* Field badges */}
-        {badges.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 6, fontSize: adaptiveFont }}>
-            {badges}
-          </div>
-        )}
-
-        {/* Property ref (if not already in badges) */}
-        {!shown.has('property') && !shown.has('property_ref') && lead.properties && (
-          <div style={{ fontSize: 11, color: '#10B981', marginBottom: 4, opacity: 0.8 }}>
-            <Icon name="home" size={10} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} />
-            {lead.properties.reference ?? lead.properties.title}
-          </div>
-        )}
-
-        {/* Footer: days + date */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-          <div />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span title="Dias nesta fase" className={`kanban-days-pill ${daysPillColor(daysInStage(lead))}`}>
-              {daysInStage(lead)}d
-            </span>
-            {lead.expected_close_date && (
-              <div style={{ fontSize: 10, color: 'var(--muted)' }}>
-                {new Date(lead.expected_close_date).toLocaleDateString('pt-PT')}
+        {/* Row 2: contact info (phone, email) */}
+        {contactRows.length > 0 && (
+          <div className="kc-contact-rows">
+            {contactRows.map(r => (
+              <div key={r.field} className="kc-contact-row" title={r.value}>
+                <span className="kc-contact-icon">{r.icon}</span>
+                <span className="kc-contact-val">{r.value}</span>
               </div>
-            )}
+            ))}
           </div>
+        )}
+
+        {/* Row 3: chips (zone, typology, property_type, call_status, source) */}
+        {chipItems.length > 0 && (
+          <div className="kanban-card-badges">
+            {chipItems.map(c => (
+              <span key={c.field} className="kanban-card-badge" title={c.value}>{c.value}</span>
+            ))}
+          </div>
+        )}
+
+        {/* Row 4: property info */}
+        {propertyRows.length > 0 && (
+          <div className="kc-property-row">
+            <Icon name="home" size={11} style={{ flexShrink: 0, opacity: 0.6 }} />
+            <span className="kc-property-val" title={propertyRows.map(r => r.value).join(' · ')}>
+              {propertyRows.map(r => r.value).join(' · ')}
+            </span>
+          </div>
+        )}
+
+        {/* Row 5: notes */}
+        {notesVal && (
+          <div
+            className={`kc-notes${notesExpanded ? ' kc-notes-expanded' : ''}`}
+            onClick={e => { e.stopPropagation(); setNotesExpanded(o => !o) }}
+            title={notesExpanded ? undefined : notesVal}
+          >
+            <span className="kc-notes-text">{notesVal}</span>
+          </div>
+        )}
+
+        {/* Footer: value + days */}
+        <div className={`kanban-card-footer${!budgetVal && !showValue ? ' kanban-card-footer-no-value' : ''}`}>
+          {budgetVal && <span className="kanban-card-value">{budgetVal}</span>}
+          <span title="Dias nesta fase" className={`kanban-days-pill ${daysPillColor(days)}`}>
+            {days} dias
+          </span>
         </div>
       </div>
     </div>
@@ -165,22 +214,50 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
   return <div ref={setNodeRef} style={{ minHeight: 120 }}>{children}</div>
 }
 
-function DroppablePipelineTab({ pipeline, isOver }: { pipeline: Pipeline; isOver?: boolean }) {
+function DroppablePipelineTab({ pipeline }: { pipeline: Pipeline; isOver?: boolean }) {
   const { setNodeRef, isOver: dndIsOver } = useDroppable({ id: `pipeline-tab-${pipeline.id}` })
-  const active = isOver ?? dndIsOver
   return (
     <div
       ref={setNodeRef}
-      style={{
-        padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 500,
-        border: active ? '2px solid var(--gold)' : '1px dashed var(--border)',
-        background: active ? 'var(--gold-bg)' : 'var(--surface)',
-        color: active ? 'var(--gold)' : 'var(--muted)',
-        transition: 'all 0.15s',
-        cursor: 'default',
-      }}
+      className={`pipeline-drop-zone${dndIsOver ? ' pipeline-drop-zone-over' : ''}`}
     >
-      ↗ {pipeline.name}
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pipeline-drop-icon">
+        <path d="M16 3h5v5"/><path d="m21 3-9 9"/><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/>
+      </svg>
+      <span className="pipeline-drop-name">{pipeline.name}</span>
+    </div>
+  )
+}
+
+function BulkDropdown({ label, icon, items, onSelect }: {
+  label: string; icon: React.ReactNode
+  items: { id: string; name: string }[]
+  onSelect: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    function close(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [open])
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(o => !o)} className="bulk-dropdown-trigger">
+        {icon}
+        <span>{label}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      {open && (
+        <div className="bulk-dropdown-menu">
+          {items.map(it => (
+            <button key={it.id} className="bulk-dropdown-item" onClick={() => { onSelect(it.id); setOpen(false) }}>
+              {it.name}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -282,7 +359,7 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
   function handleCardHoverStart(lead: Lead) {
     if (activeId) return
     if (hoverTimer.current) clearTimeout(hoverTimer.current)
-    hoverTimer.current = setTimeout(() => setHoveredLead(lead), 4500)
+    hoverTimer.current = setTimeout(() => setHoveredLead(lead), 4000)
   }
 
   function handleCardHoverEnd() {
@@ -374,8 +451,8 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
       <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {/* Cross-pipeline drop targets (visible during drag only) */}
         {activeId && otherPipelines.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12, padding: '8px 0' }}>
-            <span style={{ fontSize: 11, color: 'var(--muted)', alignSelf: 'center' }}>Mover para:</span>
+          <div className="pipeline-drop-bar">
+            <span className="pipeline-drop-label">Mover para:</span>
             {otherPipelines.map(p => (
               <DroppablePipelineTab key={p.id} pipeline={p} />
             ))}
@@ -383,42 +460,37 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
         )}
 
         {/* Bulk action bar */}
-        {selectedIds.size > 0 && (
-          <div className="kanban-bulk-bar" style={{
-            display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', marginBottom: 12,
-            background: 'var(--card)', border: '1px solid var(--gold)', borderRadius: 10,
-          }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold)' }}>{selectedIds.size} selecionado{selectedIds.size > 1 ? 's' : ''}</span>
-            <div style={{ display: 'flex', gap: 6, flex: 1, flexWrap: 'wrap' }}>
-              <select
-                className="input"
-                style={{ width: 'auto', fontSize: 12 }}
-                value=""
-                onChange={e => { if (e.target.value) bulkMoveToStage(e.target.value) }}
-              >
-                <option value="">Mover para fase…</option>
-                {visibleStages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              {otherPipelines.length > 0 && (
-                <select
-                  className="input"
-                  style={{ width: 'auto', fontSize: 12 }}
-                  value=""
-                  onChange={e => { if (e.target.value) bulkMoveToPipeline(e.target.value) }}
-                >
-                  <option value="">Enviar para pipeline…</option>
-                  {otherPipelines.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              )}
-              <button onClick={bulkRemove} className="btn btn-ghost btn-sm" style={{ fontSize: 12, color: '#EF4444' }}>Remover</button>
-            </div>
-            <button onClick={clearSelection} className="icon-btn" title="Limpar seleção" style={{ width: 20, height: 20 }}>
-              <Icon name="close" size={12} />
+        <div className={`kanban-bulk-bar${selectedIds.size > 0 ? ' kanban-bulk-bar-visible' : ''}`}>
+          <div className="bulk-bar-count">
+            <span className="bulk-bar-number">{selectedIds.size}</span>
+            <span className="bulk-bar-label">selecionado{selectedIds.size > 1 ? 's' : ''}</span>
+            <button onClick={clearSelection} className="bulk-bar-clear" title="Limpar seleção" aria-label="Limpar seleção">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
           </div>
-        )}
+          <div className="bulk-bar-actions">
+            <BulkDropdown
+              label="Mover para fase…"
+              icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>}
+              items={visibleStages.map(s => ({ id: s.id, name: s.name }))}
+              onSelect={bulkMoveToStage}
+            />
+            {otherPipelines.length > 0 && (
+              <BulkDropdown
+                label="Enviar para pipeline…"
+                icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5"/><path d="m21 3-9 9"/><path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/></svg>}
+                items={otherPipelines.map(p => ({ id: p.id, name: p.name }))}
+                onSelect={bulkMoveToPipeline}
+              />
+            )}
+            <button onClick={bulkRemove} className="bulk-bar-remove" title="Remover selecionados">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              <span>Remover</span>
+            </button>
+          </div>
+        </div>
 
-        <div className="stagger kanban-board" style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '4px 0', minHeight: 'calc(100vh - 140px)' }}>
+        <div className={`stagger kanban-board${selectedIds.size > 0 ? ' kanban-has-selection' : ''}`} style={{ display: 'flex', gap: 16, overflowX: 'auto', padding: '4px 0', minHeight: 'calc(100vh - 140px)' }}>
           {visibleStages.map(stage => {
             const stageLeads = getStageLeads(stage.id)
             const columnTotal = getColumnTotal(stage.id)
@@ -428,26 +500,24 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
                   {stageLeads.length > 0 && (
                     <input
                       type="checkbox"
-                      checked={stageLeads.length > 0 && stageLeads.every(l => selectedIds.has(l.id))}
+                      checked={stageLeads.every(l => selectedIds.has(l.id))}
                       onChange={() => selectColumn(stage.id)}
                       title="Selecionar toda a coluna"
-                      style={{ width: 12, height: 12, cursor: 'pointer', accentColor: 'var(--gold)', flexShrink: 0 }}
+                      className="kanban-col-checkbox"
                     />
                   )}
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: stage.color }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)' }}>{stage.name}</span>
+                  <div className="kanban-col-dot" style={{ background: stage.color || 'var(--muted)' }} />
+                  <span className="kanban-col-name">{stage.name}</span>
                   <span className="kanban-col-count">{stageLeads.length}</span>
+                  {columnTotal > 0 && (
+                    <span className="kanban-col-total">{columnTotal >= 1_000_000 ? `${(columnTotal / 1_000_000).toFixed(1)}M€` : `${(columnTotal / 1_000).toFixed(0)}K€`}</span>
+                  )}
                 </div>
-                {columnTotal > 0 && (
-                  <div className="kanban-col-total">
-                    {(columnTotal / 1000).toFixed(0)}K€
-                    {stage.probability < 100 && (
-                      <span style={{ opacity: 0.6 }}> · {((columnTotal * stage.probability / 100) / 1000).toFixed(0)}K€ pond.</span>
-                    )}
-                  </div>
-                )}
                 <SortableContext items={stageLeads.map(l => l.id)} strategy={verticalListSortingStrategy}>
                   <DroppableColumn id={stage.id}>
+                    {stageLeads.length === 0 && (
+                      <div className="kanban-col-empty">Sem negócios</div>
+                    )}
                     {stageLeads.map(lead => (
                       <LeadCard
                         key={lead.id} lead={lead} isDragging={lead.id === activeId}

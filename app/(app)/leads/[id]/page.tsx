@@ -52,11 +52,11 @@ interface LeadPreference {
 }
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
-  chamada: '#3B82F6',
-  visita: '#F59E0B',
-  email: '#8B5CF6',
-  reuniao: '#10B981',
-  tarefa: '#EF4444',
+  chamada: '#6B8DB5',
+  visita: '#C4A05A',
+  email: '#8B7DB5',
+  reuniao: '#5A9E84',
+  tarefa: '#C47070',
   nota: '#6B7280',
   whatsapp: '#25D366',
 }
@@ -412,7 +412,7 @@ export default function LeadPage() {
                 {lead.source}
               </span>
               {lead.deal_value && (
-                <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(16,185,129,0.1)', color: '#10B981', border: '1px solid rgba(16,185,129,0.2)' }}>
+                <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(90,158,132,0.1)', color: '#5A9E84', border: '1px solid rgba(90,158,132,0.2)' }}>
                   {(lead.deal_value / 1000).toFixed(0)}K€
                 </span>
               )}
@@ -439,14 +439,14 @@ export default function LeadPage() {
               )}
               {lead.organizations && (
                 <Link href={`/organizations/${lead.organizations.id}`} style={{ textDecoration: 'none' }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(139,92,246,0.08)', color: '#8B5CF6', border: '1px solid rgba(139,92,246,0.2)', cursor: 'pointer' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(139,125,181,0.08)', color: '#8B7DB5', border: '1px solid rgba(139,125,181,0.2)', cursor: 'pointer' }}>
                     🏢 {lead.organizations.name}
                   </span>
                 </Link>
               )}
               {lead.properties && (
                 <Link href={`/properties/${lead.properties.id}`} style={{ textDecoration: 'none' }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(16,185,129,0.08)', color: '#10B981', border: '1px solid rgba(16,185,129,0.2)', cursor: 'pointer' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: 'rgba(90,158,132,0.08)', color: '#5A9E84', border: '1px solid rgba(90,158,132,0.2)', cursor: 'pointer' }}>
                     🏠 {lead.properties.reference ? `${lead.properties.reference} — ` : ''}{lead.properties.title}
                   </span>
                 </Link>

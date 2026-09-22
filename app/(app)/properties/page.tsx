@@ -45,10 +45,10 @@ const ENERGY_CERTIFICATES: { value: string; label: string }[] = [
 ]
 
 const STATUS_COLORS: Record<PropertyStatus, string> = {
-  disponivel: '#059669',
-  reservado: '#B07D2E',
-  vendido: '#2563EB',
-  arrendado: '#8B5CF6',
+  disponivel: '#5A9E84',
+  reservado: '#A08050',
+  vendido: '#6B8DB5',
+  arrendado: '#8B7DB5',
 }
 
 export default function PropertiesPage() {
@@ -253,12 +253,12 @@ export default function PropertiesPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
-        <div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 'var(--space-6)', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
           <h1 className="font-display" style={{ fontSize: 'var(--fs-2xl)', lineHeight: 1.1 }}>Imóveis <HelpButton section="properties" /></h1>
           <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>{properties.length} imóveis</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn btn-primary">+ Novo Imóvel</button>
+        <button onClick={() => setShowForm(true)} className="btn btn-primary" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>+ Novo Imóvel</button>
       </div>
         <div
           className="filter-bar"
@@ -288,7 +288,7 @@ export default function PropertiesPage() {
         ) : (
         <div
           className="stagger"
-          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))', gap: 16 }}
         >
           {loading && [0, 1, 2, 3, 4, 5].map(i => (
             <div key={i} className="card" style={{ overflow: 'hidden' }}>

@@ -88,7 +88,7 @@ export default function OrganizationPage() {
         <div>
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-              <div style={{ width: 48, height: 48, flexShrink: 0, borderRadius: 8, background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏢</div>
+              <div style={{ width: 48, height: 48, flexShrink: 0, borderRadius: 8, background: 'linear-gradient(135deg, #8B7DB5, #6B5F96)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>🏢</div>
               <div>
                 {editing ? (
                   <input style={inputStyle} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />

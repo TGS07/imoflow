@@ -13,31 +13,31 @@ type StageInsert = {
 }
 
 const VENDEDORES_STAGES: StageInsert[] = [
-  { name: 'Contacto', color: '#3B82F6', position: 0, probability: 10, is_won: false, is_lost: false },
-  { name: 'Angariação', color: '#F59E0B', position: 1, probability: 30, is_won: false, is_lost: false },
-  { name: 'Avaliação', color: '#8B5CF6', position: 2, probability: 45, is_won: false, is_lost: false },
-  { name: 'Em promoção', color: '#14B8A6', position: 3, probability: 60, is_won: false, is_lost: false },
-  { name: 'Proposta', color: '#F97316', position: 4, probability: 80, is_won: false, is_lost: false },
-  { name: 'Vendido', color: '#10B981', position: 5, probability: 100, is_won: true, is_lost: false },
-  { name: 'Perdido', color: '#EF4444', position: 6, probability: 0, is_won: false, is_lost: true },
+  { name: 'Contacto', color: '#6B8DB5', position: 0, probability: 10, is_won: false, is_lost: false },
+  { name: 'Angariação', color: '#C4A05A', position: 1, probability: 30, is_won: false, is_lost: false },
+  { name: 'Avaliação', color: '#8B7DB5', position: 2, probability: 45, is_won: false, is_lost: false },
+  { name: 'Em promoção', color: '#5EA8A0', position: 3, probability: 60, is_won: false, is_lost: false },
+  { name: 'Proposta', color: '#C48E5A', position: 4, probability: 80, is_won: false, is_lost: false },
+  { name: 'Vendido', color: '#5A9E84', position: 5, probability: 100, is_won: true, is_lost: false },
+  { name: 'Perdido', color: '#C47070', position: 6, probability: 0, is_won: false, is_lost: true },
 ]
 
 const COMPRADORES_STAGES: StageInsert[] = [
-  { name: 'Contacto', color: '#3B82F6', position: 0, probability: 10, is_won: false, is_lost: false },
-  { name: 'Qualificação', color: '#F59E0B', position: 1, probability: 30, is_won: false, is_lost: false },
-  { name: 'Visitas', color: '#8B5CF6', position: 2, probability: 50, is_won: false, is_lost: false },
-  { name: 'Proposta', color: '#F97316', position: 3, probability: 70, is_won: false, is_lost: false },
-  { name: 'Negociação', color: '#EC4899', position: 4, probability: 85, is_won: false, is_lost: false },
-  { name: 'Fechado', color: '#10B981', position: 5, probability: 100, is_won: true, is_lost: false },
-  { name: 'Perdido', color: '#EF4444', position: 6, probability: 0, is_won: false, is_lost: true },
+  { name: 'Contacto', color: '#6B8DB5', position: 0, probability: 10, is_won: false, is_lost: false },
+  { name: 'Qualificação', color: '#C4A05A', position: 1, probability: 30, is_won: false, is_lost: false },
+  { name: 'Visitas', color: '#8B7DB5', position: 2, probability: 50, is_won: false, is_lost: false },
+  { name: 'Proposta', color: '#C48E5A', position: 3, probability: 70, is_won: false, is_lost: false },
+  { name: 'Negociação', color: '#B57D8B', position: 4, probability: 85, is_won: false, is_lost: false },
+  { name: 'Fechado', color: '#5A9E84', position: 5, probability: 100, is_won: true, is_lost: false },
+  { name: 'Perdido', color: '#C47070', position: 6, probability: 0, is_won: false, is_lost: true },
 ]
 
 const LEADS_SIMPLES_STAGES: StageInsert[] = [
-  { name: 'Contacto', color: '#3B82F6', position: 0, probability: 15, is_won: false, is_lost: false },
-  { name: 'Qualificação', color: '#F59E0B', position: 1, probability: 40, is_won: false, is_lost: false },
-  { name: 'Proposta', color: '#F97316', position: 2, probability: 70, is_won: false, is_lost: false },
-  { name: 'Fechado', color: '#10B981', position: 3, probability: 100, is_won: true, is_lost: false },
-  { name: 'Perdido', color: '#EF4444', position: 4, probability: 0, is_won: false, is_lost: true },
+  { name: 'Contacto', color: '#6B8DB5', position: 0, probability: 15, is_won: false, is_lost: false },
+  { name: 'Qualificação', color: '#C4A05A', position: 1, probability: 40, is_won: false, is_lost: false },
+  { name: 'Proposta', color: '#C48E5A', position: 2, probability: 70, is_won: false, is_lost: false },
+  { name: 'Fechado', color: '#5A9E84', position: 3, probability: 100, is_won: true, is_lost: false },
+  { name: 'Perdido', color: '#C47070', position: 4, probability: 0, is_won: false, is_lost: true },
 ]
 
 async function mergeOnboardingState(

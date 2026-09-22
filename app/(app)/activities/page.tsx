@@ -8,11 +8,11 @@ import { AudioRecorder } from '@/components/shared/AudioRecorder'
 import { QuickAddFAB } from '@/components/activities/QuickAddFAB'
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
-  chamada: '#3B82F6',
-  visita: '#F59E0B',
-  email: '#8B5CF6',
-  reuniao: '#10B981',
-  tarefa: '#EF4444',
+  chamada: '#6B8DB5',
+  visita: '#C4A05A',
+  email: '#8B7DB5',
+  reuniao: '#5A9E84',
+  tarefa: '#C47070',
   nota: '#6B7280',
   whatsapp: '#25D366',
 }
