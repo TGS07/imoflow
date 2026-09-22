@@ -111,6 +111,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
               setSelectedId(p.id)
             } else {
               setPipelines(prev => prev.map(x => x.id === p.id ? p : x))
+              if (p.id === selectedId) loadBoard(p.id)
             }
           }}
         />

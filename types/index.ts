@@ -196,6 +196,7 @@ export type Lead = {
   organizations?: Organization
   properties?: Property
   pipelines?: { name: string } | null
+  contacts?: { id: string; type: string; title: string; created_at: string }[]
 }
 
 export type Contact = {
