@@ -34,13 +34,13 @@ export function cardFieldValue(lead: Lead, field: PipelineCardField): string | n
       return v ? `${(v / 1000).toFixed(0)}K€` : null
     }
     case 'call_status': {
-      const calls = lead.contacts?.filter(c => c.type === 'chamada')
-      if (!calls?.length) return null
-      const last = calls.sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
-      return last.title
+      if (!lead.last_call) return null
+      const date = new Date(lead.last_call.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })
+      return `📞 ${lead.last_call.note || 'Chamada'} · ${date}`
     }
     case 'source': return lead.source
-    case 'notes': return lead.notes ?? lead.people?.notes ?? null
+    // As notas editam-se na ficha do contacto — essas têm prioridade
+    case 'notes': return lead.people?.notes || lead.notes || null
   }
 }
 

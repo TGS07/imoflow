@@ -764,7 +764,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
           {/* Coluna direita: IA, interações, negócios e associações */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <ContactAiSuggestion personId={id} />
-            <InteractionTimeline personId={id} onLogged={fetchPerson} />
+            <InteractionTimeline personId={id} onLogged={() => { fetchPerson(); onChanged?.() }} />
             <div className="card" style={{ padding: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
                 <div className="font-display" style={{ fontSize: 'var(--fs-md)' }}>Negócios</div>

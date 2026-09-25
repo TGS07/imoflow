@@ -196,7 +196,8 @@ export type Lead = {
   organizations?: Organization
   properties?: Property
   pipelines?: { name: string } | null
-  contacts?: { id: string; type: string; title: string; created_at: string }[]
+  // Última chamada registada no contacto (contact_interactions), anexada pela API
+  last_call?: { note: string | null; created_at: string } | null
 }
 
 export type Contact = {
