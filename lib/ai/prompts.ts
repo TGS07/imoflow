@@ -117,7 +117,7 @@ export function buildClosingEmailPrompt(params: {
 // ser perdido. Só isto justifica ter um campo de notas em todas as entidades.
 const NOTES_FIELD_INSTRUCTION = `"notes": string|null — qualquer informação adicional relevante que não tenha campo próprio no esquema (ex: nomes de familiares/cônjuge, profissão, motivo da venda ou compra, para onde a pessoa quer ir, preferências como luz natural, vista, arrumação, timing ou urgência, contexto pessoal relevante). Resume em frases curtas e factuais, em português de Portugal. Usa null se não houver nada relevante além dos outros campos. Nunca inventes informação que não foi dita.`
 
-export function buildContactExtractionPrompt(transcript: string): string {
+function buildContactExtractionPrompt(transcript: string): string {
   return [
     `Extrai dados de contacto imobiliário a partir desta transcrição (português).`,
     `Transcrição: """${transcript}"""`,
@@ -137,7 +137,7 @@ export function buildContactExtractionPrompt(transcript: string): string {
   ].join('\n')
 }
 
-export function buildInteractionExtractionPrompt(transcript: string): string {
+function buildInteractionExtractionPrompt(transcript: string): string {
   return [
     `Um agente imobiliário gravou uma nota de voz sobre uma interação com um contacto.`,
     `Transcrição: """${transcript}"""`,

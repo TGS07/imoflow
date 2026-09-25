@@ -4,7 +4,7 @@ import type { ContactSpecialDate } from '@/types'
 export const REGULAR_INTERVAL_PRESETS = [5, 7, 15, 30, 60, 90] as const
 
 // Algoritmo de Computus (Anonymous Gregorian) — domingo de Páscoa para o ano dado.
-export function computeEaster(year: number): { month: number; day: number } {
+function computeEaster(year: number): { month: number; day: number } {
   const a = year % 19
   const b = Math.floor(year / 100)
   const c = year % 100
