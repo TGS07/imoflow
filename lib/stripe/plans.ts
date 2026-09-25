@@ -52,7 +52,7 @@ export const PLANS: Record<PlanId, Plan> = {
   },
 }
 
-export function isPlanId(value: string | null | undefined): value is PlanId {
+function isPlanId(value: string | null | undefined): value is PlanId {
   return value === 'free' || value === 'pro'
 }
 

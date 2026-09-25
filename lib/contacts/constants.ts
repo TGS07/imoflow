@@ -47,13 +47,6 @@ export function capacityMeta(key: string | null | undefined) {
   return CAPACITY_BANDS.find(b => b.key === key)
 }
 
-// Mapeia um valor de orçamento (€) para a banda de capacidade financeira.
-export function budgetToCapacity(budget: number | null | undefined): CapacityBand | null {
-  if (budget == null || budget <= 0) return null
-  for (const b of CAPACITY_BANDS) if (budget < b.max) return b.key
-  return 'altissimo'
-}
-
 export const CONTACT_SOURCES = ['idealista', 'site', 'referencia', 'audio', 'manual', 'outro'] as const
 export type ContactSource = typeof CONTACT_SOURCES[number]
 

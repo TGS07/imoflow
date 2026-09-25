@@ -44,14 +44,3 @@ export async function deleteFile(
   if (error) return { data: null, error: error.message }
   return { data, error: null }
 }
-
-export async function listFiles(
-  supabase: SupabaseClient,
-  bucket: string,
-  prefix: string
-): Promise<{ data: FileObject[] | null; error: string | null }> {
-  const { data, error } = await supabase.storage.from(bucket).list(prefix)
-
-  if (error) return { data: null, error: error.message }
-  return { data, error: null }
-}
