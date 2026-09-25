@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('leads')
-    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), pipelines(name), people(id, name, email, phone, types, notes), organizations(id, name), properties(id, reference, title, price, type), contacts(id, type, title, created_at)')
+    .select('*, users(name, avatar_initials), pipeline_stages(id, name, color, position, probability, is_won, is_lost), pipelines(name), people(id, name, email, phone, types, notes), organizations(id, name), properties(id, reference, title, price, type)')
     .eq('agency_id', profile.agency_id)
     .order('created_at', { ascending: false })
 
@@ -41,7 +41,24 @@ export async function GET(request: Request) {
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  // As chamadas são registadas por contacto (contact_interactions), não por
+  // lead — anexar a última chamada de cada contacto para o card "Estado chamada".
+  const personIds = [...new Set(data.map(l => l.person_id).filter((v): v is string => !!v))]
+  const lastCallByPerson = new Map<string, { note: string | null; created_at: string }>()
+  for (let i = 0; i < personIds.length; i += 200) {
+    const { data: calls } = await supabase
+      .from('contact_interactions')
+      .select('person_id, note, created_at')
+      .eq('type', 'chamada')
+      .in('person_id', personIds.slice(i, i + 200))
+      .order('created_at', { ascending: false })
+    for (const c of calls ?? []) {
+      if (!lastCallByPerson.has(c.person_id)) lastCallByPerson.set(c.person_id, { note: c.note, created_at: c.created_at })
+    }
+  }
+
+  return NextResponse.json(data.map(l => ({ ...l, last_call: l.person_id ? lastCallByPerson.get(l.person_id) ?? null : null })))
 }
 
 export async function POST(request: Request) {

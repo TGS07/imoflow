@@ -91,6 +91,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Manter as notas dos negócios do contacto em sincronia com a ficha
+  if ('notes' in update) {
+    await supabase.from('leads').update({ notes: update.notes }).eq('person_id', id)
+  }
+
   return NextResponse.json(data)
 }
 
