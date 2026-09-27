@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Termos de Uso — ImoFlow',
-  description: 'Termos e condições de utilização da plataforma ImoFlow CRM.',
+  title: 'Termos de Uso — FormaCR',
+  description: 'Termos e condições de utilização da plataforma FormaCR CRM.',
 }
 
 const sectionTitle: React.CSSProperties = { fontSize: 18, fontWeight: 600, color: 'var(--text)', marginTop: 32, marginBottom: 12 }
@@ -21,12 +21,12 @@ export default function TermosPage() {
 
         <h2 style={sectionTitle}>1. Aceitação dos Termos</h2>
         <p style={paragraph}>
-          Ao aceder e utilizar a plataforma ImoFlow (&quot;Plataforma&quot;), o utilizador aceita ficar vinculado aos presentes Termos de Uso. Se não concordar com alguma disposição, deverá cessar imediatamente a utilização da Plataforma.
+          Ao aceder e utilizar a plataforma FormaCR (&quot;Plataforma&quot;), o utilizador aceita ficar vinculado aos presentes Termos de Uso. Se não concordar com alguma disposição, deverá cessar imediatamente a utilização da Plataforma.
         </p>
 
         <h2 style={sectionTitle}>2. Descrição do Serviço</h2>
         <p style={paragraph}>
-          O ImoFlow é um CRM (Customer Relationship Management) desenhado para agências imobiliárias, que oferece funcionalidades de gestão de leads, pipeline de vendas, imóveis, contactos, relatórios e automações.
+          O FormaCR é um CRM (Customer Relationship Management) desenhado para agências imobiliárias, que oferece funcionalidades de gestão de leads, pipeline de vendas, imóveis, contactos, relatórios e automações.
         </p>
 
         <h2 style={sectionTitle}>3. Registo e Conta</h2>
@@ -49,32 +49,32 @@ export default function TermosPage() {
 
         <h2 style={sectionTitle}>5. Dados e Conteúdo</h2>
         <p style={paragraph}>
-          Os dados introduzidos pelo utilizador (leads, contactos, imóveis, notas) permanecem propriedade da agência. O ImoFlow atua apenas como processador desses dados, conforme descrito na <Link href="/privacidade" style={{ color: 'var(--gold)', textDecoration: 'underline' }}>Política de Privacidade</Link>.
+          Os dados introduzidos pelo utilizador (leads, contactos, imóveis, notas) permanecem propriedade da agência. O FormaCR atua apenas como processador desses dados, conforme descrito na <Link href="/privacidade" style={{ color: 'var(--gold)', textDecoration: 'underline' }}>Política de Privacidade</Link>.
         </p>
 
         <h2 style={sectionTitle}>6. Disponibilidade e Manutenção</h2>
         <p style={paragraph}>
-          O ImoFlow esforça-se por manter a Plataforma disponível 24/7, mas não garante disponibilidade ininterrupta. Poderão ocorrer períodos de manutenção programada, comunicados com antecedência razoável.
+          O FormaCR esforça-se por manter a Plataforma disponível 24/7, mas não garante disponibilidade ininterrupta. Poderão ocorrer períodos de manutenção programada, comunicados com antecedência razoável.
         </p>
 
         <h2 style={sectionTitle}>7. Propriedade Intelectual</h2>
         <p style={paragraph}>
-          Todo o código, design, logótipos e conteúdo da Plataforma são propriedade do ImoFlow. O utilizador obtém apenas uma licença limitada, não exclusiva e revogável para utilizar o serviço.
+          Todo o código, design, logótipos e conteúdo da Plataforma são propriedade do FormaCR. O utilizador obtém apenas uma licença limitada, não exclusiva e revogável para utilizar o serviço.
         </p>
 
         <h2 style={sectionTitle}>8. Limitação de Responsabilidade</h2>
         <p style={paragraph}>
-          O ImoFlow não se responsabiliza por perdas indiretas, lucros cessantes ou danos resultantes de interrupções de serviço, perda de dados por motivos fora do seu controlo ou utilização inadequada por parte do utilizador.
+          O FormaCR não se responsabiliza por perdas indiretas, lucros cessantes ou danos resultantes de interrupções de serviço, perda de dados por motivos fora do seu controlo ou utilização inadequada por parte do utilizador.
         </p>
 
         <h2 style={sectionTitle}>9. Rescisão</h2>
         <p style={paragraph}>
-          A agência pode cancelar a sua conta a qualquer momento. O ImoFlow reserva-se o direito de suspender ou encerrar contas que violem estes Termos, com aviso prévio de 30 dias exceto em casos de violação grave.
+          A agência pode cancelar a sua conta a qualquer momento. O FormaCR reserva-se o direito de suspender ou encerrar contas que violem estes Termos, com aviso prévio de 30 dias exceto em casos de violação grave.
         </p>
 
         <h2 style={sectionTitle}>10. Alterações aos Termos</h2>
         <p style={paragraph}>
-          O ImoFlow pode atualizar estes Termos a qualquer momento. As alterações serão comunicadas através da Plataforma e entrarão em vigor 15 dias após a publicação.
+          O FormaCR pode atualizar estes Termos a qualquer momento. As alterações serão comunicadas através da Plataforma e entrarão em vigor 15 dias após a publicação.
         </p>
 
         <h2 style={sectionTitle}>11. Lei Aplicável</h2>

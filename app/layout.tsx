@@ -9,13 +9,13 @@ const fraunces = Fraunces({ subsets: ['latin'], style: ['normal', 'italic'], axe
 const hanken = Hanken_Grotesk({ subsets: ['latin'], style: ['normal', 'italic'], variable: '--font-hanken', display: 'swap' })
 
 export const metadata: Metadata = {
-  title: 'ImoFlow CRM',
+  title: 'FormaCR CRM',
   description: 'CRM Imobiliário para agências',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'ImoFlow',
+    title: 'FormaCR',
   },
   icons: {
     icon: '/icon-192.png',

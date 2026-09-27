@@ -1,5 +1,5 @@
 // lib/help/manual.ts
-// Manual de instruções do ImoFlow — fonte única de verdade: alimenta a
+// Manual de instruções do FormaCR — fonte única de verdade: alimenta a
 // página /help e o contexto do chat de IA (/api/ai/help). Ao adicionar ou
 // alterar funcionalidades relevantes para o utilizador, atualizar aqui.
 
@@ -258,7 +258,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       {
         heading: 'Como usar',
-        body: 'Cria um formulário, escolhe os campos e publica-o no teu site via iframe (código de incorporação fornecido). Cada submissão cria automaticamente uma lead no ImoFlow com a origem "site".',
+        body: 'Cria um formulário, escolhe os campos e publica-o no teu site via iframe (código de incorporação fornecido). Cada submissão cria automaticamente uma lead no FormaCR com a origem "site".',
       },
     ],
   },

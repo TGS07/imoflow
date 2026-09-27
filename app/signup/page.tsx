@@ -95,7 +95,7 @@ export default function SignupPage() {
             letterSpacing: '-0.02em',
             lineHeight: 1.1,
           }}>
-            ImoFlow
+            FormaCR
           </div>
           <div style={{ fontSize: 9, letterSpacing: '0.28em', color: 'var(--muted)', textTransform: 'uppercase', marginTop: 5, opacity: 0.75 }}>
             CRM Imobiliário
@@ -105,7 +105,7 @@ export default function SignupPage() {
         {/* Welcome heading */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text)', lineHeight: 1.2 }}>Criar conta</div>
-          <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 8, lineHeight: 1.5 }}>Comece a usar o ImoFlow gratuitamente</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 8, lineHeight: 1.5 }}>Comece a usar o FormaCR gratuitamente</div>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

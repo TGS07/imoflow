@@ -1,4 +1,4 @@
-// POST /api/ai/help — chat de ajuda sobre o ImoFlow.
+// POST /api/ai/help — chat de ajuda sobre o FormaCR.
 // A IA recebe o manual completo como contexto e responde apenas a perguntas
 // sobre a app; perguntas fora do tema são recusadas educadamente.
 import { createClient } from '@/lib/supabase/server'
@@ -23,13 +23,13 @@ export async function POST(request: Request) {
     .slice(-6)
 
   const system = [
-    'És o assistente de ajuda do ImoFlow, um CRM imobiliário em português europeu.',
-    'Responde APENAS a perguntas sobre o ImoFlow e o seu funcionamento, com base no manual abaixo.',
-    'Se a pergunta não for sobre o ImoFlow, responde apenas que só podes ajudar com dúvidas sobre a app.',
+    'És o assistente de ajuda do FormaCR, um CRM imobiliário em português europeu.',
+    'Responde APENAS a perguntas sobre o FormaCR e o seu funcionamento, com base no manual abaixo.',
+    'Se a pergunta não for sobre o FormaCR, responde apenas que só podes ajudar com dúvidas sobre a app.',
     'Respostas curtas e práticas: passos numerados quando fizer sentido, sem jargão técnico.',
     'Se o manual não cobrir a dúvida, di-lo honestamente e sugere a secção mais próxima — nunca inventes funcionalidades.',
     '',
-    '=== MANUAL DO IMOFLOW ===',
+    '=== MANUAL DO FORMACR ===',
     buildHelpManualText(),
   ].join('\n')
 

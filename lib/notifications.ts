@@ -97,17 +97,17 @@ export async function createNotification(params: CreateNotificationParams, clien
 
   try {
     await resend.emails.send({
-      from: 'ImoFlow <onboarding@resend.dev>',
+      from: 'FormaCR <onboarding@resend.dev>',
       to: toEmail,
-      subject: `[ImoFlow] ${title}`,
+      subject: `[FormaCR] ${title}`,
       text: [
         `Olá ${userRow.name ?? ''},`,
         '',
         body,
-        link ? `\nVer detalhes: https://app.imoflow.pt${link}` : '',
+        link ? `\nVer detalhes: https://app.formacr.pt${link}` : '',
         '',
         '---',
-        'ImoFlow · Para desactivar notificações por email, vai a Definições > Notificações.',
+        'FormaCR · Para desactivar notificações por email, vai a Definições > Notificações.',
       ].join('\n'),
     })
   } catch (err) {

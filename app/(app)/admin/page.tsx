@@ -45,7 +45,7 @@ export default function AdminPage() {
   return (
     <>
       <div className="page-pad" style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-        <h1 className="font-display" style={{ fontSize: 20 }}>Admin — ImoFlow</h1>
+        <h1 className="font-display" style={{ fontSize: 20 }}>Admin — FormaCR</h1>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Gestão de agências clientes</p>
       </div>
       <div className="two-col-grid page-pad" style={{ padding: '28px 32px', display: 'grid', gridTemplateColumns: '380px 1fr', gap: 28 }}>

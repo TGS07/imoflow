@@ -1,8 +1,8 @@
-// Service worker mínimo do ImoFlow — apenas para installability (PWA).
+// Service worker mínimo do FormaCR — apenas para installability (PWA).
 // Estratégia network-first; NÃO faz cache de páginas/dados dinâmicos para
 // evitar servir conteúdo desatualizado num CRM. Só guarda um fallback offline.
 
-const CACHE = 'imoflow-shell-v1'
+const CACHE = 'formacr-shell-v1'
 const OFFLINE_URL = '/offline.html'
 
 self.addEventListener('install', (event) => {

@@ -8,7 +8,7 @@ function authHeaders(username: string, password: string, extra?: Record<string, 
   return {
     Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
     'Content-Type': 'application/xml; charset=utf-8',
-    'User-Agent': 'ImoFlow/1.0',
+    'User-Agent': 'FormaCR/1.0',
     ...extra,
   }
 }

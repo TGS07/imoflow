@@ -27,7 +27,7 @@ export async function sendLeadEmail(params: SendLeadEmailParams): Promise<SendLe
     .eq('id', agencyId)
     .single()
 
-  const fromName = agency?.email_from_name || agency?.name || 'ImoFlow'
+  const fromName = agency?.email_from_name || agency?.name || 'FormaCR'
 
   let status: 'sent' | 'failed' = 'sent'
   let errorMessage: string | undefined

@@ -35,7 +35,7 @@ export default function ResetPasswordPage() {
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 380, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 40 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div className="font-display" style={{ fontSize: 28, color: 'var(--gold)', marginBottom: 6 }}>ImoFlow</div>
+          <div className="font-display" style={{ fontSize: 28, color: 'var(--gold)', marginBottom: 6 }}>FormaCR</div>
           <div style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Nova Password</div>
         </div>
 
