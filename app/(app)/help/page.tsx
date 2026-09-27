@@ -56,7 +56,7 @@ function HelpChat() {
         <span className="font-display" style={{ fontSize: 15 }}>Pergunta à IA</span>
       </div>
       <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
-        Tira dúvidas sobre o ImoFlow — como usar cada página, para que serve cada coisa.
+        Tira dúvidas sobre o FormaCR — como usar cada página, para que serve cada coisa.
       </p>
 
       {messages.length === 0 && (
@@ -131,7 +131,7 @@ function HelpContent() {
     <>
       <div className="page-pad" style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 10 }}>
         <h1 className="font-display" style={{ fontSize: 20, fontWeight: 500 }}>Ajuda</h1>
-        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Manual do ImoFlow e assistente de dúvidas</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Manual do FormaCR e assistente de dúvidas</p>
       </div>
 
       <div className="page-enter page-pad" style={{ padding: '28px 32px', flex: 1 }}>

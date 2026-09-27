@@ -61,10 +61,10 @@ export function CommandPalette() {
     }
     const onOpen = () => setOpen(true)
     window.addEventListener('keydown', onKey)
-    window.addEventListener('imoflow:open-cmdk', onOpen)
+    window.addEventListener('formacr:open-cmdk', onOpen)
     return () => {
       window.removeEventListener('keydown', onKey)
-      window.removeEventListener('imoflow:open-cmdk', onOpen)
+      window.removeEventListener('formacr:open-cmdk', onOpen)
     }
   }, [])
 

@@ -14,7 +14,7 @@ type Member = {
   telegram_chat_id: string | null
 }
 
-const TELEGRAM_BOT_USERNAME = 'Imoflowbot'
+const TELEGRAM_BOT_USERNAME = 'Formacrbot'
 
 export default function TeamPage() {
   const [members, setMembers] = useState<Member[]>([])
@@ -95,7 +95,7 @@ export default function TeamPage() {
         <div>
           <h1 className="font-display" style={{ fontSize: 'var(--fs-xl)', marginBottom: 4 }}>Equipa <HelpButton section="team" /></h1>
           <p style={{ fontSize: 13, color: 'var(--muted)' }}>Membros da tua agência e os seus acessos.</p>
-          <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>"Ligar Telegram" ativa os avisos automáticos de imóveis do Idealista que fazem match com os leads de cada consultor, e também as notificações gerais do ImoFlow (novas leads, mudanças de etapa, lembretes) — cada pessoa tem de abrir o link na sua própria conta de Telegram.</p>
+          <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>"Ligar Telegram" ativa os avisos automáticos de imóveis do Idealista que fazem match com os leads de cada consultor, e também as notificações gerais do FormaCR (novas leads, mudanças de etapa, lembretes) — cada pessoa tem de abrir o link na sua própria conta de Telegram.</p>
         </div>
         <Link
           href="/settings/team/new"

@@ -15,7 +15,7 @@ const PLANS: Plan[] = [
   {
     name: 'Free',
     price: 'Grátis',
-    description: 'Para experimentar o ImoFlow sem custos.',
+    description: 'Para experimentar o FormaCR sem custos.',
     features: [
       'Até 5 leads ativos',
       '1 utilizador',

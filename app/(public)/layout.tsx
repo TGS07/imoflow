@@ -5,7 +5,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-        <Link href="/" className="font-display" style={{ fontSize: 20, color: 'var(--gold)', textDecoration: 'none' }}>ImoFlow</Link>
+        <Link href="/" className="font-display" style={{ fontSize: 20, color: 'var(--gold)', textDecoration: 'none' }}>FormaCR</Link>
       </header>
       <main style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '40px 24px' }}>
         {children}

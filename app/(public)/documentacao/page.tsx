@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Documentação — ImoFlow',
-  description: 'Guia completo de utilização da plataforma ImoFlow CRM.',
+  title: 'Documentação — FormaCR',
+  description: 'Guia completo de utilização da plataforma FormaCR CRM.',
 }
 
 const sectionTitle: React.CSSProperties = { fontSize: 18, fontWeight: 600, color: 'var(--text)', marginTop: 32, marginBottom: 12 }
@@ -19,7 +19,7 @@ export default function DocumentacaoPage() {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(to right, transparent, var(--gold), transparent)' }} />
 
         <h1 className="font-display" style={{ fontSize: 27, marginBottom: 8, color: 'var(--text)' }}>Documentação</h1>
-        <p style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 32 }}>Guia de utilização do ImoFlow CRM</p>
+        <p style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 32 }}>Guia de utilização do FormaCR CRM</p>
 
         {/* Quick links */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 32 }}>
@@ -41,7 +41,7 @@ export default function DocumentacaoPage() {
         {/* 1. Primeiros Passos */}
         <h2 id="primeiros-passos" style={sectionTitle}>1. Primeiros Passos</h2>
         <p style={paragraph}>
-          O ImoFlow é um CRM pensado para agências imobiliárias em Portugal. Após receber o convite do administrador da sua agência, aceda com o email e password definidos.
+          O FormaCR é um CRM pensado para agências imobiliárias em Portugal. Após receber o convite do administrador da sua agência, aceda com o email e password definidos.
         </p>
         <h3 style={subTitle}>Painel Principal (Dashboard)</h3>
         <p style={paragraph}>
@@ -97,7 +97,7 @@ export default function DocumentacaoPage() {
         {/* 5. Recomendações */}
         <h2 id="recomendacoes" style={sectionTitle}>5. Recomendações Automáticas</h2>
         <p style={paragraph}>
-          O ImoFlow monitoriza alertas do Idealista e cruza-os com os critérios dos seus leads, gerando recomendações automáticas de imóveis que podem interessar aos seus clientes.
+          O FormaCR monitoriza alertas do Idealista e cruza-os com os critérios dos seus leads, gerando recomendações automáticas de imóveis que podem interessar aos seus clientes.
         </p>
         <h3 style={subTitle}>Como funciona</h3>
         <ul style={list}>

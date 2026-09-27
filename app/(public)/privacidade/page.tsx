@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidade — ImoFlow',
-  description: 'Política de privacidade e proteção de dados da plataforma ImoFlow CRM.',
+  title: 'Política de Privacidade — FormaCR',
+  description: 'Política de privacidade e proteção de dados da plataforma FormaCR CRM.',
 }
 
 const sectionTitle: React.CSSProperties = { fontSize: 18, fontWeight: 600, color: 'var(--text)', marginTop: 32, marginBottom: 12 }
@@ -21,12 +21,12 @@ export default function PrivacidadePage() {
         <p style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 32 }}>Última atualização: 21 de agosto de 2026</p>
 
         <p style={paragraph}>
-          O ImoFlow respeita a privacidade dos seus utilizadores e está empenhado em proteger os dados pessoais, em conformidade com o Regulamento Geral sobre a Proteção de Dados (RGPD — Regulamento UE 2016/679) e a legislação portuguesa aplicável.
+          O FormaCR respeita a privacidade dos seus utilizadores e está empenhado em proteger os dados pessoais, em conformidade com o Regulamento Geral sobre a Proteção de Dados (RGPD — Regulamento UE 2016/679) e a legislação portuguesa aplicável.
         </p>
 
         <h2 style={sectionTitle}>1. Responsável pelo Tratamento</h2>
         <p style={paragraph}>
-          O responsável pelo tratamento dos dados é a entidade que opera a instância do ImoFlow CRM — tipicamente a agência imobiliária que contratou o serviço. O ImoFlow atua como subcontratante (processador) nos termos do artigo 28.º do RGPD.
+          O responsável pelo tratamento dos dados é a entidade que opera a instância do FormaCR CRM — tipicamente a agência imobiliária que contratou o serviço. O FormaCR atua como subcontratante (processador) nos termos do artigo 28.º do RGPD.
         </p>
 
         <h2 style={sectionTitle}>2. Dados Recolhidos</h2>
@@ -112,7 +112,7 @@ export default function PrivacidadePage() {
 
         <h2 style={sectionTitle}>9. Cookies</h2>
         <p style={paragraph}>
-          O ImoFlow utiliza apenas cookies essenciais para autenticação e preferência de tema (claro/escuro). Não utilizamos cookies de tracking, analytics ou publicidade.
+          O FormaCR utiliza apenas cookies essenciais para autenticação e preferência de tema (claro/escuro). Não utilizamos cookies de tracking, analytics ou publicidade.
         </p>
 
         <h2 style={sectionTitle}>10. Alterações a esta Política</h2>

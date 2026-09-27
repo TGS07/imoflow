@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ImoFlow — CRM Imobiliário',
-    short_name: 'ImoFlow',
+    name: 'FormaCR — CRM Imobiliário',
+    short_name: 'FormaCR',
     description: 'CRM e automações para agências imobiliárias',
     start_url: '/dashboard',
     display: 'standalone',

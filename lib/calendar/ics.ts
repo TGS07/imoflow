@@ -31,7 +31,7 @@ export function buildIcsFeed(events: IcsEvent[]): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//ImoFlow//Calendario de Notificacoes//PT',
+    'PRODID:-//FormaCR//Calendario de Notificacoes//PT',
     'CALSCALE:GREGORIAN',
   ]
 
@@ -39,7 +39,7 @@ export function buildIcsFeed(events: IcsEvent[]): string {
   for (const event of events) {
     lines.push(
       'BEGIN:VEVENT',
-      `UID:${event.id}@imoflow.pt`,
+      `UID:${event.id}@formacr.pt`,
       `DTSTAMP:${stamp}`,
       `DTSTART:${formatIcsDate(event.dueDate)}`,
       `SUMMARY:${escapeIcsText(event.title)}`,

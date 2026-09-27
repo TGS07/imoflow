@@ -118,7 +118,7 @@ export async function getPortalData(
     lead_id: lead.id,
     lead_name: lead.name,
     agency: {
-      name: agency?.name ?? 'ImoFlow',
+      name: agency?.name ?? 'FormaCR',
       logo_url: agency?.logo_url ?? null,
     },
     agent,

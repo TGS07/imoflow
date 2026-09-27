@@ -105,7 +105,7 @@ export function Hero() {
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#DC2626', opacity: 0.5 }} />
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#C9A84C', opacity: 0.5 }} />
             <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#059669', opacity: 0.5 }} />
-            <span style={{ fontSize: 'var(--fs-2xs)', color: 'var(--muted)', marginLeft: 8 }}>imoflow.pt/pipeline</span>
+            <span style={{ fontSize: 'var(--fs-2xs)', color: 'var(--muted)', marginLeft: 8 }}>formacr.pt/pipeline</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, padding: 24 }}>
             {['Novo Contacto', 'Visita Marcada', 'Proposta Enviada'].map((col) => (

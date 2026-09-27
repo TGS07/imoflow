@@ -75,7 +75,7 @@ export function SidebarNav({ userName, userInitials, userRole, userTheme }: Prop
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const openSearch = () => window.dispatchEvent(new CustomEvent('imoflow:open-cmdk'))
+  const openSearch = () => window.dispatchEvent(new CustomEvent('formacr:open-cmdk'))
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -116,7 +116,7 @@ export function SidebarNav({ userName, userInitials, userRole, userTheme }: Prop
       {/* Brand */}
       <Link href="/dashboard" className="sv2-brand">
         <div className="sv2-brand-mark">IF</div>
-        <span className="sv2-brand-name">ImoFlow</span>
+        <span className="sv2-brand-name">FormaCR</span>
       </Link>
 
       {/* Search trigger */}
