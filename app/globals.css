@@ -1789,6 +1789,9 @@ textarea.input { resize: vertical; line-height: 1.6; }
   background: var(--card);
   border: 1px solid rgba(176,125,46,0.18);
   border-radius: var(--radius-md);
+  /* O transform cria um stacking context; sem z-index os menus ficam por baixo das colunas */
+  position: relative;
+  z-index: 5; /* acima das colunas, abaixo do header sticky (10) */
   opacity: 0;
   transform: translateY(-8px);
   max-height: 0;
