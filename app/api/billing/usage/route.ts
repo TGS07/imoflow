@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { checkLimit, type LimitResource } from '@/lib/stripe/limits'
-import { getPlan, type PlanId } from '@/lib/stripe/plans'
+import { getPlan, getEffectivePlanId, type PlanId } from '@/lib/stripe/plans'
+import { getPlanFeatures } from '@/lib/stripe/features'
 import { NextResponse } from 'next/server'
 
 const RESOURCES: LimitResource[] = ['leads', 'people', 'properties', 'members', 'automations']
@@ -20,7 +21,7 @@ export async function GET() {
 
   const { data: agency, error: agencyError } = await supabase
     .from('agencies')
-    .select('plan')
+    .select('plan, trial_ends_at')
     .eq('id', profile.agency_id)
     .single()
 
@@ -28,26 +29,32 @@ export async function GET() {
     return NextResponse.json({ error: 'Agency not found' }, { status: 404 })
   }
 
-  const planId = (agency.plan as PlanId | null) ?? 'free'
-  const plan = getPlan(planId)
+  const rawPlan = (agency.plan as PlanId | null) ?? 'free'
+  const trialEndsAt = agency.trial_ends_at as string | null
+  const effectivePlanId = getEffectivePlanId(rawPlan, trialEndsAt)
+  const plan = getPlan(effectivePlanId)
+  const features = getPlanFeatures(effectivePlanId)
 
-  // Passamos `planId` (já carregado acima) a `checkLimit` para que cada
-  // chamada salte o `SELECT plan FROM agencies` e faça só a contagem —
-  // evita repetir a mesma query 5 vezes (uma por resource).
   const results = await Promise.all(
     RESOURCES.map(async (resource) => {
-      const result = await checkLimit(supabase, profile.agency_id, resource, planId)
+      const result = await checkLimit(supabase, profile.agency_id, resource, effectivePlanId)
       return { resource, ...result }
     })
   )
 
-  // Nota: `limit: Infinity` não é serializável em JSON — `JSON.stringify`
-  // converte-o em `null`. O cliente trata isso corretamente por já usar
-  // `Number.isFinite(row.limit)` (que também é `false` para `null`), mas
-  // fica aqui documentado para não ser confundido com um bug.
+  let trialDaysRemaining: number | null = null
+  if (rawPlan === 'trial' && trialEndsAt) {
+    const diff = new Date(trialEndsAt).getTime() - Date.now()
+    trialDaysRemaining = Math.max(0, Math.ceil(diff / (24 * 60 * 60 * 1000)))
+  }
+
   return NextResponse.json({
-    plan: planId,
+    plan: effectivePlanId,
+    rawPlan: rawPlan,
     planName: plan.name,
+    trialEndsAt,
+    trialDaysRemaining,
+    features,
     usage: results,
   })
 }

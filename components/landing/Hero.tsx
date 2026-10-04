@@ -71,7 +71,7 @@ export function Hero() {
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
           <Link href="/signup" className="btn btn-primary btn-lg">
-            Criar conta grátis
+            Experimentar 7 dias grátis
           </Link>
           <Link href="/login" className="btn btn-ghost btn-lg">
             Entrar

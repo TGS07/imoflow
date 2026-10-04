@@ -105,7 +105,7 @@ export default function SignupPage() {
         {/* Welcome heading */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text)', lineHeight: 1.2 }}>Criar conta</div>
-          <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 8, lineHeight: 1.5 }}>Comece a usar o FormaCR gratuitamente</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 8, lineHeight: 1.5 }}>Experimente 7 dias grátis — sem cartão de crédito</div>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -235,7 +235,7 @@ export default function SignupPage() {
             marginTop: 4,
             letterSpacing: '0.01em',
           }}>
-            {loading ? 'A criar conta...' : 'Criar conta'}
+            {loading ? 'A criar conta...' : 'Começar trial de 7 dias'}
           </button>
 
           <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>

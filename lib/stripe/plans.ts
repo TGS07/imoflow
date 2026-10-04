@@ -1,17 +1,4 @@
-// Definição dos planos e respetivos limites de uso.
-// Mantém consistência com o que está prometido publicamente em
-// components/landing/Pricing.tsx (Free: até 5 leads, 1 utilizador;
-// Pro: ilimitado, até 10 utilizadores, automações avançadas).
-//
-// `Infinity` é usado para "ilimitado" — lib/stripe/limits.ts trata este
-// valor como um atalho para não precisar de contar linhas na BD.
-
-// Preço fixo mostrado na landing page e em /settings/billing — não vem da
-// Stripe (decisão deliberada: mais simples de manter, atualizar aqui e no
-// preço/produto da Stripe manualmente se algum dia mudar).
-export const PRO_PRICE_DISPLAY = '90€/mês'
-
-export type PlanId = 'free' | 'pro'
+export type PlanId = 'free' | 'trial' | 'starter' | 'essential' | 'pro'
 
 export type PlanLimits = {
   leads: number
@@ -24,6 +11,7 @@ export type PlanLimits = {
 export type Plan = {
   name: string
   priceId: string | null
+  priceDisplay: string | null
   limits: PlanLimits
 }
 
@@ -31,6 +19,7 @@ export const PLANS: Record<PlanId, Plan> = {
   free: {
     name: 'Free',
     priceId: null,
+    priceDisplay: null,
     limits: {
       leads: 5,
       people: 5,
@@ -39,9 +28,46 @@ export const PLANS: Record<PlanId, Plan> = {
       automations: 0,
     },
   },
+  trial: {
+    name: 'Trial',
+    priceId: null,
+    priceDisplay: null,
+    limits: {
+      leads: Infinity,
+      people: Infinity,
+      properties: Infinity,
+      members: 5,
+      automations: 10,
+    },
+  },
+  starter: {
+    name: 'Starter',
+    priceId: process.env.STRIPE_STARTER_PRICE_ID ?? null,
+    priceDisplay: '49€/mês',
+    limits: {
+      leads: 25,
+      people: 50,
+      properties: 15,
+      members: 1,
+      automations: 0,
+    },
+  },
+  essential: {
+    name: 'Essencial',
+    priceId: process.env.STRIPE_ESSENTIAL_PRICE_ID ?? null,
+    priceDisplay: '89€/mês',
+    limits: {
+      leads: Infinity,
+      people: Infinity,
+      properties: Infinity,
+      members: 5,
+      automations: 10,
+    },
+  },
   pro: {
     name: 'Pro',
     priceId: process.env.STRIPE_PRO_PRICE_ID ?? null,
+    priceDisplay: '149€/mês',
     limits: {
       leads: Infinity,
       people: Infinity,
@@ -53,9 +79,17 @@ export const PLANS: Record<PlanId, Plan> = {
 }
 
 function isPlanId(value: string | null | undefined): value is PlanId {
-  return value === 'free' || value === 'pro'
+  return value === 'free' || value === 'trial' || value === 'starter' || value === 'essential' || value === 'pro'
 }
 
 export function getPlan(planId: string | null | undefined): Plan {
   return isPlanId(planId) ? PLANS[planId] : PLANS.free
+}
+
+export function getEffectivePlanId(plan: string | null | undefined, trialEndsAt: string | null | undefined): PlanId {
+  if (plan === 'trial') {
+    if (!trialEndsAt) return 'free'
+    return new Date(trialEndsAt) > new Date() ? 'trial' : 'free'
+  }
+  return isPlanId(plan) ? plan : 'free'
 }

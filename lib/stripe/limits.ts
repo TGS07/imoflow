@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getPlan, type PlanId } from './plans'
+import { getPlan, getEffectivePlanId, type PlanId } from './plans'
 
 export type LimitResource = 'leads' | 'people' | 'properties' | 'members' | 'automations'
 
@@ -17,39 +17,29 @@ export type CheckLimitResult = {
   limit: number
 }
 
-/**
- * Verifica se a agency ainda tem margem para criar mais um recurso do tipo
- * indicado, de acordo com o plano atual (`agencies.plan`) e os limites
- * definidos em lib/stripe/plans.ts.
- *
- * Faz `count: 'exact', head: true` (sem trazer as rows todas) — exceto
- * quando o limite é `Infinity`, caso em que nem sequer conta (otimização).
- *
- * Se o chamador já souber o `plan` da agency (ex: já fez o SELECT antes,
- * como em app/api/billing/usage/route.ts ao verificar vários resources
- * seguidos), pode passá-lo em `knownPlanId` para evitar repetir o
- * `SELECT plan FROM agencies` a cada chamada.
- */
 export async function checkLimit(
   supabase: SupabaseClient,
   agencyId: string,
   resource: LimitResource,
-  knownPlanId?: PlanId | null
+  knownPlanId?: PlanId | null,
+  knownTrialEndsAt?: string | null
 ): Promise<CheckLimitResult> {
-  let planId: string | null | undefined = knownPlanId
+  let effectivePlanId: PlanId
 
-  if (knownPlanId === undefined) {
+  if (knownPlanId !== undefined) {
+    effectivePlanId = getEffectivePlanId(knownPlanId, knownTrialEndsAt)
+  } else {
     const { data: agency, error: agencyError } = await supabase
       .from('agencies')
-      .select('plan')
+      .select('plan, trial_ends_at')
       .eq('id', agencyId)
       .single()
 
     if (agencyError) throw agencyError
-    planId = agency?.plan as string | null
+    effectivePlanId = getEffectivePlanId(agency?.plan, agency?.trial_ends_at)
   }
 
-  const plan = getPlan(planId)
+  const plan = getPlan(effectivePlanId)
   const limit = plan.limits[resource]
 
   if (limit === Infinity) {

@@ -3,21 +3,18 @@ import { getStripe } from '@/lib/stripe/client'
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 
-// Este endpoint é chamado diretamente pelo Stripe (sem sessão de user) — a
-// autenticidade do pedido é garantida pela verificação da assinatura HMAC
-// (stripe-signature), não por cookies/auth. Por isso usa sempre o cliente
-// service-role para as escritas.
-
 async function getAgencyIdFromSession(session: Stripe.Checkout.Session): Promise<string | null> {
-  // client_reference_id é definido em app/api/billing/checkout/route.ts como
-  // o agency_id — é a forma mais robusta de identificar a agency, porque não
-  // depende de já existir stripe_customer_id gravado na BD. metadata.agency_id
-  // funciona como fallback (mesmo valor, gravado por redundância).
   return session.client_reference_id ?? (session.metadata?.agency_id as string | undefined) ?? null
 }
 
 function getAgencyIdFromSubscription(subscription: Stripe.Subscription): string | null {
   return (subscription.metadata?.agency_id as string | undefined) ?? null
+}
+
+function getPlanFromMetadata(metadata: Stripe.Metadata | null): string {
+  const planId = metadata?.plan_id
+  if (planId === 'starter' || planId === 'essential' || planId === 'pro') return planId
+  return 'pro'
 }
 
 export async function POST(request: Request) {
@@ -38,12 +35,6 @@ export async function POST(request: Request) {
   }
 
   const supabase = createServiceClient()
-
-  // Se alguma escrita à BD falhar, devolvemos um status non-2xx no final para
-  // que o Stripe reentregue o evento (política de retries dele) em vez de o
-  // considerar entregue com sucesso — caso contrário uma falha transitória
-  // deixaria a agency permanentemente dessincronizada do estado real da
-  // subscription (ex: cliente paga mas fica preso em 'free').
   let dbWriteFailed = false
 
   switch (event.type) {
@@ -58,11 +49,13 @@ export async function POST(request: Request) {
 
       const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id ?? null
       const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id ?? null
+      const planId = getPlanFromMetadata(session.metadata)
 
       const { error } = await supabase
         .from('agencies')
         .update({
-          plan: 'pro',
+          plan: planId,
+          trial_ends_at: null,
           stripe_customer_id: customerId,
           stripe_subscription_id: subscriptionId,
         })
@@ -82,8 +75,6 @@ export async function POST(request: Request) {
       const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id
 
       if (!agencyId) {
-        // Fallback: procura a agency pelo stripe_customer_id, caso a
-        // subscription não tenha sido criada com metadata.agency_id.
         const { data: agency } = await supabase
           .from('agencies')
           .select('id')
@@ -98,12 +89,15 @@ export async function POST(request: Request) {
       }
 
       const activeStatuses: Stripe.Subscription.Status[] = ['active', 'trialing']
-      const plan = activeStatuses.includes(subscription.status) ? 'pro' : 'free'
+      const planId = activeStatuses.includes(subscription.status)
+        ? getPlanFromMetadata(subscription.metadata)
+        : 'free'
 
       const { error } = await supabase
         .from('agencies')
         .update({
-          plan,
+          plan: planId,
+          trial_ends_at: planId === 'free' ? null : undefined,
           stripe_subscription_id: subscription.id,
         })
         .eq('id', agencyId)
@@ -139,6 +133,7 @@ export async function POST(request: Request) {
         .from('agencies')
         .update({
           plan: 'free',
+          trial_ends_at: null,
           stripe_subscription_id: null,
         })
         .eq('id', agencyId)
@@ -151,7 +146,6 @@ export async function POST(request: Request) {
     }
 
     default:
-      // Eventos não tratados são ignorados propositadamente.
       break
   }
 

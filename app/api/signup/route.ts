@@ -45,11 +45,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status })
   }
 
+  const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+
   const { data: agency, error: agencyError } = await service
     .from('agencies')
     .insert({
       name: agencyName.trim(),
       email: email.trim(),
+      plan: 'trial',
+      trial_ends_at: trialEndsAt,
     })
     .select('id')
     .single()

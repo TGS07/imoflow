@@ -33,7 +33,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
   if (!agency) {
     return new NextResponse('Not found', { status: 404 })
   }
-  if (agency.plan !== 'pro') {
+  if (agency.plan !== 'pro' && agency.plan !== 'essential' && agency.plan !== 'trial') {
     return new NextResponse('Forbidden', { status: 403 })
   }
 

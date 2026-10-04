@@ -9,6 +9,7 @@ type IconName =
   | 'plug' | 'robot' | 'template' | 'credit-card' | 'arrow-right'
   | 'chevron-right' | 'user-plus' | 'home-plus' | 'calendar-plus'
   | 'layout-top' | 'layout-side'
+  | 'clock' | 'alert-triangle'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   dashboard: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
@@ -63,6 +64,8 @@ const PATHS: Record<IconName, React.ReactNode> = {
   'calendar-plus': <><rect x="3.5" y="5" width="17" height="16" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M12 14v3M10.5 15.5h3" /></>,
   'layout-top': <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></>,
   'layout-side': <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /></>,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></>,
+  'alert-triangle': <path d="M10.3 3.2 1.8 18.5a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.2a2 2 0 0 0-3.4 0ZM12 9v4M12 17h.01" />,
 }
 
 type Props = {
