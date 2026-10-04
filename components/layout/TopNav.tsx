@@ -86,7 +86,7 @@ export function TopNav({ userName, userEmail, userInitials, userRole, userTheme 
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const openSearch = () => window.dispatchEvent(new CustomEvent('imoflow:open-cmdk'))
+  const openSearch = () => window.dispatchEvent(new CustomEvent('formacr:open-cmdk'))
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -106,7 +106,7 @@ export function TopNav({ userName, userEmail, userInitials, userRole, userTheme 
     <nav className="app-header" role="navigation" aria-label="Navegação principal">
       {/* Left: logo + search */}
       <div className="ah-left">
-        <Link href="/dashboard" className="ah-logo" aria-label="ImoFlow">
+        <Link href="/dashboard" className="ah-logo" aria-label="FormaCR">
           <div className="ah-logo-mark">IF</div>
         </Link>
 

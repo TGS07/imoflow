@@ -95,7 +95,7 @@ export default function SignupPage() {
             letterSpacing: '-0.02em',
             lineHeight: 1.1,
           }}>
-            ImoFlow
+            FormaCR
           </div>
           <div style={{ fontSize: 9, letterSpacing: '0.28em', color: 'var(--muted)', textTransform: 'uppercase', marginTop: 5, opacity: 0.75 }}>
             CRM Imobiliário

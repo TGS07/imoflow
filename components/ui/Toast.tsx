@@ -18,8 +18,8 @@ export function ToastContainer() {
       setToasts(prev => [...prev, { id, message, type }])
       setTimeout(() => remove(id), 4000)
     }
-    window.addEventListener('imoflow:toast', handler)
-    return () => window.removeEventListener('imoflow:toast', handler)
+    window.addEventListener('formacr:toast', handler)
+    return () => window.removeEventListener('formacr:toast', handler)
   }, [remove])
 
   if (toasts.length === 0) return null

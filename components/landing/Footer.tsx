@@ -14,7 +14,7 @@ export function Footer() {
           gap: 16,
         }}
       >
-        <span className="font-display" style={{ fontSize: 'var(--fs-md)', color: 'var(--gold)' }}>ImoFlow</span>
+        <span className="font-display" style={{ fontSize: 'var(--fs-md)', color: 'var(--gold)' }}>FormaCR</span>
 
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
           <Link href="/termos" style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)', textDecoration: 'none' }}>Termos de Uso</Link>
@@ -23,7 +23,7 @@ export function Footer() {
         </div>
 
         <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--muted)' }}>
-          © {new Date().getFullYear()} ImoFlow. Todos os direitos reservados.
+          © {new Date().getFullYear()} FormaCR. Todos os direitos reservados.
         </span>
       </div>
     </footer>

@@ -187,7 +187,7 @@ export default function AgencySettingsPage() {
       <div className="card" style={{ padding: 20, marginTop: 16, background: 'var(--surface)' }}>
         <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.7, margin: 0 }}>
           <strong style={{ color: 'var(--gold)' }}>Domínio próprio:</strong> de momento os emails saem do
-          domínio partilhado do ImoFlow. Para enviar diretamente do teu domínio (ex: geral@minhaagencia.pt),
+          domínio partilhado do FormaCR. Para enviar diretamente do teu domínio (ex: geral@minhaagencia.pt),
           é preciso verificá-lo no Resend (Domains → Add Domain → adicionar os registos DNS) e definir a
           variável <code style={{ color: 'var(--text)' }}>EMAIL_FROM</code> no servidor.
         </p>

@@ -60,7 +60,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
     return {
       id: a.id as string,
       title: a.title as string,
-      description: link ? `Ver no ImoFlow: https://app.imoflow.pt${link}` : 'Ver no ImoFlow',
+      description: link ? `Ver no FormaCR: https://app.formacr.pt${link}` : 'Ver no FormaCR',
       dueDate: a.due_date as string,
     }
   })
