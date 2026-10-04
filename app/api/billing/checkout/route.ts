@@ -1,13 +1,27 @@
 import { createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe/client'
-import { PLANS } from '@/lib/stripe/plans'
+import { PLANS, type PlanId } from '@/lib/stripe/plans'
 import { NextResponse } from 'next/server'
+
+const PAID_PLANS: PlanId[] = ['starter', 'essential', 'pro']
 
 export async function POST(request: Request) {
   const stripe = getStripe()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  let targetPlan: PlanId
+  try {
+    const body = await request.json()
+    targetPlan = body.planId
+  } catch {
+    return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 })
+  }
+
+  if (!PAID_PLANS.includes(targetPlan)) {
+    return NextResponse.json({ error: 'Plano inválido' }, { status: 400 })
+  }
 
   const { data: profile } = await supabase
     .from('users')
@@ -27,12 +41,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Agency not found' }, { status: 404 })
   }
 
-  const priceId = PLANS.pro.priceId
-  if (!priceId) {
-    return NextResponse.json({ error: 'Plano Pro não está configurado (STRIPE_PRO_PRICE_ID em falta)' }, { status: 500 })
+  const plan = PLANS[targetPlan]
+  if (!plan.priceId) {
+    return NextResponse.json({ error: `Plano ${targetPlan} não está configurado (STRIPE_${targetPlan.toUpperCase()}_PRICE_ID em falta)` }, { status: 500 })
   }
 
-  // Reutiliza o Stripe Customer existente ou cria um novo associado à agency.
   let customerId = agency.stripe_customer_id as string | null
   if (!customerId) {
     const customer = await stripe.customers.create({
@@ -53,25 +66,17 @@ export async function POST(request: Request) {
 
   const { origin } = new URL(request.url)
 
-  // `client_reference_id` identifica a agency de forma robusta no webhook —
-  // é sempre devolvido no evento checkout.session.completed, sem depender
-  // de já existir stripe_customer_id gravado localmente.
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: customerId,
     client_reference_id: agency.id,
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: [{ price: plan.priceId, quantity: 1 }],
     success_url: `${origin}/settings/billing?checkout=success`,
     cancel_url: `${origin}/settings/billing?checkout=cancelled`,
-    metadata: { agency_id: agency.id },
+    metadata: { agency_id: agency.id, plan_id: targetPlan },
     subscription_data: {
-      metadata: { agency_id: agency.id },
+      metadata: { agency_id: agency.id, plan_id: targetPlan },
     },
-    // Managed Payments (Stripe como merchant of record) vem ativado por
-    // omissão na conta e exige tax_code no produto, que não configurámos —
-    // desativamos aqui para usar o modelo direto (Stripe apenas processa
-    // o pagamento, sem responsabilidades fiscais assumidas pela Stripe).
-    managed_payments: { enabled: false },
   })
 
   if (!session.url) {

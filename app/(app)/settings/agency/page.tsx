@@ -196,7 +196,7 @@ export default function AgencySettingsPage() {
       {!loading && agency && (
         <div className="card" style={{ padding: 20, marginTop: 16 }}>
           <h3 className="font-display" style={{ fontSize: 15, marginBottom: 4 }}>Feed XML de imóveis</h3>
-          {agency.plan === 'pro' ? (
+          {agency.plan === 'pro' || agency.plan === 'essential' ? (
             <>
               <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>
                 Usa este link para importar os teus imóveis em portais imobiliários (ex: CASA, SAPO). O feed

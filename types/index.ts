@@ -9,7 +9,8 @@ export type Agency = {
   name: string
   email: string
   logo_url: string | null
-  plan: 'free' | 'pro'
+  plan: 'free' | 'trial' | 'starter' | 'essential' | 'pro'
+  trial_ends_at: string | null
   email_from_name: string | null
   email_reply_to: string | null
   created_at: string
