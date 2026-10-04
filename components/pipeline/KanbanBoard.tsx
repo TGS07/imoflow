@@ -390,7 +390,10 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
   const otherPipelines = (pipelines ?? []).filter(p => p.id !== currentPipelineId)
 
   function getStageLeads(stageId: string) {
-    return leads.filter(l => l.stage_id === stageId)
+    // Os que estão há mais tempo na fase aparecem primeiro
+    return leads
+      .filter(l => l.stage_id === stageId)
+      .sort((a, b) => new Date(a.stage_entered_at).getTime() - new Date(b.stage_entered_at).getTime())
   }
 
   function handleDragStart(event: DragStartEvent) {
