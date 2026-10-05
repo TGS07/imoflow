@@ -24,5 +24,5 @@ export async function GET(request: Request) {
     .eq('id', userId)
 
   if (error) return page('Não foi possível cancelar agora. Tenta mais tarde.', 500)
-  return page('Subscrição cancelada. Já não vais receber avisos de novidades.')
+  return page('Subscrição cancelada. Já não vais receber emails de novidades nem campanhas.')
 }
