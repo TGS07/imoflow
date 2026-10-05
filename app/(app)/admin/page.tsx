@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Agency } from '@/types'
 
 export default function AdminPage() {
@@ -46,7 +47,7 @@ export default function AdminPage() {
     <>
       <div className="page-pad" style={{ padding: '20px 32px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
         <h1 className="font-display" style={{ fontSize: 20 }}>Admin — FormaCR</h1>
-        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Gestão de agências clientes</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 1 }}>Gestão de agências clientes · <Link href="/admin/campaigns" style={{ color: 'var(--gold)' }}>Campanhas de email →</Link></p>
       </div>
       <div className="two-col-grid page-pad" style={{ padding: '28px 32px', display: 'grid', gridTemplateColumns: '380px 1fr', gap: 28 }}>
         {/* FORM */}
