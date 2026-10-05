@@ -2,6 +2,9 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { getStripe } from '@/lib/stripe/client'
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
+import { getPlan } from '@/lib/stripe/plans'
+import { sendTransactionalEmail } from '@/lib/email/transactional'
+import { renderPlanConfirmed } from '@/lib/email/transactional-templates'
 
 async function getAgencyIdFromSession(session: Stripe.Checkout.Session): Promise<string | null> {
   return session.client_reference_id ?? (session.metadata?.agency_id as string | undefined) ?? null
@@ -64,6 +67,27 @@ export async function POST(request: Request) {
       if (error) {
         console.error('[stripe webhook] falha ao atualizar agency após checkout', error)
         dbWriteFailed = true
+      } else {
+        const [{ data: agency }, { data: admin }] = await Promise.all([
+          supabase.from('agencies').select('email').eq('id', agencyId).maybeSingle(),
+          supabase
+            .from('users')
+            .select('name')
+            .eq('agency_id', agencyId)
+            .eq('role', 'admin')
+            .limit(1)
+            .maybeSingle(),
+        ])
+        const to = session.customer_details?.email ?? agency?.email
+        if (to) {
+          const plan = getPlan(planId)
+          const confirmation = renderPlanConfirmed({
+            name: admin?.name ?? '',
+            planName: plan.name,
+            priceDisplay: plan.priceDisplay,
+          })
+          await sendTransactionalEmail({ to, ...confirmation })
+        }
       }
       break
     }

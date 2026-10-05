@@ -1,5 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { NextResponse } from 'next/server'
+import { sendTransactionalEmail } from '@/lib/email/transactional'
+import { renderTrialStarted } from '@/lib/email/transactional-templates'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -92,6 +94,13 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ error: userError.message }, { status: 500 })
   }
+
+  const welcome = renderTrialStarted({
+    name: name.trim(),
+    agencyName: agencyName.trim(),
+    trialEndsAt,
+  })
+  await sendTransactionalEmail({ to: email.trim(), ...welcome })
 
   return NextResponse.json({ success: true })
 }
