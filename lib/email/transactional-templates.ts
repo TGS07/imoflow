@@ -1,3 +1,5 @@
+import { PLANS } from '@/lib/stripe/plans'
+
 const APP_URL = process.env.APP_URL ?? 'https://imoflow.vercel.app'
 
 function esc(s: string): string {
@@ -52,6 +54,34 @@ export function renderPlanConfirmed(p: { name: string; planName: string; priceDi
       'Podes ver os dados da subscrição, as faturas e alterar ou cancelar o plano a qualquer momento nas definições de faturação.',
     ],
     { label: 'Gerir subscrição', url: `${APP_URL}/settings/billing` }
+  )
+  return { subject, html, text }
+}
+
+export function renderTrialEnding(p: { name: string; agencyName: string; trialEndsAt: string; daysLeft: number }) {
+  const when = p.daysLeft <= 1 ? 'amanhã' : `daqui a ${p.daysLeft} dias`
+  const subject = `O trial da FormaCR acaba ${when}`
+  const { html, text } = layout(
+    `O teu trial acaba ${when}`,
+    [
+      `Olá, ${esc(firstName(p.name))}! O trial da agência <strong>${esc(p.agencyName)}</strong> termina a <strong>${esc(formatDatePt(p.trialEndsAt))}</strong>.`,
+      'Escolhe agora um plano para continuares com tudo o que tens: leads, pipeline, automações e equipa. Sem plano, a conta passa para o plano gratuito, com limites.',
+    ],
+    { label: 'Escolher plano', url: `${APP_URL}/settings/billing` }
+  )
+  return { subject, html, text }
+}
+
+export function renderTrialEnded(p: { name: string; agencyName: string }) {
+  const free = PLANS.free.limits
+  const subject = 'O teu trial da FormaCR terminou'
+  const { html, text } = layout(
+    'O teu trial terminou',
+    [
+      `Olá, ${esc(firstName(p.name))}! O trial da agência <strong>${esc(p.agencyName)}</strong> terminou e a conta passou para o plano gratuito (até ${free.leads} leads, ${free.people} contactos e ${free.properties} imóveis, sem automações).`,
+      'Os teus dados continuam guardados. Escolhe um plano para voltares a ter acesso completo.',
+    ],
+    { label: 'Escolher plano', url: `${APP_URL}/settings/billing` }
   )
   return { subject, html, text }
 }
