@@ -3,7 +3,7 @@
 // sobre a app; perguntas fora do tema são recusadas educadamente.
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getAIClient, AI_MODEL } from '@/lib/ai/client'
+import { createChatCompletion } from '@/lib/ai/client'
 import { buildHelpManualText } from '@/lib/help/manual'
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
@@ -34,8 +34,7 @@ export async function POST(request: Request) {
   ].join('\n')
 
   try {
-    const completion = await getAIClient().chat.completions.create({
-      model: AI_MODEL,
+    const completion = await createChatCompletion({
       max_tokens: 512,
       temperature: 0.3,
       messages: [

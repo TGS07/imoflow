@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getAIClient, AI_MODEL } from '@/lib/ai/client'
+import { createChatCompletion } from '@/lib/ai/client'
 import { buildClosingEmailPrompt } from '@/lib/ai/prompts'
 
 export async function POST(request: Request) {
@@ -37,8 +37,8 @@ export async function POST(request: Request) {
     reviewLink: process.env.GOOGLE_REVIEW_LINK ?? 'https://g.page/r/CONFIGURAR-REVIEW',
   })
 
-  const completion = await getAIClient().chat.completions.create({
-    model: AI_MODEL, max_tokens: 512, temperature: 0.7,
+  const completion = await createChatCompletion({
+    max_tokens: 512, temperature: 0.7,
     messages: [{ role: 'user', content: prompt }],
   })
   return NextResponse.json({ body: completion.choices[0]?.message?.content?.trim() ?? '', recipients: [...names] })

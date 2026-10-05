@@ -1,4 +1,4 @@
-import { getAIClient, AI_MODEL } from '@/lib/ai/client'
+import { createChatCompletion } from '@/lib/ai/client'
 import type { Listing, LeadPreference } from './types'
 
 const SYSTEM_PROMPT = `És um agente imobiliário português a escrever a um cliente comprador por WhatsApp.
@@ -21,7 +21,6 @@ export async function draftMessage(
   pref: LeadPreference,
   agentName: string
 ): Promise<string> {
-  const client = getAIClient()
   const detalhes = [
     `Cliente: ${pref.lead_name}`,
     `Agente: ${agentName}`,
@@ -34,8 +33,7 @@ export async function draftMessage(
     `Link: ${listing.link}`,
   ].join('\n')
 
-  const response = await client.chat.completions.create({
-    model: AI_MODEL,
+  const response = await createChatCompletion({
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       { role: 'user', content: `Escreve a mensagem.\n\n${detalhes}` },

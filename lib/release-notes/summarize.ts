@@ -1,29 +1,6 @@
-import { getAIClient, AI_MODEL } from '@/lib/ai/client'
+import { createChatCompletion } from '@/lib/ai/client'
 
 export type CommitInfo = { sha: string; message: string }
-
-// Tenta o modelo principal e, se a conta Groq não tiver acesso a ele, os seguintes.
-const MODELS = [process.env.RELEASE_AI_MODEL, AI_MODEL, 'openai/gpt-oss-120b', 'llama-3.1-8b-instant']
-  .filter((m, i, all): m is string => !!m && all.indexOf(m) === i)
-
-async function complete(messages: { role: 'system' | 'user'; content: string }[]) {
-  let lastError: unknown
-  for (const model of MODELS) {
-    try {
-      return await getAIClient().chat.completions.create({
-        model,
-        temperature: 0.2,
-        response_format: { type: 'json_object' },
-        messages,
-      })
-    } catch (err) {
-      if ((err as { code?: string }).code !== 'model_not_found') throw err
-      console.error(`release-notes: modelo ${model} indisponível, a tentar o seguinte`)
-      lastError = err
-    }
-  }
-  throw lastError
-}
 
 // Devolve de 0 a 6 pontos em PT para clientes. [] = nada relevante para o utilizador.
 export async function summarizeCommits(commits: CommitInfo[]): Promise<string[]> {
@@ -31,7 +8,10 @@ export async function summarizeCommits(commits: CommitInfo[]): Promise<string[]>
 
   const list = commits.map(c => `- ${c.message.split('\n')[0]}`).join('\n')
 
-  const completion = await complete([
+  const completion = await createChatCompletion({
+    temperature: 0.2,
+    response_format: { type: 'json_object' },
+    messages: [
       {
         role: 'system',
         content:
@@ -45,7 +25,8 @@ export async function summarizeCommits(commits: CommitInfo[]): Promise<string[]>
           'Se nada for relevante para o utilizador final, devolve {"items": []}. Não inventes funcionalidades.',
       },
       { role: 'user', content: `Commits do deploy:\n${list}` },
-  ])
+    ],
+  })
 
   const raw = completion.choices[0]?.message?.content ?? '{}'
   const parsed: unknown = JSON.parse(raw)
