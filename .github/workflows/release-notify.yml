@@ -1,0 +1,39 @@
+name: Release notify
+
+# Corre quando o deploy de produção no Vercel termina com sucesso.
+on:
+  deployment_status:
+
+jobs:
+  notify:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.deployment.sha }}
+
+      - name: Enviar commits para a FormaCR
+        env:
+          NOTIFY_URL: ${{ secrets.RELEASE_NOTIFY_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SHA: ${{ github.event.deployment.sha }}
+        run: |
+          set -euo pipefail
+          LAST=$(curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$NOTIFY_URL/api/release-notes/last" | jq -r '.sha // empty')
+
+          if [ -n "$LAST" ] && git cat-file -e "$LAST^{commit}" 2>/dev/null; then
+            RANGE="$LAST..$SHA"
+          else
+            RANGE="-n 5 $SHA"
+          fi
+
+          COMMITS=$(git log $RANGE --no-merges --pretty=format:'%H%x1f%s' \
+            | jq -R -s -c 'split("\n") | map(select(length>0) | split("\u001f") | {sha: .[0], message: .[1]})')
+
+          jq -n --arg sha "$SHA" --argjson commits "$COMMITS" '{sha: $sha, commits: $commits}' \
+            | curl -fsS -X POST "$NOTIFY_URL/api/release-notes/ingest" \
+                -H "Authorization: Bearer $CRON_SECRET" \
+                -H "Content-Type: application/json" \
+                --data-binary @-
