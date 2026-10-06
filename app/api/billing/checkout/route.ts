@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       subscription_data: {
         metadata: { agency_id: agency.id, plan_id: targetPlan },
       },
+      managed_payments: { enabled: false },
     })
 
     if (!session.url) {
