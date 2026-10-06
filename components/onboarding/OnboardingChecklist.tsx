@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Card } from '@/components/ui/Card'
 import { Icon } from '@/components/ui/Icon'
 
 type OnboardingResponse = {
@@ -67,21 +66,31 @@ export function OnboardingChecklist() {
   }
 
   return (
-    <Card
+    <div
       style={{
         display: 'flex',
         alignItems: 'flex-start',
-        justifyContent: 'space-between',
         gap: 'var(--space-4)',
-        padding: 'var(--space-5)',
+        padding: 'var(--space-4) var(--space-5)',
+        borderRadius: 'var(--radius)',
+        background: 'var(--gold-glow)',
+        border: '1px solid rgba(176,125,46,0.3)',
         marginBottom: 'var(--space-6)',
+        position: 'relative',
       }}
     >
+      <div style={{
+        width: 32, height: 32, borderRadius: 9,
+        background: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#0D0D0F', flexShrink: 0, marginTop: 2,
+      }}>
+        <Icon name="sparkle" size={15} />
+      </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="font-display" style={{ fontSize: 'var(--fs-lg)', marginBottom: 'var(--space-3)' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
           Completa a configuração da tua agência
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {pending.map(item => (
             <Link
               key={item.key}
@@ -89,14 +98,15 @@ export function OnboardingChecklist() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 'var(--space-2)',
-                fontSize: 'var(--fs-sm)',
+                gap: 6,
+                fontSize: 12,
                 color: 'var(--gold)',
-                fontWeight: 600,
+                fontWeight: 500,
                 textDecoration: 'none',
               }}
             >
-              {item.label} →
+              <Icon name="arrow-right" size={12} />
+              {item.label}
             </Link>
           ))}
         </div>
@@ -106,11 +116,11 @@ export function OnboardingChecklist() {
         onClick={handleDismiss}
         disabled={dismissing}
         aria-label="Fechar"
-        className="btn btn-ghost btn-sm"
-        style={{ flexShrink: 0, padding: 6 }}
+        className="icon-btn-sm"
+        style={{ flexShrink: 0 }}
       >
-        <Icon name="close" size={14} />
+        <Icon name="x" size={14} />
       </button>
-    </Card>
+    </div>
   )
 }

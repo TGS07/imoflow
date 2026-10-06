@@ -79,8 +79,8 @@ export function UpgradeBanner() {
             O seu <strong>trial expirou</strong>. Escolha um plano para continuar a usar todas as funcionalidades.
           </div>
         </div>
-        <Link href="/settings/billing" className="btn btn-primary btn-sm" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
-          Ver planos
+        <Link href="/settings/billing" className="btn btn-soft btn-sm" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+          Ver planos →
         </Link>
       </div>
     )
@@ -113,8 +113,8 @@ export function UpgradeBanner() {
             O seu trial expira em <strong>{usage.trialDaysRemaining} dia{usage.trialDaysRemaining !== 1 ? 's' : ''}</strong>. Escolha um plano para não perder acesso.
           </div>
         </div>
-        <Link href="/settings/billing" className="btn btn-primary btn-sm" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
-          Ver planos
+        <Link href="/settings/billing" className="btn btn-soft btn-sm" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+          Ver planos →
         </Link>
       </div>
     )
@@ -157,8 +157,8 @@ export function UpgradeBanner() {
           Faça upgrade para continuar sem restrições.
         </div>
       </div>
-      <Link href="/settings/billing" className="btn btn-primary btn-sm" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
-        Ver planos
+      <Link href="/settings/billing" className="btn btn-soft btn-sm" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+        Ver planos →
       </Link>
     </div>
   )
