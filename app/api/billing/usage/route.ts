@@ -37,7 +37,7 @@ export async function GET() {
 
   const results = await Promise.all(
     RESOURCES.map(async (resource) => {
-      const result = await checkLimit(supabase, profile.agency_id, resource, effectivePlanId)
+      const result = await checkLimit(supabase, profile.agency_id, resource, rawPlan, trialEndsAt)
       return { resource, ...result }
     })
   )
