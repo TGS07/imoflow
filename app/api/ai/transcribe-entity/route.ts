@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getAIClient, AI_MODEL } from '@/lib/ai/client'
+import { getAIClient, createChatCompletion } from '@/lib/ai/client'
 import { buildEntityExtractionPrompt, type VoiceEntity } from '@/lib/ai/prompts'
 
 const VALID_ENTITIES: VoiceEntity[] = ['contact', 'interaction', 'lead', 'organization', 'property', 'activity', 'visit']
@@ -26,8 +26,8 @@ export async function POST(request: Request) {
   const transcript = (transcription as { text: string }).text ?? ''
 
   // 2) extração de campos, específica da entidade
-  const completion = await client.chat.completions.create({
-    model: AI_MODEL, max_tokens: 512, temperature: 0.2,
+  const completion = await createChatCompletion({
+    max_tokens: 512, temperature: 0.2,
     response_format: { type: 'json_object' },
     messages: [{ role: 'user', content: buildEntityExtractionPrompt(entity as VoiceEntity, transcript) }],
   })

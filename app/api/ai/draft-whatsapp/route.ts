@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getAIClient, AI_MODEL } from '@/lib/ai/client'
+import { createChatCompletion } from '@/lib/ai/client'
 import { buildDraftWhatsAppPrompt } from '@/lib/ai/prompts'
 import type { Lead, Activity } from '@/types'
 
@@ -28,8 +28,7 @@ export async function POST(request: Request) {
     agency?.name ?? 'Agência',
   )
 
-  const completion = await getAIClient().chat.completions.create({
-    model: AI_MODEL,
+  const completion = await createChatCompletion({
     max_tokens: 256,
     temperature: 0.7,
     messages: [{ role: 'user', content: prompt }],

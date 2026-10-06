@@ -1,4 +1,4 @@
-import { getAIClient, AI_MODEL } from '@/lib/ai/client'
+import { createChatCompletion } from '@/lib/ai/client'
 import type { Listing, LeadPreference, MatchReason } from './types'
 
 function tipologiaToNum(tipologia: string | null): number | null {
@@ -36,9 +36,7 @@ async function zonaOk(listing: Listing, pref: LeadPreference): Promise<boolean> 
   if (!pref.zonas.length) return true
   if (!listing.zona) return false
 
-  const client = getAIClient()
-  const response = await client.chat.completions.create({
-    model: AI_MODEL,
+  const response = await createChatCompletion({
     messages: [
       {
         role: 'user',

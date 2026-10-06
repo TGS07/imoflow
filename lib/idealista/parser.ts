@@ -1,4 +1,4 @@
-import { getAIClient, AI_MODEL } from '@/lib/ai/client'
+import { createChatCompletion } from '@/lib/ai/client'
 import type { Listing, ParsedEmail } from './types'
 
 const SYSTEM_PROMPT = `És um extrator de dados de emails de alerta do portal imobiliário Idealista.
@@ -46,10 +46,8 @@ function extractTextFromRawEmail(raw: string): string {
 
 export async function parseEmail(rawEmail: string): Promise<ParsedEmail> {
   const text = extractTextFromRawEmail(rawEmail)
-  const client = getAIClient()
 
-  const response = await client.chat.completions.create({
-    model: AI_MODEL,
+  const response = await createChatCompletion({
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       { role: 'user', content: `Extrai os imóveis deste email:\n\n${text}` },

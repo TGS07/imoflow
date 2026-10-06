@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core'
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, pointerWithin, rectIntersection, type CollisionDetection } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Lead, PipelineStage, PipelineCardField, Pipeline } from '@/types'
@@ -209,9 +209,17 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
   )
 }
 
+// O alvo é o que está debaixo do cursor. Com rectIntersection (o default) o
+// próprio lugar original do card ganhava enquanto não passasse metade para a
+// coluna do lado, e o drop era ignorado.
+const collisionDetection: CollisionDetection = args => {
+  const hits = pointerWithin(args)
+  return hits.length > 0 ? hits : rectIntersection(args)
+}
+
 function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id })
-  return <div ref={setNodeRef} style={{ minHeight: 120 }}>{children}</div>
+  return <div ref={setNodeRef} style={{ minHeight: 120, flex: 1 }}>{children}</div>
 }
 
 function DroppablePipelineTab({ pipeline }: { pipeline: Pipeline; isOver?: boolean }) {
@@ -451,7 +459,7 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
 
   return (
     <>
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         {/* Cross-pipeline drop targets (visible during drag only) */}
         {activeId && otherPipelines.length > 0 && (
           <div className="pipeline-drop-bar">
