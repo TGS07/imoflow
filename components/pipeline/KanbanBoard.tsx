@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, pointerWithin, rectIntersection, type CollisionDetection } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Lead, PipelineStage, PipelineCardField, Pipeline } from '@/types'
+import { Lead, PipelineStage, PipelineCardField, Pipeline, PipelineCardSort } from '@/types'
 import { useRouter } from 'next/navigation'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { CardPropertyModal } from '@/components/pipeline/CardPropertyModal'
@@ -277,11 +277,12 @@ type Props = {
   currentPipelineId?: string | null
   onOpenContact?: (personId: string, leadId: string) => void
   cardFields: PipelineCardFields
+  cardSort?: PipelineCardSort
   onDuplicated?: () => void
   onCardUpdated?: () => void
 }
 
-export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId, onOpenContact, cardFields, onDuplicated, onCardUpdated }: Props) {
+export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId, onOpenContact, cardFields, cardSort = 'oldest_first', onDuplicated, onCardUpdated }: Props) {
   const router = useRouter()
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -398,10 +399,11 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
   const otherPipelines = (pipelines ?? []).filter(p => p.id !== currentPipelineId)
 
   function getStageLeads(stageId: string) {
-    // Os que estão há mais tempo na fase aparecem primeiro
+    // Ordem por tempo na fase, conforme a definição da pipeline
+    const dir = cardSort === 'newest_first' ? -1 : 1
     return leads
       .filter(l => l.stage_id === stageId)
-      .sort((a, b) => new Date(a.stage_entered_at).getTime() - new Date(b.stage_entered_at).getTime())
+      .sort((a, b) => dir * (new Date(a.stage_entered_at).getTime() - new Date(b.stage_entered_at).getTime()))
   }
 
   function handleDragStart(event: DragStartEvent) {

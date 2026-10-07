@@ -36,8 +36,11 @@ export type Pipeline = {
   card_primary_field: PipelineCardField
   card_secondary_field: PipelineCardField
   card_fields: PipelineCardField[] | null
+  card_sort: PipelineCardSort
   created_at: string
 }
+
+export type PipelineCardSort = 'oldest_first' | 'newest_first'
 
 export type PipelineStage = {
   id: string
