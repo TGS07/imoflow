@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     const valid = body.card_fields.filter((f: unknown) => typeof f === 'string' && (CARD_FIELDS as readonly string[]).includes(f))
     if (valid.length > 0) insert.card_fields = valid
   }
+  if (body.card_sort === 'oldest_first' || body.card_sort === 'newest_first') insert.card_sort = body.card_sort
 
   const { data, error } = await supabase
     .from('pipelines')

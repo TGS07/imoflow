@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Lead, PipelineStage, Pipeline, PipelineCardField, PipelineCardSort } from '@/types'
+import { Lead, PipelineStage, Pipeline, PipelineCardField } from '@/types'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { PropertyPickerModal } from '@/components/pipeline/PropertyPickerModal'
@@ -57,21 +57,6 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
     leads.filter(l => l.person_id && l.pipeline_stages && !l.pipeline_stages.is_won && !l.pipeline_stages.is_lost)
       .map(l => l.person_id as string)
   )
-
-  async function changeCardSort(cardSort: PipelineCardSort) {
-    if (!selected) return
-    const previous = selected.card_sort
-    setPipelines(prev => prev.map(p => p.id === selected.id ? { ...p, card_sort: cardSort } : p))
-    const res = await fetch(`/api/pipelines/${selected.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ card_sort: cardSort }),
-    })
-    if (!res.ok) {
-      setPipelines(prev => prev.map(p => p.id === selected.id ? { ...p, card_sort: previous } : p))
-      alert('Erro ao guardar a ordenação.')
-    }
-  }
 
   async function deletePipeline(p: Pipeline) {
     if (!confirm(`Eliminar a pipeline "${p.name}"? As etapas são apagadas.`)) return
@@ -162,22 +147,6 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           )}
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
-          {selected && (
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted)' }}>
-              Ordenar
-              <select
-                className="input"
-                value={selected.card_sort ?? 'oldest_first'}
-                onChange={e => changeCardSort(e.target.value as PipelineCardSort)}
-                disabled={!isAdmin}
-                title={isAdmin ? 'Ordem dos cards em cada fase (aplica-se a toda a equipa)' : 'Só administradores podem alterar a ordenação'}
-                style={{ width: 'auto', padding: '6px 10px', fontSize: 13 }}
-              >
-                <option value="oldest_first">Mais tempo na fase primeiro</option>
-                <option value="newest_first">Menos tempo na fase primeiro</option>
-              </select>
-            </label>
-          )}
           <button onClick={() => setShowPicker(true)} disabled={!selected} className="btn btn-ghost" style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             + Imóvel
