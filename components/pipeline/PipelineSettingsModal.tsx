@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Pipeline, PipelineCardField } from '@/types'
+import { Pipeline, PipelineCardField, PipelineCardSort } from '@/types'
 import { CARD_FIELD_LABELS } from '@/lib/pipeline/card-fields'
 
 const ALL_FIELDS: PipelineCardField[] = ['name', 'phone', 'email', 'zone', 'typology', 'property', 'property_ref', 'property_type', 'value', 'call_status', 'source', 'notes']
@@ -16,6 +16,7 @@ export function PipelineSettingsModal({ pipeline, onClose, onSaved }: Props) {
   const [name, setName] = useState(pipeline?.name ?? '')
   const defaultFields: PipelineCardField[] = pipeline?.card_fields ?? [pipeline?.card_primary_field ?? 'name', pipeline?.card_secondary_field ?? 'zone']
   const [selectedFields, setSelectedFields] = useState<PipelineCardField[]>(defaultFields)
+  const [cardSort, setCardSort] = useState<PipelineCardSort>(pipeline?.card_sort ?? 'oldest_first')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,6 +48,7 @@ export function PipelineSettingsModal({ pipeline, onClose, onSaved }: Props) {
         card_fields: selectedFields,
         card_primary_field: selectedFields[0],
         card_secondary_field: selectedFields[1] ?? selectedFields[0],
+        card_sort: cardSort,
       }
       const res = await fetch(isEdit ? `/api/pipelines/${pipeline!.id}` : '/api/pipelines', {
         method: isEdit ? 'PATCH' : 'POST',
@@ -70,6 +72,14 @@ export function PipelineSettingsModal({ pipeline, onClose, onSaved }: Props) {
           <div>
             <div className="section-label" style={{ marginBottom: 6 }}>Nome</div>
             <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Arrendamentos" autoFocus required />
+          </div>
+
+          <div>
+            <div className="section-label" style={{ marginBottom: 6 }}>Ordenar cards em cada fase</div>
+            <select className="input" value={cardSort} onChange={e => setCardSort(e.target.value as PipelineCardSort)}>
+              <option value="oldest_first">Mais tempo na fase primeiro</option>
+              <option value="newest_first">Menos tempo na fase primeiro</option>
+            </select>
           </div>
 
           <div>
