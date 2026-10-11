@@ -1,7 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { NextResponse } from 'next/server'
 import { sendTransactionalEmail } from '@/lib/email/transactional'
-import { renderTrialStarted } from '@/lib/email/transactional-templates'
+import { renderWelcome } from '@/lib/email/transactional-templates'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -47,15 +47,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status })
   }
 
-  const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-
   const { data: agency, error: agencyError } = await service
     .from('agencies')
     .insert({
       name: agencyName.trim(),
       email: email.trim(),
-      plan: 'trial',
-      trial_ends_at: trialEndsAt,
+      plan: 'pro',
     })
     .select('id')
     .single()
@@ -95,10 +92,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: userError.message }, { status: 500 })
   }
 
-  const welcome = renderTrialStarted({
+  const welcome = renderWelcome({
     name: name.trim(),
     agencyName: agencyName.trim(),
-    trialEndsAt,
   })
   await sendTransactionalEmail({ to: email.trim(), ...welcome })
 

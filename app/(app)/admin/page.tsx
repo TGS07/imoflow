@@ -75,7 +75,7 @@ export default function AdminPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['Nome', 'Email', 'Plano', 'Criada em'].map(h => (
+                  {['Nome', 'Email', 'Criada em'].map(h => (
                     <th key={h} style={{ textAlign: 'left', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--muted)', padding: '10px 22px', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>{h}</th>
                   ))}
                 </tr>
@@ -85,9 +85,6 @@ export default function AdminPage() {
                   <tr key={a.id}>
                     <td style={{ padding: '12px 22px', fontSize: 13, fontWeight: 500, color: 'var(--text)', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>{a.name}</td>
                     <td style={{ padding: '12px 22px', fontSize: 12, color: 'var(--muted)', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>{a.email}</td>
-                    <td style={{ padding: '12px 22px', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>
-                      <span style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 4, background: 'rgba(201,168,76,0.1)', color: 'var(--gold)' }}>{(a.plan ?? 'free').toUpperCase()}</span>
-                    </td>
                     <td style={{ padding: '12px 22px', fontSize: 12, color: 'var(--muted)', borderBottom: '1px solid rgba(38,38,41,0.5)' }}>{new Date(a.created_at).toLocaleDateString('pt-PT')}</td>
                   </tr>
                 ))}

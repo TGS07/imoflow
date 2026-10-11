@@ -29,7 +29,6 @@ const settingsItems: { href: string; icon: IconName; label: string; colorClass: 
   { href: '/settings/templates', icon: 'template', label: 'Templates', colorClass: 'si-green' },
   { href: '/settings/agency', icon: 'building', label: 'Agência', colorClass: 'si-amber' },
   { href: '/settings/team', icon: 'team', label: 'Equipa', colorClass: 'si-red' },
-  { href: '/settings/billing', icon: 'credit-card', label: 'Faturação', colorClass: 'si-gold' },
 ]
 
 const quickAddItems: { href: string; icon: IconName; label: string; colorClass: string }[] = [

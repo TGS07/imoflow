@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { AUDIENCES, countAudiences, filterAudience, loadRecipients, type Audience } from '@/lib/campaigns/audience'
+import { AUDIENCES, countAudiences, loadRecipients, type Audience } from '@/lib/campaigns/audience'
 import { sendCampaign, sendCampaignTest } from '@/lib/campaigns/send'
 
 export const maxDuration = 300
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     .limit(1)
   if (dup?.length) return NextResponse.json({ error: 'Esta campanha já foi enviada há poucos minutos.' }, { status: 409 })
 
-  const recipients = filterAudience(await loadRecipients(), audience)
+  const recipients = await loadRecipients()
   if (recipients.length === 0) return NextResponse.json({ error: 'Não há destinatários nesta audiência.' }, { status: 400 })
 
   const { data: row, error: insertError } = await supabase

@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { createNotification } from '@/lib/notifications'
 import { triggerAutomations } from '@/lib/automations/engine'
-import { checkLimit } from '@/lib/stripe/limits'
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -73,14 +72,6 @@ export async function POST(request: Request) {
     .single()
 
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-
-  const limitCheck = await checkLimit(supabase, profile.agency_id, 'leads')
-  if (!limitCheck.allowed) {
-    return NextResponse.json(
-      { error: `Atingiu o limite de ${limitCheck.limit} leads do seu plano. Faça upgrade para continuar.` },
-      { status: 403 }
-    )
-  }
 
   const body = await request.json()
   const { custom_fields: customFieldValues, ...leadData } = body

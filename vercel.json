@@ -30,10 +30,6 @@
     {
       "path": "/api/cron/contacts-sync",
       "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/trial-reminders",
-      "schedule": "0 10 * * *"
     }
   ]
 }

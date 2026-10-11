@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-type Audience = 'all' | 'trial' | 'paid' | 'free'
+type Audience = 'all'
 type HistoryItem = {
   id: string
   subject: string
@@ -16,9 +16,6 @@ type HistoryItem = {
 
 const AUDIENCE_LABELS: Record<Audience, string> = {
   all: 'Todos os utilizadores',
-  trial: 'Agências em trial',
-  paid: 'Agências com plano pago',
-  free: 'Agências no plano gratuito',
 }
 const STATUS_LABELS: Record<HistoryItem['status'], string> = {
   sending: 'A enviar',
@@ -133,7 +130,7 @@ export default function CampaignsPage() {
               <div key={h.id} style={{ padding: '12px 0', borderTop: '1px solid var(--border)' }}>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{h.subject}</div>
                 <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
-                  {new Date(h.created_at).toLocaleString('pt-PT')} · {AUDIENCE_LABELS[h.audience]} · {STATUS_LABELS[h.status]} · {h.sent_count}/{h.recipient_count} enviados{h.failed_count ? `, ${h.failed_count} falhados` : ''}
+                  {new Date(h.created_at).toLocaleString('pt-PT')} · {AUDIENCE_LABELS[h.audience] ?? 'Segmento antigo'} · {STATUS_LABELS[h.status]} · {h.sent_count}/{h.recipient_count} enviados{h.failed_count ? `, ${h.failed_count} falhados` : ''}
                 </div>
               </div>
             ))

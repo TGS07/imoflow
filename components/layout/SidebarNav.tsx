@@ -29,7 +29,6 @@ const settingsSubItems: { href: string; icon: IconName; label: string }[] = [
   { href: '/settings/templates', icon: 'template', label: 'Templates' },
   { href: '/settings/agency', icon: 'building', label: 'Agência' },
   { href: '/settings/team', icon: 'team', label: 'Equipa' },
-  { href: '/settings/billing', icon: 'credit-card', label: 'Faturação' },
 ]
 
 type Props = {
