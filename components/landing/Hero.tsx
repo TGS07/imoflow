@@ -70,10 +70,7 @@ export function Hero() {
         </p>
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
-          <Link href="/signup" className="btn btn-primary btn-lg">
-            Experimentar 7 dias grátis
-          </Link>
-          <Link href="/login" className="btn btn-ghost btn-lg">
+          <Link href="/login" className="btn btn-primary btn-lg">
             Entrar
           </Link>
         </div>

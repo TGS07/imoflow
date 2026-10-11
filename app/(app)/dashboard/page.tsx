@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { daysSince, followupStatus } from '@/lib/contacts/followup'
 import { matchSpecialDatesToday } from '@/lib/contacts/special-dates'
 import { Icon } from '@/components/ui/Icon'
-import { UpgradeBanner } from '@/components/billing/UpgradeBanner'
 import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist'
 import type { Database } from '@/types/database'
 
@@ -160,7 +159,6 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <UpgradeBanner />
       <OnboardingChecklist />
 
       {lastSync && (

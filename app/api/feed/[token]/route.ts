@@ -6,8 +6,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 // Feed XML público de imóveis, para importação em portais imobiliários
 // (CASA/SAPO). Sem sessão — o token na URL É a autenticação, mesmo padrão
-// de GET /api/calendar/[token]. Só disponível a agências no plano Pro
-// (verificado aqui, não só na UI de definições).
+// de GET /api/calendar/[token].
 export async function GET(_: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
 
@@ -22,7 +21,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
 
   const { data: agency, error: agencyError } = await supabase
     .from('agencies')
-    .select('id, name, plan')
+    .select('id, name')
     .eq('feed_token', token)
     .maybeSingle()
 
@@ -32,9 +31,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
   }
   if (!agency) {
     return new NextResponse('Not found', { status: 404 })
-  }
-  if (agency.plan !== 'pro' && agency.plan !== 'essential' && agency.plan !== 'trial') {
-    return new NextResponse('Forbidden', { status: 403 })
   }
 
   const { data: properties, error: propertiesError } = await supabase
