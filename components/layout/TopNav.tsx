@@ -26,6 +26,7 @@ const settingsItems: { href: string; icon: IconName; label: string; colorClass: 
   { href: '/settings/pipeline', icon: 'pipeline', label: 'Pipeline', colorClass: 'si-gold' },
   { href: '/settings/automations', icon: 'robot', label: 'Automações', colorClass: 'si-purple' },
   { href: '/settings/forms', icon: 'form', label: 'Formulários', colorClass: 'si-blue' },
+  { href: '/settings/integrations', icon: 'plug', label: 'Integrações', colorClass: 'si-purple' },
   { href: '/settings/templates', icon: 'template', label: 'Templates', colorClass: 'si-green' },
   { href: '/settings/agency', icon: 'building', label: 'Agência', colorClass: 'si-amber' },
   { href: '/settings/team', icon: 'team', label: 'Equipa', colorClass: 'si-red' },

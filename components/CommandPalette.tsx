@@ -32,6 +32,7 @@ const NAV: NavItem[] = [
   { label: 'Configurações do Pipeline', href: '/settings/pipeline', icon: 'settings', keywords: 'etapas campos definicoes' },
   { label: 'Automações', href: '/settings/automations', icon: 'zap', keywords: 'regras automatico' },
   { label: 'Formulários', href: '/settings/forms', icon: 'form', keywords: 'forms captura' },
+  { label: 'Integrações', href: '/settings/integrations', icon: 'plug', keywords: 'webhook api parceiro leads externas instagram zapier make' },
   { label: 'Templates', href: '/settings/templates', icon: 'mail', keywords: 'emails modelos whatsapp' },
   { label: 'Agência', href: '/settings/agency', icon: 'building', keywords: 'remetente definicoes' },
   { label: 'Equipa', href: '/settings/team', icon: 'team', keywords: 'utilizadores consultores' },
