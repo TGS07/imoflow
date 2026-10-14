@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-const CARD_FIELDS = ['name', 'phone', 'email', 'zone', 'property', 'typology', 'value', 'property_type', 'property_ref', 'call_status', 'source', 'notes'] as const
+const CARD_FIELDS = ['name', 'phone', 'email', 'zone', 'property', 'typology', 'value', 'property_type', 'property_ref', 'call_status', 'source', 'notes', 'traits'] as const
 function parseCardField(v: unknown): string | undefined {
   return typeof v === 'string' && (CARD_FIELDS as readonly string[]).includes(v) ? v : undefined
 }
@@ -34,7 +34,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const valid = body.card_fields.filter((f: unknown) => typeof f === 'string' && (CARD_FIELDS as readonly string[]).includes(f))
     if (valid.length > 0) update.card_fields = valid
   }
-  if (body.card_sort === 'oldest_first' || body.card_sort === 'newest_first') update.card_sort = body.card_sort
+  if (['oldest_first', 'newest_first', 'hottest_first'].includes(body.card_sort)) update.card_sort = body.card_sort
+  if (['stage', 'last_contact', 'both'].includes(body.days_mode)) update.days_mode = body.days_mode
+  if (body.card_border_color === null || (typeof body.card_border_color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(body.card_border_color))) {
+    update.card_border_color = body.card_border_color
+  }
   if (Object.keys(update).length === 0) return NextResponse.json({ error: 'Nada a atualizar' }, { status: 400 })
 
   const { data, error } = await supabase

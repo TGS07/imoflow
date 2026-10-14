@@ -11,6 +11,7 @@ import { REGULAR_INTERVAL_PRESETS } from '@/lib/contacts/special-dates'
 import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
 import { DocumentList } from '@/components/shared/DocumentList'
 import { toast } from '@/lib/toast'
+import { ContactEngagementBar } from '@/components/contacts/ContactEngagementBar'
 
 type PortalActivityRow = {
   id: string
@@ -404,6 +405,16 @@ export default function LeadPage() {
           </div>
           <div>
             <h2 className="font-display" style={{ fontSize: 22, marginBottom: 8 }}>{lead.name}</h2>
+            {lead.people && (
+              <div style={{ marginBottom: 12 }}>
+                <ContactEngagementBar
+                  personId={lead.people.id}
+                  temperature={lead.people.temperature ?? null}
+                  nextCallAt={lead.people.next_call_at ?? null}
+                  onChanged={fetchAll}
+                />
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
               <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 5, background: `${stageColor}22`, color: stageColor, border: `1px solid ${stageColor}40` }}>
                 {stageName}

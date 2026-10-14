@@ -180,6 +180,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
               all: selected?.card_fields ?? [selected?.card_primary_field ?? 'name', selected?.card_secondary_field ?? 'zone'],
             }}
             cardSort={selected?.card_sort ?? 'oldest_first'}
+            appearance={{ daysMode: selected?.days_mode ?? 'stage', borderColor: selected?.card_border_color ?? null }}
             onDuplicated={() => selectedId && loadBoard(selectedId)}
             onCardUpdated={() => selectedId && loadBoard(selectedId)}
           />

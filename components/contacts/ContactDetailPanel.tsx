@@ -14,6 +14,9 @@ import { SellerProperties } from '@/components/contacts/SellerProperties'
 import { ConsultantProperties } from '@/components/contacts/ConsultantProperties'
 import { REGULAR_INTERVAL_PRESETS } from '@/lib/contacts/special-dates'
 import { DocumentList } from '@/components/shared/DocumentList'
+import { ContactEngagementBar } from '@/components/contacts/ContactEngagementBar'
+import { TRAIT_SUGGESTIONS, VISIT_ACTIVITY } from '@/lib/contacts/engagement'
+import type { PropertyVisitActivity } from '@/types'
 
 export type LeadSummary = {
   id: string
@@ -28,7 +31,7 @@ export type LeadSummary = {
   stage_recurring_days?: number | null
 }
 
-type PropertyRef = { id: string; title: string; status: string; price: number | null; reference: string | null }
+type PropertyRef = { id: string; title: string; status: string; price: number | null; reference: string | null; visit_activity?: PropertyVisitActivity | null }
 
 type PersonDetail = Person & {
   leads?: LeadSummary[]
@@ -61,6 +64,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
   const [customInterval, setCustomInterval] = useState('')
   const [agencyFollowup, setAgencyFollowup] = useState<{ first: number; second: number } | null>(null)
   const [newSpecialDate, setNewSpecialDate] = useState({ label: '', month: '', day: '' })
+  const [newTrait, setNewTrait] = useState('')
   const [form, setForm] = useState<{
     name: string; email: string; phone: string; address: string; notes: string
     types: ContactTypeKey[]; financial_capacity: string; source: string; details: ContactDetails
@@ -233,6 +237,33 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     })
     fetchPerson()
     onChanged?.()
+  }
+
+  // Características do contacto (ex: "ligar ao fim de semana", "ser paciente")
+  async function saveTraits(next: string[]) {
+    await fetch(`/api/people/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ traits: next }),
+    })
+    fetchPerson()
+    onChanged?.()
+  }
+
+  function addTrait(label: string) {
+    const t = label.trim()
+    if (!person || !t || (person.traits ?? []).includes(t)) return
+    setNewTrait('')
+    saveTraits([...(person.traits ?? []), t])
+  }
+
+  async function setVisitActivity(propertyId: string, value: PropertyVisitActivity | null) {
+    const res = await fetch(`/api/properties/${propertyId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visit_activity: value }),
+    })
+    if (res.ok) { fetchPerson(); onChanged?.() }
   }
 
   async function addToPipelines(pipelineIds: string[], propertyId?: string | null) {
@@ -481,6 +512,14 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
               {!editing && (person.types?.length ?? 0) > 0 && (
                 <div style={{ marginTop: 8 }}><ContactTypeChips types={person.types ?? []} /></div>
               )}
+              <div style={{ marginTop: 12 }}>
+                <ContactEngagementBar
+                  personId={id}
+                  temperature={person.temperature ?? null}
+                  nextCallAt={person.next_call_at ?? null}
+                  onChanged={() => { fetchPerson(); onChanged?.() }}
+                />
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 0, alignItems: 'stretch' }}>
               {[
@@ -497,9 +536,68 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
           </div>
         </div>
 
+        {/* Sugestão IA logo no topo: usa temperatura, características, próxima
+            chamada, historial e imóveis para recomendar o próximo passo. */}
+        <div style={{ marginBottom: 24 }}>
+          <ContactAiSuggestion personId={id} onChanged={() => { fetchPerson(); onChanged?.() }} />
+        </div>
+
         <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: embedded ? '1fr' : '1fr 1fr', gap: embedded ? 20 : 24 }}>
           {/* Coluna esquerda: dados do contacto agrupados por tema */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div className="card" style={{ padding: 24 }}>
+              {cardTitle('Características')}
+              {(person.traits ?? []).length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                  {(person.traits ?? []).map(t => (
+                    <span key={t} className="chip active" style={{ gap: 6 }}>
+                      {t}
+                      <button type="button" aria-label={`Remover ${t}`} onClick={() => saveTraits((person.traits ?? []).filter(x => x !== t))} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, fontSize: 13, lineHeight: 1 }}>×</button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginBottom: 12 }}>Como lidar com este contacto — ex: ligar ao fim de semana, ter calma.</div>
+              )}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                <input className="input" placeholder="Nova característica…" value={newTrait} onChange={e => setNewTrait(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addTrait(newTrait) }} style={{ flex: 1 }} />
+                <button type="button" className="btn btn-soft btn-sm" disabled={!newTrait.trim()} onClick={() => addTrait(newTrait)} style={{ height: 'auto' }}>+ Adicionar</button>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {TRAIT_SUGGESTIONS.filter(t => !(person.traits ?? []).includes(t)).map(t => (
+                  <button key={t} type="button" className="chip" style={{ fontSize: 11, padding: '3px 9px' }} onClick={() => addTrait(t)}>+ {t}</button>
+                ))}
+              </div>
+              <div style={{ fontSize: 'var(--fs-2xs)', color: 'var(--muted)', marginTop: 10 }}>Aparecem no card da pipeline quando o campo «Características» está ativo nessa pipeline.</div>
+            </div>
+
+            {candidateProperties.length > 0 && (
+              <div className="card" style={{ padding: 24 }}>
+                {cardTitle('Estado dos imóveis')}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {candidateProperties.map(p => (
+                    <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <Link href={`/properties/${p.id}`} style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'var(--text)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.reference ? `${p.reference} — ` : ''}{p.title}
+                      </Link>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                        {VISIT_ACTIVITY.map(v => {
+                          const active = p.visit_activity === v.key
+                          return (
+                            <button key={v.key} type="button" className="chip" onClick={() => setVisitActivity(p.id, active ? null : v.key)}
+                              style={active ? { background: `${v.color}1A`, color: v.color, borderColor: `${v.color}66`, fontWeight: 600 } : undefined}>
+                              {v.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 'var(--fs-2xs)', color: 'var(--muted)', marginTop: 10 }}>Muitas visitas → card com border verde · poucas ou nenhuma → border laranja.</div>
+              </div>
+            )}
+
             <div className="card" style={{ padding: 24 }}>
               {cardTitle('Contacto')}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -763,7 +861,6 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
 
           {/* Coluna direita: IA, interações, negócios e associações */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <ContactAiSuggestion personId={id} />
             <InteractionTimeline personId={id} onLogged={() => { fetchPerson(); onChanged?.() }} />
             <div className="card" style={{ padding: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>

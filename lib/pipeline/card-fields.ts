@@ -1,4 +1,5 @@
 import type { Lead, PipelineCardField } from '@/types'
+import { OUTCOME_LABELS } from '@/lib/contacts/engagement'
 
 export type PipelineCardFields = {
   primary: PipelineCardField
@@ -36,16 +37,24 @@ export function cardFieldValue(lead: Lead, field: PipelineCardField): string | n
     case 'call_status': {
       if (!lead.last_call) return null
       const date = new Date(lead.last_call.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })
-      return `📞 ${lead.last_call.note || 'Chamada'} · ${date}`
+      const label = lead.last_call.outcome ? OUTCOME_LABELS[lead.last_call.outcome] : (lead.last_call.note || 'Chamada')
+      return `📞 ${label} · ${date}`
     }
     case 'source': return lead.source
     // As notas editam-se na ficha do contacto — essas têm prioridade
     case 'notes': return lead.people?.notes || lead.notes || null
+    case 'traits': return (lead.people?.traits ?? []).join(' · ') || null
   }
 }
 
 export function daysInStage(lead: Lead): number {
   return Math.floor((Date.now() - new Date(lead.stage_entered_at).getTime()) / 86400000)
+}
+
+// Dias desde a última chamada/email/mensagem; sem registos conta desde que entrou na pipeline
+export function daysSinceLastContact(lead: Lead): number {
+  const ref = lead.last_contact_at ?? lead.created_at
+  return Math.floor((Date.now() - new Date(ref).getTime()) / 86400000)
 }
 
 export const CARD_FIELD_LABELS: Record<PipelineCardField, string> = {
@@ -61,4 +70,5 @@ export const CARD_FIELD_LABELS: Record<PipelineCardField, string> = {
   call_status: 'Estado chamada',
   source: 'Fonte',
   notes: 'Notas',
+  traits: 'Características',
 }

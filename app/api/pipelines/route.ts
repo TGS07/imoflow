@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-const CARD_FIELDS = ['name', 'phone', 'email', 'zone', 'property', 'typology', 'value', 'property_type', 'property_ref', 'call_status', 'source', 'notes'] as const
+const CARD_FIELDS = ['name', 'phone', 'email', 'zone', 'property', 'typology', 'value', 'property_type', 'property_ref', 'call_status', 'source', 'notes', 'traits'] as const
 function parseCardField(v: unknown): string | undefined {
   return typeof v === 'string' && (CARD_FIELDS as readonly string[]).includes(v) ? v : undefined
 }
@@ -59,7 +59,9 @@ export async function POST(request: Request) {
     const valid = body.card_fields.filter((f: unknown) => typeof f === 'string' && (CARD_FIELDS as readonly string[]).includes(f))
     if (valid.length > 0) insert.card_fields = valid
   }
-  if (body.card_sort === 'oldest_first' || body.card_sort === 'newest_first') insert.card_sort = body.card_sort
+  if (['oldest_first', 'newest_first', 'hottest_first'].includes(body.card_sort)) insert.card_sort = body.card_sort
+  if (['stage', 'last_contact', 'both'].includes(body.days_mode)) insert.days_mode = body.days_mode
+  if (typeof body.card_border_color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(body.card_border_color)) insert.card_border_color = body.card_border_color
 
   const { data, error } = await supabase
     .from('pipelines')

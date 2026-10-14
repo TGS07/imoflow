@@ -1,16 +1,34 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, useDroppable, pointerWithin, rectIntersection, type CollisionDetection } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Lead, PipelineStage, PipelineCardField, Pipeline, PipelineCardSort } from '@/types'
+import { Lead, PipelineStage, PipelineCardField, Pipeline, PipelineCardSort, PipelineDaysMode } from '@/types'
 import { useRouter } from 'next/navigation'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { CardPropertyModal } from '@/components/pipeline/CardPropertyModal'
 import { CardHoverPreview } from '@/components/pipeline/CardHoverPreview'
 import { Icon } from '@/components/ui/Icon'
 import type { ContactPropertyCandidate } from '@/lib/pipeline/resolve-contact-property'
-import { cardFieldValue, daysInStage, CARD_FIELD_LABELS, type PipelineCardFields } from '@/lib/pipeline/card-fields'
+import { cardFieldValue, daysInStage, daysSinceLastContact, type PipelineCardFields } from '@/lib/pipeline/card-fields'
+import { daysUntil, nextCallLabel, temperatureRank } from '@/lib/contacts/engagement'
+
+// Aparência do card definida na pipeline
+export type CardAppearance = { daysMode: PipelineDaysMode; borderColor: string | null }
+
+const ACCENT_HOT = '#DC2626'
+const ACCENT_VISITS_MANY = '#16A34A'
+const ACCENT_VISITS_FEW = '#EA8A1A'
+
+// Cor do border: contacto quente > estado de visitas do imóvel > cor da pipeline
+function cardAccent(lead: Lead, borderColor: string | null): { color: string; green: boolean } | null {
+  const green = lead.visit_activity === 'muitas'
+  if (lead.people?.temperature === 'quente') return { color: ACCENT_HOT, green }
+  if (green) return { color: ACCENT_VISITS_MANY, green }
+  if (lead.visit_activity === 'poucas' || lead.visit_activity === 'nenhuma') return { color: ACCENT_VISITS_FEW, green: false }
+  if (borderColor) return { color: borderColor, green: false }
+  return null
+}
 
 const DAYS_GREEN_MAX = 5
 const DAYS_AMBER_MAX = 14
@@ -44,8 +62,8 @@ const CHIP_FIELDS = new Set<PipelineCardField>(['zone', 'typology', 'property_ty
 const CONTACT_FIELDS = new Set<PipelineCardField>(['phone', 'email'])
 const PROPERTY_FIELDS = new Set<PipelineCardField>(['property', 'property_ref'])
 
-function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, onEditProperty, onHoverStart, onHoverEnd, selected, onSelect, onRemove }: {
-  lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; onDuplicated?: () => void; onEditProperty?: (lead: Lead) => void; onHoverStart?: (lead: Lead) => void; onHoverEnd?: () => void
+function LeadCard({ lead, isDragging, onOpenContact, cardFields, appearance, onDuplicated, onEditProperty, onHoverStart, onHoverEnd, selected, onSelect, onRemove }: {
+  lead: Lead; isDragging?: boolean; onOpenContact?: (personId: string, leadId: string) => void; cardFields: PipelineCardFields; appearance: CardAppearance; onDuplicated?: () => void; onEditProperty?: (lead: Lead) => void; onHoverStart?: (lead: Lead) => void; onHoverEnd?: () => void
   selected?: boolean; onSelect?: (id: string, checked: boolean) => void; onRemove?: (id: string) => void
 }) {
   const router = useRouter()
@@ -55,6 +73,8 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
 
   const fields = cardFields.all
   const [notesExpanded, setNotesExpanded] = useState(false)
+  const [notesTruncated, setNotesTruncated] = useState(false)
+  const notesRef = useRef<HTMLSpanElement>(null)
   const [duplicating, setDuplicating] = useState(false)
 
   async function duplicateCard(e: React.MouseEvent) {
@@ -82,6 +102,11 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
     ? rawValue >= 1_000_000 ? `${(rawValue / 1_000_000).toFixed(1)}M€` : `${(rawValue / 1_000).toFixed(0)}K€`
     : null
   const days = daysInStage(lead)
+  const contactDays = daysSinceLastContact(lead)
+  const nextCallAt = lead.people?.next_call_at ?? null
+  const callDue = nextCallAt ? daysUntil(nextCallAt) <= 0 : false
+  const accent = cardAccent(lead, appearance.borderColor)
+  const traits = fields.includes('traits') ? (lead.people?.traits ?? []) : []
 
   const contactRows: { field: PipelineCardField; icon: string; value: string }[] = []
   const chipItems: { field: PipelineCardField; value: string }[] = []
@@ -90,7 +115,7 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
   let showValue = false
 
   for (const f of fields) {
-    if (f === 'name') continue
+    if (f === 'name' || f === 'traits') continue
     const val = cardFieldValue(lead, f)
     if (!val) continue
 
@@ -107,6 +132,13 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
     }
   }
 
+  // "Ver mais" só aparece quando a nota é cortada (mais de 2 linhas)
+  useLayoutEffect(() => {
+    const el = notesRef.current
+    if (!el || notesExpanded) return
+    setNotesTruncated(el.scrollHeight > el.clientHeight + 1)
+  }, [notesVal, notesExpanded])
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <div
@@ -116,7 +148,10 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
         }}
         onMouseEnter={() => onHoverStart?.(lead)}
         onMouseLeave={() => onHoverEnd?.()}
-        className={`kanban-card${selected ? ' kanban-card-selected' : ''}${isDragging ? ' kanban-card-dragging' : ''}`}
+        className={`kanban-card${selected ? ' kanban-card-selected' : ''}${isDragging ? ' kanban-card-dragging' : ''}${callDue ? ' kanban-card-call-due' : ''}${accent?.green ? ' kanban-card-accent-green' : ''}`}
+        data-accent={accent ? '' : undefined}
+        style={accent ? { '--card-accent': accent.color, '--card-accent-soft': `${accent.color}40` } as React.CSSProperties : undefined}
+        title={lead.people?.temperature === 'quente' ? 'Contacto quente' : undefined}
       >
         {/* Row 1: checkbox + avatar + name + type badge + actions */}
         <div className="kanban-card-top">
@@ -155,6 +190,14 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           </div>
         </div>
 
+        {/* Próxima chamada agendada: dias que faltam (pisca quando chega o dia) */}
+        {nextCallAt && (
+          <div className={`kc-next-call${callDue ? ' kc-next-call-due' : ''}`} title={`Próxima chamada: ${new Date(nextCallAt + 'T00:00').toLocaleDateString('pt-PT')}`}>
+            <span aria-hidden>📞</span>
+            <span>{nextCallLabel(nextCallAt)}</span>
+          </div>
+        )}
+
         {/* Row 2: contact info (phone, email) */}
         {contactRows.length > 0 && (
           <div className="kc-contact-rows">
@@ -186,22 +229,44 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, onDuplicated, o
           </div>
         )}
 
+        {/* Características do contacto (campo ativo na pipeline) */}
+        {traits.length > 0 && (
+          <div className="kc-traits">
+            {traits.map(t => <span key={t} className="kc-trait" title={t}>{t}</span>)}
+          </div>
+        )}
+
         {/* Row 5: notes */}
         {notesVal && (
-          <div
-            className={`kc-notes${notesExpanded ? ' kc-notes-expanded' : ''}`}
-            onClick={e => { e.stopPropagation(); setNotesExpanded(o => !o) }}
-            title={notesExpanded ? undefined : notesVal}
-          >
-            <span className="kc-notes-text">{notesVal}</span>
+          <div className={`kc-notes${notesExpanded ? ' kc-notes-expanded' : ''}`}>
+            <span ref={notesRef} className="kc-notes-text">{notesVal}</span>
+            {(notesTruncated || notesExpanded) && (
+              <button
+                type="button"
+                className="kc-notes-more"
+                onPointerDown={e => e.stopPropagation()}
+                onClick={e => { e.stopPropagation(); setNotesExpanded(o => !o) }}
+              >
+                {notesExpanded ? 'Ver menos' : 'Ver mais'}
+              </button>
+            )}
           </div>
         )}
 
         {/* Footer: value + days */}
         <div className={`kanban-card-footer${!budgetVal && !showValue ? ' kanban-card-footer-no-value' : ''}`}>
           {budgetVal && <span className="kanban-card-value">{budgetVal}</span>}
-          <span title="Dias nesta fase" className={`kanban-days-pill ${daysPillColor(days)}`}>
-            {days} dias
+          <span className="kanban-days-group">
+            {appearance.daysMode !== 'last_contact' && (
+              <span title="Dias nesta fase" className={`kanban-days-pill ${daysPillColor(days)}`}>
+                {appearance.daysMode === 'both' ? `Fase ${days}d` : `${days} dias`}
+              </span>
+            )}
+            {appearance.daysMode !== 'stage' && (
+              <span title={lead.last_contact_at ? 'Dias desde a última chamada, email ou mensagem' : 'Sem contactos registados — dias desde que entrou'} className={`kanban-days-pill ${daysPillColor(contactDays)}`}>
+                📞 {appearance.daysMode === 'both' ? `${contactDays}d` : `${contactDays} dias`}
+              </span>
+            )}
           </span>
         </div>
       </div>
@@ -278,11 +343,14 @@ type Props = {
   onOpenContact?: (personId: string, leadId: string) => void
   cardFields: PipelineCardFields
   cardSort?: PipelineCardSort
+  appearance?: CardAppearance
   onDuplicated?: () => void
   onCardUpdated?: () => void
 }
 
-export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId, onOpenContact, cardFields, cardSort = 'oldest_first', onDuplicated, onCardUpdated }: Props) {
+const DEFAULT_APPEARANCE: CardAppearance = { daysMode: 'stage', borderColor: null }
+
+export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId, onOpenContact, cardFields, cardSort = 'oldest_first', appearance = DEFAULT_APPEARANCE, onDuplicated, onCardUpdated }: Props) {
   const router = useRouter()
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -399,11 +467,15 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
   const otherPipelines = (pipelines ?? []).filter(p => p.id !== currentPipelineId)
 
   function getStageLeads(stageId: string) {
-    // Ordem por tempo na fase, conforme a definição da pipeline
+    // Ordem conforme a definição da pipeline: tempo na fase, ou mais quentes
+    // primeiro (empate → há mais tempo na fase em cima)
     const dir = cardSort === 'newest_first' ? -1 : 1
+    const byTime = (a: Lead, b: Lead) => dir * (new Date(a.stage_entered_at).getTime() - new Date(b.stage_entered_at).getTime())
     return leads
       .filter(l => l.stage_id === stageId)
-      .sort((a, b) => dir * (new Date(a.stage_entered_at).getTime() - new Date(b.stage_entered_at).getTime()))
+      .sort((a, b) => cardSort === 'hottest_first'
+        ? (temperatureRank(a.people?.temperature) - temperatureRank(b.people?.temperature)) || byTime(a, b)
+        : byTime(a, b))
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -534,7 +606,7 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
                     {stageLeads.map(lead => (
                       <LeadCard
                         key={lead.id} lead={lead} isDragging={lead.id === activeId}
-                        onOpenContact={onOpenContact} cardFields={cardFields}
+                        onOpenContact={onOpenContact} cardFields={cardFields} appearance={appearance}
                         onDuplicated={onDuplicated} onEditProperty={setEditingProperty}
                         onHoverStart={handleCardHoverStart} onHoverEnd={handleCardHoverEnd}
                         selected={selectedIds.has(lead.id)} onSelect={handleSelect}
@@ -548,7 +620,7 @@ export function KanbanBoard({ initialLeads, stages, pipelines, currentPipelineId
           })}
         </div>
         <DragOverlay>
-          {activeLead && <LeadCard lead={activeLead} onOpenContact={onOpenContact} cardFields={cardFields} onDuplicated={onDuplicated} onEditProperty={setEditingProperty} />}
+          {activeLead && <LeadCard lead={activeLead} onOpenContact={onOpenContact} cardFields={cardFields} appearance={appearance} onDuplicated={onDuplicated} onEditProperty={setEditingProperty} />}
         </DragOverlay>
       </DndContext>
       {editingProperty && (
