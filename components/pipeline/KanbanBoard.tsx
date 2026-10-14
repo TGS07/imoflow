@@ -5,6 +5,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { Lead, PipelineStage, PipelineCardField, Pipeline, PipelineCardSort, PipelineDaysMode } from '@/types'
 import { useRouter } from 'next/navigation'
+import { createPortal } from 'react-dom'
 import { ContactTypeChips } from '@/components/contacts/ContactTypeChips'
 import { CardPropertyModal } from '@/components/pipeline/CardPropertyModal'
 import { CardHoverPreview } from '@/components/pipeline/CardHoverPreview'
@@ -302,34 +303,58 @@ function DroppablePipelineTab({ pipeline }: { pipeline: Pipeline; isOver?: boole
   )
 }
 
+// O menu é renderizado num portal no <body> com posição fixa: dentro da barra
+// (transform + max-height) ficava por baixo das colunas em Safaris mais antigos.
 function BulkDropdown({ label, icon, items, onSelect }: {
   label: string; icon: React.ReactNode
   items: { id: string; name: string }[]
   onSelect: (id: string) => void
 }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const open = pos !== null
+
+  function toggle() {
+    if (open) { setPos(null); return }
+    const r = triggerRef.current?.getBoundingClientRect()
+    if (r) setPos({ top: r.bottom + 4, left: r.left })
+  }
+
   useEffect(() => {
     if (!open) return
-    function close(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    function close(e: MouseEvent) {
+      const t = e.target as Node
+      if (triggerRef.current?.contains(t) || menuRef.current?.contains(t)) return
+      setPos(null)
+    }
+    function dismiss() { setPos(null) }
     document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
+    window.addEventListener('resize', dismiss)
+    window.addEventListener('scroll', dismiss, true)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      window.removeEventListener('resize', dismiss)
+      window.removeEventListener('scroll', dismiss, true)
+    }
   }, [open])
+
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(o => !o)} className="bulk-dropdown-trigger">
+    <div style={{ position: 'relative' }}>
+      <button ref={triggerRef} onClick={toggle} className="bulk-dropdown-trigger">
         {icon}
         <span>{label}</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
-      {open && (
-        <div className="bulk-dropdown-menu">
+      {pos && createPortal(
+        <div ref={menuRef} className="bulk-dropdown-menu" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 1000 }}>
           {items.map(it => (
-            <button key={it.id} className="bulk-dropdown-item" onClick={() => { onSelect(it.id); setOpen(false) }}>
+            <button key={it.id} className="bulk-dropdown-item" onClick={() => { onSelect(it.id); setPos(null) }}>
               {it.name}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
