@@ -26,6 +26,7 @@ const settingsSubItems: { href: string; icon: IconName; label: string }[] = [
   { href: '/settings/pipeline', icon: 'pipeline', label: 'Pipeline' },
   { href: '/settings/automations', icon: 'robot', label: 'Automações' },
   { href: '/settings/forms', icon: 'form', label: 'Formulários' },
+  { href: '/settings/integrations', icon: 'plug', label: 'Integrações' },
   { href: '/settings/templates', icon: 'template', label: 'Templates' },
   { href: '/settings/agency', icon: 'building', label: 'Agência' },
   { href: '/settings/team', icon: 'team', label: 'Equipa' },
