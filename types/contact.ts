@@ -30,6 +30,9 @@ export type ContactSpecialDate = { label: string; month: number; day: number }
 
 export type ContactInteractionType = 'chamada' | 'visita' | 'email' | 'whatsapp' | 'nota'
 
+// Resultado: chamadas (atendeu / não atendeu / whatsapp), emails e mensagens (enviado / respondido)
+export type InteractionOutcome = 'atendeu' | 'nao_atendeu' | 'whatsapp' | 'enviado' | 'respondido'
+
 export type ContactInteraction = {
   id: string
   agency_id: string
@@ -37,6 +40,7 @@ export type ContactInteraction = {
   user_id: string | null
   type: ContactInteractionType
   note: string | null
+  outcome: InteractionOutcome | null
   created_at: string
   users?: { name: string; avatar_initials: string }
 }

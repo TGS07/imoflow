@@ -26,7 +26,7 @@ export type User = {
   theme: 'light' | 'dark'
 }
 
-export type PipelineCardField = 'name' | 'phone' | 'email' | 'zone' | 'property' | 'typology' | 'value' | 'property_type' | 'property_ref' | 'call_status' | 'source' | 'notes'
+export type PipelineCardField = 'name' | 'phone' | 'email' | 'zone' | 'property' | 'typology' | 'value' | 'property_type' | 'property_ref' | 'call_status' | 'source' | 'notes' | 'traits'
 
 export type Pipeline = {
   id: string
@@ -37,10 +37,16 @@ export type Pipeline = {
   card_secondary_field: PipelineCardField
   card_fields: PipelineCardField[] | null
   card_sort: PipelineCardSort
+  days_mode: PipelineDaysMode
+  card_border_color: string | null
   created_at: string
 }
 
-export type PipelineCardSort = 'oldest_first' | 'newest_first'
+export type PipelineCardSort = 'oldest_first' | 'newest_first' | 'hottest_first'
+// Contagem de dias no card: tempo na fase, desde o último contacto, ou ambos
+export type PipelineDaysMode = 'stage' | 'last_contact' | 'both'
+export type ContactTemperature = 'quente' | 'neutro' | 'frio'
+export type PropertyVisitActivity = 'muitas' | 'poucas' | 'nenhuma'
 
 export type PipelineStage = {
   id: string
@@ -109,6 +115,9 @@ export type Person = {
   special_notify_easter: boolean
   special_notify_birthday: boolean
   special_dates: import('./contact').ContactSpecialDate[]
+  temperature: ContactTemperature | null
+  traits: string[]
+  next_call_at: string | null
   created_at: string
 }
 
@@ -158,6 +167,7 @@ export type Property = {
   photos: string[]
   notes: string | null
   idealista_url: string | null
+  visit_activity: PropertyVisitActivity | null
   seller_id: string | null
   buyer_id?: string | null
   buyer?: { id: string; name: string; phone: string | null; email: string | null } | null
@@ -201,7 +211,11 @@ export type Lead = {
   properties?: Property
   pipelines?: { name: string } | null
   // Última chamada registada no contacto (contact_interactions), anexada pela API
-  last_call?: { note: string | null; created_at: string } | null
+  last_call?: { note: string | null; outcome: import('./contact').InteractionOutcome | null; created_at: string } | null
+  // Última chamada/email/mensagem do contacto (para a contagem "desde o último contacto")
+  last_contact_at?: string | null
+  // Estado de visitas do imóvel do card (ou, na falta, de um imóvel que o contacto vende)
+  visit_activity?: PropertyVisitActivity | null
 }
 
 export type Contact = {
@@ -242,4 +256,4 @@ export type { ReportPeriod, ReportKpis, ReportFunnelEntry, ReportSourceEntry, Re
 export type { WebFormField, WebForm } from './web-form'
 export type { WhatsAppTemplate, WhatsAppMessage } from './whatsapp'
 export { WEB_FORM_FIELD_LABELS, OPTIONAL_FORM_FIELDS } from './web-form'
-export type { ContactDetails, ContactInteraction, ContactInteractionType, ContactSpecialDate } from './contact'
+export type { ContactDetails, ContactInteraction, ContactInteractionType, ContactSpecialDate, InteractionOutcome } from './contact'

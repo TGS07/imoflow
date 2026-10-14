@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { HelpButton } from '@/components/help/HelpButton'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Lead, PipelineStage } from '@/types'
+import { Lead, PipelineStage, Pipeline } from '@/types'
 import { NewLeadModal } from '@/components/leads/NewLeadModal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatPhoneDisplay } from '@/lib/whatsapp/utils'
@@ -28,6 +28,8 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [stageFilter, setStageFilter] = useState('')
+  const [pipelines, setPipelines] = useState<Pipeline[]>([])
+  const [pipelineFilter, setPipelineFilter] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [page, setPage] = useState(1)
   const router = useRouter()
@@ -43,12 +45,14 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetch('/api/pipeline-stages').then(r => r.json()).then(setStages)
+    fetch('/api/pipelines').then(r => r.ok ? r.json() : []).then(setPipelines).catch(() => {})
   }, [])
 
   const fetchLeads = useCallback(async () => {
     const params = new URLSearchParams()
     if (debouncedSearch) params.set('search', debouncedSearch)
     if (stageFilter) params.set('stage_id', stageFilter)
+    else if (pipelineFilter) params.set('pipeline_id', pipelineFilter)
     if (personFilter) params.set('person_id', personFilter)
     try {
       const res = await fetch(`/api/leads?${params}`)
@@ -60,16 +64,24 @@ export default function LeadsPage() {
     } finally {
       setLoading(false)
     }
-  }, [debouncedSearch, stageFilter, personFilter])
+  }, [debouncedSearch, stageFilter, pipelineFilter, personFilter])
 
   useEffect(() => { fetchLeads() }, [fetchLeads])
 
-  useEffect(() => { setPage(1) }, [debouncedSearch, stageFilter])
+  useEffect(() => { setPage(1) }, [debouncedSearch, stageFilter, pipelineFilter])
 
   function getStageInfo(lead: Lead) {
     const stage = lead.pipeline_stages ?? stages.find(s => s.id === lead.stage_id)
     return stage ?? { name: '—', color: '#666' }
   }
+
+  // Fases só da pipeline escolhida — misturar todas dava nomes repetidos
+  // (ex: 3× "Proposta"). Com uma única pipeline mostram-se logo.
+  const visibleStages: { id: string; name: string }[] = pipelineFilter
+    ? stages.filter(s => !s.is_lost && s.pipeline_id === pipelineFilter)
+    : pipelines.length > 1
+      ? []
+      : stages.filter(s => !s.is_lost)
 
   const totalPages = Math.max(1, Math.ceil(leads.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -108,8 +120,11 @@ export default function LeadsPage() {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
-          <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+        {/* Pesquisa + pipeline numa linha; fases da pipeline escolhida por baixo.
+            Antes estava tudo numa linha só e a pesquisa encolhia até ficar por
+            cima do chip «Todos». */}
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
+          <div style={{ flex: '1 1 280px', maxWidth: 480, position: 'relative' }}>
             <Icon name="search" size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }} />
             <input
               placeholder="Pesquisar por nome, email ou telefone..."
@@ -119,26 +134,25 @@ export default function LeadsPage() {
               style={{ width: '100%', paddingLeft: 34, background: 'var(--surface)' }}
             />
           </div>
-          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setStageFilter('')}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                fontSize: 'var(--fs-sm)',
-                fontWeight: 600,
-                cursor: 'pointer',
-                background: stageFilter === '' ? 'var(--gold)' : 'transparent',
-                color: stageFilter === '' ? 'white' : 'var(--muted)',
-                border: `1px solid ${stageFilter === '' ? 'var(--gold)' : 'var(--border)'}`,
-                transition: 'all 0.15s var(--ease)',
-              }}
+          {pipelines.length > 1 && (
+            <select
+              className="input"
+              value={pipelineFilter}
+              onChange={e => { setPipelineFilter(e.target.value); setStageFilter('') }}
+              style={{ width: 'auto', minWidth: 180, background: 'var(--surface)' }}
+              aria-label="Filtrar por pipeline"
             >
-              Todos
-            </button>
-            {stages.filter(s => !s.is_lost).map(s => (
+              <option value="">Todas as pipelines</option>
+              {pipelines.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
+          {[{ id: '', name: 'Todos' }, ...visibleStages].map(s => {
+            const active = stageFilter === s.id
+            return (
               <button
-                key={s.id}
+                key={s.id || 'all'}
                 onClick={() => setStageFilter(s.id)}
                 style={{
                   padding: '6px 14px',
@@ -146,16 +160,17 @@ export default function LeadsPage() {
                   fontSize: 'var(--fs-sm)',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  background: stageFilter === s.id ? 'var(--gold)' : 'transparent',
-                  color: stageFilter === s.id ? 'white' : 'var(--muted)',
-                  border: `1px solid ${stageFilter === s.id ? 'var(--gold)' : 'var(--border)'}`,
+                  whiteSpace: 'nowrap',
+                  background: active ? 'var(--gold)' : 'transparent',
+                  color: active ? 'white' : 'var(--muted)',
+                  border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`,
                   transition: 'all 0.15s var(--ease)',
                 }}
               >
                 {s.name}
               </button>
-            ))}
-          </div>
+            )
+          })}
         </div>
 
         <div>

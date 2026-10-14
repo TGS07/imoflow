@@ -205,5 +205,45 @@ async function handle(request: Request) {
     }
   }
 
+  // --- Próxima chamada agendada (people.next_call_at) ---
+  // Data de hoje em Lisboa (o cron corre em UTC). Avisa uma vez por data
+  // agendada; a próxima chamada limpa-se sozinha quando se regista o contacto.
+  const todayLisbon = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date(now))
+  const { data: callPeople } = await supabase
+    .from('people')
+    .select('id, name, agency_id, assigned_to, next_call_at, phone')
+    .not('next_call_at', 'is', null)
+    .lte('next_call_at', todayLisbon)
+
+  for (const cp of callPeople ?? []) {
+    const userId = cp.assigned_to ?? adminByAgency.get(cp.agency_id)
+    if (!userId) continue
+    const link = `/people/${cp.id}`
+    const [y, m, d] = String(cp.next_call_at).split('-')
+    const suffix = `Chamada agendada para ${d}/${m}/${y}.`
+    if (await alreadyNotifiedRecently(supabase, userId, link, suffix, 365, now)) continue
+
+    const late = cp.next_call_at !== todayLisbon
+    const notification = await createNotification({
+      userId,
+      agencyId: cp.agency_id,
+      type: 'task_due',
+      title: `📞 ${late ? 'Chamada em atraso' : 'Ligar hoje'}: ${cp.name}`,
+      body: `Está na hora de ligar a ${cp.name}${cp.phone ? ` (${cp.phone})` : ''}. ${suffix}`,
+      link,
+    }, supabase)
+    if (notification) {
+      await mirrorNotificationToCalendar({
+        supabase,
+        agencyId: cp.agency_id,
+        assignedTo: userId,
+        notificationId: notification.id,
+        title: `Ligar: ${cp.name}`,
+        target: { kind: 'person', id: cp.id },
+      })
+    }
+    processed++
+  }
+
   return NextResponse.json({ processed })
 }

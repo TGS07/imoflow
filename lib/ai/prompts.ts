@@ -149,9 +149,20 @@ function buildInteractionExtractionPrompt(transcript: string): string {
   ].join('\n')
 }
 
+export type ContactAiContext = {
+  leads: { pipeline: string; stage: string; daysInStage: number; value: number | null }[]
+  properties: { label: string; role: string; status: string; visit_activity: string | null }[]
+}
+
+const OUTCOME_TEXT: Record<string, string> = {
+  atendeu: 'atendeu', nao_atendeu: 'NÃO atendeu', whatsapp: 'não atendeu, enviada mensagem WhatsApp',
+  enviado: 'enviado', respondido: 'respondeu',
+}
+
 export function buildSuggestContactActionPrompt(
   person: Person,
   interactions: ContactInteraction[],
+  ctx: ContactAiContext = { leads: [], properties: [] },
 ): string {
   const lastInteraction = interactions[0]
   const daysSinceLast = lastInteraction
@@ -161,11 +172,14 @@ export function buildSuggestContactActionPrompt(
   const typeLabels: Record<string, string> = { comprador: 'Comprador', vendedor: 'Vendedor', investidor: 'Investidor', consultor: 'Consultor Imobiliário', servico: 'Serviço' }
   const types = (person.types ?? []).map(t => typeLabels[t] ?? t).join(', ') || 'não definido'
   const d = person.details ?? {}
+  const today = new Date()
+  const weekday = today.toLocaleDateString('pt-PT', { weekday: 'long' })
 
   const detailLines: string[] = []
   if (person.types?.includes('comprador') || person.types?.includes('investidor')) {
     detailLines.push(`- O que procura: ${d.looking_for ?? 'não definido'}`)
     detailLines.push(`- Zona de procura: ${d.search_zone ?? 'não definida'}`)
+    if (d.looking_price) detailLines.push(`- Preço máximo: ${d.looking_price}€`)
     detailLines.push(`- Já comprou connosco: ${d.already_bought ? 'sim' : 'não'}`)
   }
   if (person.types?.includes('vendedor') || person.types?.includes('investidor')) {
@@ -184,25 +198,71 @@ export function buildSuggestContactActionPrompt(
     detailLines.push(`- Zona de atuação: ${d.working_zone ?? 'não definida'}`)
   }
 
+  const nextCall = person.next_call_at
+    ? `- Próxima chamada agendada: ${new Date(person.next_call_at + 'T00:00').toLocaleDateString('pt-PT')}`
+    : '- Sem próxima chamada agendada'
+
+  // Padrões úteis: tentativas falhadas seguidas, taxa de atendimento
+  const calls = interactions.filter(i => i.type === 'chamada')
+  const answered = calls.filter(i => i.outcome === 'atendeu').length
+  let missedStreak = 0
+  for (const c of calls) { if (c.outcome === 'nao_atendeu' || c.outcome === 'whatsapp') missedStreak++; else break }
+
   const history = interactions
-    .slice(0, 10)
-    .map(i => `- [${new Date(i.created_at).toLocaleDateString('pt-PT')}] ${i.type}${i.note ? ` — ${i.note}` : ''}`)
+    .slice(0, 15)
+    .map(i => {
+      const dt = new Date(i.created_at)
+      const when = `${dt.toLocaleDateString('pt-PT')} ${dt.toLocaleDateString('pt-PT', { weekday: 'short' })} ${dt.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+      return `- [${when}] ${i.type}${i.outcome ? ` (${OUTCOME_TEXT[i.outcome] ?? i.outcome})` : ''}${i.note ? ` — ${i.note}` : ''}`
+    })
     .join('\n')
 
-  return `És um assistente de vendas imobiliárias. Analisa o seguinte contacto e sugere a próxima ação mais importante.
+  const leadsText = ctx.leads.length
+    ? ctx.leads.map(l => `- Pipeline «${l.pipeline}», fase «${l.stage}» há ${l.daysInStage} dias${l.value ? `, valor ${l.value}€` : ''}`).join('\n')
+    : '- Não está em nenhuma pipeline ativa'
+  const visitText: Record<string, string> = { muitas: 'muitas visitas', poucas: 'poucas visitas', nenhuma: 'sem visitas' }
+  const propsText = ctx.properties.length
+    ? ctx.properties.map(p => `- ${p.label} (${p.role}, ${p.status}${p.visit_activity ? `, ${visitText[p.visit_activity] ?? p.visit_activity}` : ''})`).join('\n')
+    : '- Nenhum'
+
+  return `És um consultor sénior de vendas imobiliárias em Portugal a orientar um agente. Analisa TODA a informação do contacto e diz exatamente qual o próximo passo, como abordar a pessoa e porquê. Sê concreto e prático, nada genérico — usa as características, o historial e o estado dos imóveis.
+
+HOJE: ${weekday}, ${today.toLocaleDateString('pt-PT')}
 
 CONTACTO:
 - Nome: ${person.name}
 - Tipo(s): ${types}
+- Temperatura: ${person.temperature ?? 'não definida'}
 - Capacidade financeira: ${person.financial_capacity ?? 'não definida'}
+- Origem: ${person.source ?? 'não definida'}
 ${detailLines.join('\n')}
 ${daysSinceLast !== null ? `- Dias desde última interação: ${daysSinceLast}` : '- Sem interações anteriores'}
+${nextCall}
+- Chamadas: ${calls.length} no total, ${answered} atendidas${missedStreak > 0 ? `, ${missedStreak} tentativa(s) seguida(s) sem resposta` : ''}
 
-HISTORIAL RECENTE:
+CARACTERÍSTICAS (como lidar com esta pessoa — RESPEITA-AS):
+${(person.traits ?? []).length ? person.traits.map(t => `- ${t}`).join('\n') : '- Nenhuma registada'}
+
+NOTAS DO AGENTE:
+${person.notes?.trim() || 'Sem notas.'}
+
+NEGÓCIOS:
+${leadsText}
+
+IMÓVEIS ASSOCIADOS:
+${propsText}
+
+HISTORIAL RECENTE (mais recente primeiro):
 ${history || 'Sem interações registadas.'}
 
+Regras:
+- Se há várias chamadas sem resposta, sugere outro canal (WhatsApp/email) ou outro horário (vê a que horas/dias atendeu antes).
+- Se as características indicam dia/hora/canal preferido, a ação tem de os respeitar (ex: hoje não é fim de semana → agenda para sábado).
+- Se um imóvel tem poucas ou nenhuma visita, considera rever preço/anúncio com o vendedor; se tem muitas, aproveita para criar urgência junto de compradores.
+- Escreve em português de Portugal.
+
 Responde em JSON com exatamente este formato (sem markdown, sem texto extra):
-{"action": "descrição curta da ação (máx 80 chars)", "reason": "justificação curta (máx 120 chars)", "urgency": "alta|media|baixa"}`
+{"action": "próxima ação concreta (máx 90 chars)", "reason": "porquê, com base nos dados (máx 160 chars)", "urgency": "alta|media|baixa", "channel": "chamada|whatsapp|email|visita|reuniao", "when": "quando fazer (ex: hoje ao fim da tarde, sábado de manhã)", "tips": ["dica de abordagem 1", "dica 2", "dica 3"], "next_call_in_days": número de dias até ao próximo contacto ou null}`
 }
 
 export type VoiceEntity = 'contact' | 'interaction' | 'lead' | 'organization' | 'property' | 'activity' | 'visit'

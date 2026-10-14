@@ -17,9 +17,9 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const { data, error } = await supabase
     .from('people')
     .select(`*, leads(id, name, stage_id, pipeline_id, deal_value, expected_close_date, created_at, pipeline_stages(name, color, is_won, is_lost), pipelines(name)),
-      properties_as_seller:properties!seller_id(id, title, status, price, reference),
-      properties_as_buyer:properties!buyer_id(id, title, status, price, reference),
-      property_consultants(id, properties(id, title, status, price, reference))`)
+      properties_as_seller:properties!seller_id(id, title, status, price, reference, visit_activity),
+      properties_as_buyer:properties!buyer_id(id, title, status, price, reference, visit_activity),
+      property_consultants(id, properties(id, title, status, price, reference, visit_activity))`)
     .eq('id', id)
     .single()
 
@@ -79,9 +79,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     'name', 'email', 'phone', 'address', 'notes', 'types', 'financial_capacity', 'source', 'details',
     'assigned_to', 'is_regular', 'birthday', 'regular_interval_days', 'calendar_sync_enabled',
     'is_special', 'special_notify_christmas', 'special_notify_easter', 'special_notify_birthday', 'special_dates',
+    'temperature', 'traits', 'next_call_at',
   ] as const
   const update: Record<string, unknown> = {}
   for (const k of allowed) if (k in body) update[k] = body[k]
+  if ('traits' in update) {
+    update.traits = Array.isArray(update.traits)
+      ? [...new Set((update.traits as unknown[]).filter((t): t is string => typeof t === 'string').map(t => t.trim()).filter(Boolean))].slice(0, 20)
+      : []
+  }
 
   const { data, error } = await supabase
     .from('people')
