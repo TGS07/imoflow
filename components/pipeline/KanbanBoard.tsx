@@ -285,7 +285,7 @@ const collisionDetection: CollisionDetection = args => {
 
 function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id })
-  return <div ref={setNodeRef} style={{ minHeight: 120, flex: 1 }}>{children}</div>
+  return <div ref={setNodeRef} style={{ minHeight: 120, flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
 }
 
 function DroppablePipelineTab({ pipeline }: { pipeline: Pipeline; isOver?: boolean }) {
