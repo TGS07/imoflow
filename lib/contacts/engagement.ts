@@ -1,27 +1,23 @@
 import type { ContactTemperature, InteractionOutcome, PropertyVisitActivity } from '@/types'
 
-// Temperatura do contacto: escolhida à mão na ficha, ou atualizada sozinha ao
-// registar uma chamada (atendeu → quente, não atendeu → frio).
+// Temperatura do contacto: escolhida sempre à mão na ficha. Cada nível pinta o
+// border do card com a sua cor; sem temperatura, o card não fica com border.
 export const TEMPERATURES: { key: ContactTemperature; label: string; emoji: string; color: string }[] = [
+  { key: 'frio', label: 'Frio', emoji: '❄', color: '#38BDF8' },
+  { key: 'fresco', label: 'Fresco', emoji: '🌤', color: '#EAB308' },
+  { key: 'morno', label: 'Morno', emoji: '☀', color: '#F97316' },
   { key: 'quente', label: 'Quente', emoji: '🔥', color: '#DC2626' },
-  { key: 'neutro', label: 'Neutro', emoji: '●', color: '#A8A29E' },
-  { key: 'frio', label: 'Frio', emoji: '❄', color: '#2563EB' },
 ]
 
 export function temperatureMeta(t: ContactTemperature | null | undefined) {
   return TEMPERATURES.find(x => x.key === t) ?? null
 }
 
-// Ordem para "mais quentes primeiro" (sem temperatura = neutro)
+// Ordem para "mais quentes primeiro": quente → morno → fresco → frio → sem temperatura
+const TEMPERATURE_ORDER: ContactTemperature[] = ['quente', 'morno', 'fresco', 'frio']
 export function temperatureRank(t: ContactTemperature | null | undefined): number {
-  return t === 'quente' ? 0 : t === 'frio' ? 2 : 1
-}
-
-export function temperatureFromOutcome(type: string, outcome: InteractionOutcome | null | undefined): ContactTemperature | null {
-  if (type !== 'chamada') return null
-  if (outcome === 'atendeu') return 'quente'
-  if (outcome === 'nao_atendeu') return 'frio'
-  return null
+  const i = t ? TEMPERATURE_ORDER.indexOf(t) : -1
+  return i === -1 ? TEMPERATURE_ORDER.length : i
 }
 
 export const OUTCOME_LABELS: Record<InteractionOutcome, string> = {

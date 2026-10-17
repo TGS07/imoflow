@@ -12,19 +12,19 @@ import { CardHoverPreview } from '@/components/pipeline/CardHoverPreview'
 import { Icon } from '@/components/ui/Icon'
 import type { ContactPropertyCandidate } from '@/lib/pipeline/resolve-contact-property'
 import { cardFieldValue, daysInStage, daysSinceLastContact, type PipelineCardFields } from '@/lib/pipeline/card-fields'
-import { daysUntil, nextCallLabel, temperatureRank } from '@/lib/contacts/engagement'
+import { daysUntil, nextCallLabel, temperatureMeta, temperatureRank } from '@/lib/contacts/engagement'
 
 // Aparência do card definida na pipeline
 export type CardAppearance = { daysMode: PipelineDaysMode; borderColor: string | null }
 
-const ACCENT_HOT = '#DC2626'
 const ACCENT_VISITS_MANY = '#16A34A'
 const ACCENT_VISITS_FEW = '#EA8A1A'
 
-// Cor do border: contacto quente > estado de visitas do imóvel > cor da pipeline
+// Cor do border: temperatura do contacto > estado de visitas do imóvel > cor da pipeline
 function cardAccent(lead: Lead, borderColor: string | null): { color: string; green: boolean } | null {
   const green = lead.visit_activity === 'muitas'
-  if (lead.people?.temperature === 'quente') return { color: ACCENT_HOT, green }
+  const temp = temperatureMeta(lead.people?.temperature)
+  if (temp) return { color: temp.color, green }
   if (green) return { color: ACCENT_VISITS_MANY, green }
   if (lead.visit_activity === 'poucas' || lead.visit_activity === 'nenhuma') return { color: ACCENT_VISITS_FEW, green: false }
   if (borderColor) return { color: borderColor, green: false }
@@ -152,7 +152,7 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, appearance, onD
         className={`kanban-card${selected ? ' kanban-card-selected' : ''}${isDragging ? ' kanban-card-dragging' : ''}${callDue ? ' kanban-card-call-due' : ''}${accent?.green ? ' kanban-card-accent-green' : ''}`}
         data-accent={accent ? '' : undefined}
         style={accent ? { '--card-accent': accent.color, '--card-accent-soft': `${accent.color}40` } as React.CSSProperties : undefined}
-        title={lead.people?.temperature === 'quente' ? 'Contacto quente' : undefined}
+        title={lead.people?.temperature ? `Contacto ${temperatureMeta(lead.people.temperature)?.label.toLowerCase()}` : undefined}
       >
         {/* Row 1: checkbox + avatar + name + type badge + actions */}
         <div className="kanban-card-top">

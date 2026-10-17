@@ -11,7 +11,7 @@ type Props = {
   compact?: boolean
 }
 
-// Topo da ficha do contacto e da lead: temperatura (quente/neutro/frio) e
+// Topo da ficha do contacto e da lead: temperatura (frio/fresco/morno/quente) e
 // próxima chamada (daqui a X dias → notificação + card a pulsar no dia).
 export function ContactEngagementBar({ personId, temperature, nextCallAt, onChanged, compact }: Props) {
   const [busy, setBusy] = useState(false)
