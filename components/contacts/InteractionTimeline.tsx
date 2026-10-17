@@ -112,11 +112,6 @@ export function InteractionTimeline({ personId, onLogged }: { personId: string; 
         </button>
         <button className="btn btn-primary" onClick={() => add()} disabled={saving || (!outcome && !note.trim())}>Registar</button>
       </div>
-      {type === 'chamada' && (
-        <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: -6, marginBottom: 14 }}>
-          Atendeu → contacto passa a quente · Não atendeu → passa a frio
-        </div>
-      )}
       {showRecorder && (
         <div style={{ border: '1px dashed var(--border)', borderRadius: 10, marginBottom: 14 }}>
           <AudioRecorder entity="interaction" hint="Descreve a interação em voz alta — a IA preenche o tipo e a nota para confirmares." onExtracted={applyVoice} />

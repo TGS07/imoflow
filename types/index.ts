@@ -45,7 +45,7 @@ export type Pipeline = {
 export type PipelineCardSort = 'oldest_first' | 'newest_first' | 'hottest_first'
 // Contagem de dias no card: tempo na fase, desde o último contacto, ou ambos
 export type PipelineDaysMode = 'stage' | 'last_contact' | 'both'
-export type ContactTemperature = 'quente' | 'neutro' | 'frio'
+export type ContactTemperature = 'frio' | 'fresco' | 'morno' | 'quente'
 export type PropertyVisitActivity = 'muitas' | 'poucas' | 'nenhuma'
 
 export type PipelineStage = {

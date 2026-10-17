@@ -8,7 +8,7 @@ const ALL_FIELDS: PipelineCardField[] = ['name', 'phone', 'email', 'zone', 'typo
 const SORT_OPTIONS: { key: PipelineCardSort; label: string; hint: string }[] = [
   { key: 'oldest_first', label: 'Mais tempo na fase primeiro', hint: 'Quem está parado há mais tempo fica em cima.' },
   { key: 'newest_first', label: 'Menos tempo na fase primeiro', hint: 'Entradas recentes em cima.' },
-  { key: 'hottest_first', label: 'Contactos mais quentes primeiro', hint: 'Quentes → neutros → frios. A temperatura muda sozinha ao registar chamadas (atendeu = quente, não atendeu = frio).' },
+  { key: 'hottest_first', label: 'Contactos mais quentes primeiro', hint: 'Quentes → mornos → frescos → frios → sem temperatura.' },
 ]
 
 const DAYS_OPTIONS: { key: PipelineDaysMode; label: string; hint: string }[] = [
@@ -145,7 +145,10 @@ export function PipelineSettingsModal({ pipeline, onClose, onSaved }: Props) {
                 </label>
               </div>
               <div style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.6 }}>
-                Têm prioridade sobre esta cor: <span style={{ color: '#DC2626', fontWeight: 600 }}>vermelho</span> = contacto quente ·{' '}
+                Têm prioridade sobre esta cor: a temperatura do contacto (<span style={{ color: '#38BDF8', fontWeight: 600 }}>frio</span>,{' '}
+                <span style={{ color: '#EAB308', fontWeight: 600 }}>fresco</span>,{' '}
+                <span style={{ color: '#F97316', fontWeight: 600 }}>morno</span>,{' '}
+                <span style={{ color: '#DC2626', fontWeight: 600 }}>quente</span>) ·{' '}
                 <span style={{ color: '#16A34A', fontWeight: 600 }}>verde</span> = imóvel com muitas visitas ·{' '}
                 <span style={{ color: '#EA8A1A', fontWeight: 600 }}>laranja</span> = poucas ou nenhuma visita.
                 Cards com a próxima chamada para hoje (ou atrasada) piscam.

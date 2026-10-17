@@ -2,7 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import type { InteractionOutcome } from '@/types'
-import { OUTCOMES_BY_TYPE, CONTACT_INTERACTION_TYPES, temperatureFromOutcome, daysUntil } from '@/lib/contacts/engagement'
+import { OUTCOMES_BY_TYPE, CONTACT_INTERACTION_TYPES, daysUntil } from '@/lib/contacts/engagement'
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -41,12 +41,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // denormalizar última interação no contacto; uma chamada atendida aquece o
-  // contacto, uma não atendida arrefece-o. Um contacto feito no dia (ou depois)
-  // da "próxima chamada" agendada dá-a por cumprida.
+  // denormalizar última interação no contacto (a temperatura é sempre escolhida
+  // à mão). Um contacto feito no dia (ou depois) da "próxima chamada" agendada
+  // dá-a por cumprida.
   const personUpdate: Record<string, unknown> = { last_interaction_at: data.created_at }
-  const temperature = temperatureFromOutcome(body.type, outcome)
-  if (temperature) personUpdate.temperature = temperature
   if ((CONTACT_INTERACTION_TYPES as readonly string[]).includes(body.type)) {
     const { data: person } = await supabase.from('people').select('next_call_at').eq('id', id).single()
     if (person?.next_call_at && daysUntil(person.next_call_at) <= 0) personUpdate.next_call_at = null
