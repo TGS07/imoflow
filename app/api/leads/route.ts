@@ -44,7 +44,8 @@ export async function GET(request: Request) {
 
   // As chamadas são registadas por contacto (contact_interactions), não por
   // lead — anexar a última chamada de cada contacto (card "Estado chamada") e
-  // o último contacto feito (chamada/email/mensagem) para a contagem de dias.
+  // a última chamada atendida para a contagem de dias (chamadas não atendidas,
+  // emails e mensagens não reiniciam a contagem).
   const personIds = [...new Set(data.map(l => l.person_id).filter((v): v is string => !!v))]
   const lastCallByPerson = new Map<string, { note: string | null; outcome: string | null; created_at: string }>()
   const lastContactByPerson = new Map<string, string>()
@@ -65,7 +66,7 @@ export async function GET(request: Request) {
         .not('visit_activity', 'is', null),
     ])
     for (const c of interactions ?? []) {
-      if (!lastContactByPerson.has(c.person_id)) lastContactByPerson.set(c.person_id, c.created_at)
+      if (c.type === 'chamada' && c.outcome === 'atendeu' && !lastContactByPerson.has(c.person_id)) lastContactByPerson.set(c.person_id, c.created_at)
       if (c.type === 'chamada' && !lastCallByPerson.has(c.person_id)) lastCallByPerson.set(c.person_id, { note: c.note, outcome: c.outcome, created_at: c.created_at })
     }
     for (const p of sellerProps ?? []) {

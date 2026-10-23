@@ -264,7 +264,7 @@ function LeadCard({ lead, isDragging, onOpenContact, cardFields, appearance, onD
               </span>
             )}
             {appearance.daysMode !== 'stage' && (
-              <span title={lead.last_contact_at ? 'Dias desde a última chamada, email ou mensagem' : 'Sem contactos registados — dias desde que entrou'} className={`kanban-days-pill ${daysPillColor(contactDays)}`}>
+              <span title={lead.last_contact_at ? 'Dias desde a última chamada atendida' : 'Sem chamadas atendidas — dias desde que entrou'} className={`kanban-days-pill ${daysPillColor(contactDays)}`}>
                 📞 {appearance.daysMode === 'both' ? `${contactDays}d` : `${contactDays} dias`}
               </span>
             )}
