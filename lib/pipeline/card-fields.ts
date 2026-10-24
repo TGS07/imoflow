@@ -51,7 +51,7 @@ export function daysInStage(lead: Lead): number {
   return Math.floor((Date.now() - new Date(lead.stage_entered_at).getTime()) / 86400000)
 }
 
-// Dias desde a última chamada/email/mensagem; sem registos conta desde que entrou na pipeline
+// Dias desde a última chamada atendida; sem nenhuma conta desde que entrou na pipeline
 export function daysSinceLastContact(lead: Lead): number {
   const ref = lead.last_contact_at ?? lead.created_at
   return Math.floor((Date.now() - new Date(ref).getTime()) / 86400000)

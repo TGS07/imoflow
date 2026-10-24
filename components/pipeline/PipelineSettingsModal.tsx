@@ -13,7 +13,7 @@ const SORT_OPTIONS: { key: PipelineCardSort; label: string; hint: string }[] = [
 
 const DAYS_OPTIONS: { key: PipelineDaysMode; label: string; hint: string }[] = [
   { key: 'stage', label: 'Dias na fase', hint: 'Conta desde que o card entrou na fase atual.' },
-  { key: 'last_contact', label: 'Dias desde o último contacto', hint: 'Conta desde a última chamada, email ou mensagem registada.' },
+  { key: 'last_contact', label: 'Dias desde o último contacto', hint: 'Conta desde a última chamada atendida. Chamadas não atendidas não reiniciam.' },
   { key: 'both', label: 'Os dois, lado a lado', hint: 'Mostra «Fase Xd» e «📞 Xd» no mesmo card.' },
 ]
 
