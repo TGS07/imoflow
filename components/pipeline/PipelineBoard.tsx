@@ -29,8 +29,10 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
 
   useEffect(() => { loadPipelines() }, [loadPipelines])
 
-  const loadBoard = useCallback(async (pipelineId: string) => {
-    setLoading(true)
+  // silent: atualizar os dados sem trocar o board por "A carregar…" — senão o
+  // board é desmontado, o scroll volta ao topo e parece um refresh da página.
+  const loadBoard = useCallback(async (pipelineId: string, silent = false) => {
+    if (!silent) setLoading(true)
     const [s, l] = await Promise.all([
       fetch(`/api/pipeline-stages?pipeline_id=${pipelineId}`).then(r => r.ok ? r.json() : []),
       fetch(`/api/leads?pipeline_id=${pipelineId}`).then(r => r.ok ? r.json() : []),
@@ -74,14 +76,14 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
   return (
     <>
       {showNewLead && selectedId && (
-        <NewLeadModal defaultPipelineIds={[selectedId]} onClose={() => setShowNewLead(false)} onCreated={() => { setShowNewLead(false); if (selectedId) loadBoard(selectedId) }} />
+        <NewLeadModal defaultPipelineIds={[selectedId]} onClose={() => setShowNewLead(false)} onCreated={() => { setShowNewLead(false); if (selectedId) loadBoard(selectedId, true) }} />
       )}
       {showPicker && selected && (
         <PropertyPickerModal
           pipelineId={selected.id}
           pipelineName={selected.name}
           onClose={() => setShowPicker(false)}
-          onAdded={() => selectedId && loadBoard(selectedId)}
+          onAdded={() => selectedId && loadBoard(selectedId, true)}
         />
       )}
       {showContactPicker && selected && (
@@ -90,7 +92,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           pipelineName={selected.name}
           alreadyInIds={alreadyInIds}
           onClose={() => setShowContactPicker(false)}
-          onAdded={() => selectedId && loadBoard(selectedId)}
+          onAdded={() => selectedId && loadBoard(selectedId, true)}
         />
       )}
       {openContact && (
@@ -98,7 +100,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
           personId={openContact.personId}
           highlightLeadId={openContact.leadId}
           onClose={() => setOpenContact(null)}
-          onChanged={() => selectedId && loadBoard(selectedId)}
+          onChanged={() => selectedId && loadBoard(selectedId, true)}
         />
       )}
       {pipelineModal && (
@@ -111,7 +113,7 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
               setSelectedId(p.id)
             } else {
               setPipelines(prev => prev.map(x => x.id === p.id ? p : x))
-              if (p.id === selectedId) loadBoard(p.id)
+              if (p.id === selectedId) loadBoard(p.id, true)
             }
           }}
         />
@@ -181,8 +183,8 @@ export function PipelineBoard({ isAdmin }: { isAdmin: boolean }) {
             }}
             cardSort={selected?.card_sort ?? 'oldest_first'}
             appearance={{ daysMode: selected?.days_mode ?? 'stage', borderColor: selected?.card_border_color ?? null }}
-            onDuplicated={() => selectedId && loadBoard(selectedId)}
-            onCardUpdated={() => selectedId && loadBoard(selectedId)}
+            onDuplicated={() => selectedId && loadBoard(selectedId, true)}
+            onCardUpdated={() => selectedId && loadBoard(selectedId, true)}
           />
         )}
       </div>

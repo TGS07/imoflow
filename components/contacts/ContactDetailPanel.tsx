@@ -71,17 +71,31 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
     assigned_to: string; is_regular: boolean; birthday: string
   }>({ name: '', email: '', phone: '', address: '', notes: '', types: [], financial_capacity: '', source: '', details: {}, assigned_to: '', is_regular: false, birthday: '' })
 
-  const fetchPerson = useCallback(async () => {
-    const res = await fetch(`/api/people/${id}`)
-    if (!res.ok) return
-    const data = await res.json()
-    setPerson(data)
+  // Enquanto se edita, recarregar o contacto (ex: depois de registar uma
+  // chamada) não pode apagar o que ainda não foi guardado no formulário.
+  const editingRef = useRef(false)
+  useEffect(() => { editingRef.current = editing }, [editing])
+
+  const fillForm = useCallback((data: PersonDetail) => {
     setForm({
       name: data.name, email: data.email ?? '', phone: data.phone ?? '', address: data.address ?? '', notes: data.notes ?? '',
       types: data.types ?? [], financial_capacity: data.financial_capacity ?? '', source: data.source ?? '', details: data.details ?? {},
       assigned_to: data.assigned_to ?? '', is_regular: data.is_regular ?? false, birthday: data.birthday ?? '',
     })
-  }, [id])
+  }, [])
+
+  const fetchPerson = useCallback(async () => {
+    const res = await fetch(`/api/people/${id}`)
+    if (!res.ok) return
+    const data = await res.json()
+    setPerson(data)
+    if (!editingRef.current) fillForm(data)
+  }, [id, fillForm])
+
+  function startEditing() {
+    if (person) fillForm(person)
+    setEditing(true)
+  }
 
   useEffect(() => { fetchPerson() }, [fetchPerson])
 
@@ -148,7 +162,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
         birthday: form.birthday || null,
       }),
     })
-    if (res.ok) { setEditing(false); fetchPerson(); onChanged?.() }
+    if (res.ok) { editingRef.current = false; setEditing(false); fetchPerson(); onChanged?.() }
   }
 
   // Alternar rapidamente o estado "regular" sem entrar em modo de edição
@@ -483,7 +497,7 @@ export function ContactDetailPanel({ personId, embedded = false, onClose, onChan
             </div>
           )}
           {!editing ? (
-            <button onClick={() => setEditing(true)} className="btn btn-ghost">Editar</button>
+            <button onClick={startEditing} className="btn btn-ghost">Editar</button>
           ) : (
             <>
               <button onClick={() => setEditing(false)} className="btn btn-ghost">Cancelar</button>
