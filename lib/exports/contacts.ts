@@ -6,7 +6,7 @@ export const NO_TEMPERATURE = 'sem'
 export const TEMPERATURE_FILTERS = ['frio', 'fresco', 'morno', 'quente', NO_TEMPERATURE] as const
 
 export type ExportFilters = {
-  pipelineId: string
+  pipelineIds: string[]
   stageIds: string[]
   temperature: string | null
 }
@@ -56,7 +56,7 @@ async function fetchLeads(supabase: Supabase, viewer: ExportViewer, filters: Exp
       .from('leads')
       .select(LEAD_SELECT)
       .eq('agency_id', viewer.agencyId)
-      .eq('pipeline_id', filters.pipelineId)
+      .in('pipeline_id', filters.pipelineIds)
       .in('stage_id', filters.stageIds)
       .order('created_at', { ascending: false })
       .order('id', { ascending: true })
@@ -95,30 +95,39 @@ function propertyLabel(property: LeadRow['properties']): string | null {
   return [property.reference, property.title].filter(Boolean).join(' — ') || null
 }
 
+function distinctNames(names: (string | undefined)[]): string {
+  return [...new Set(names.filter(Boolean))].join(', ')
+}
+
 export async function loadExportRows(supabase: Supabase, viewer: ExportViewer, filters: ExportFilters): Promise<ExportRow[]> {
   const leads = await fetchLeads(supabase, viewer, filters)
 
-  const byKey = new Map<string, LeadRow>()
+  const byKey = new Map<string, LeadRow[]>()
   for (const lead of leads) {
     const key = lead.person_id ? `p:${lead.person_id}` : `l:${lead.id}`
-    if (!byKey.has(key)) byKey.set(key, lead)
+    byKey.set(key, [...(byKey.get(key) ?? []), lead])
   }
 
-  const personIds = [...byKey.values()].map(l => l.person_id).filter((v): v is string => !!v)
+  const personIds = [...byKey.values()].map(group => group[0].person_id).filter((v): v is string => !!v)
   const lastContacts = await fetchLastContacts(supabase, personIds)
 
-  const rows = [...byKey.entries()].map(([key, lead]): ExportRow => ({
-    key,
-    name: lead.people?.name || lead.name,
-    phone: lead.people?.phone || lead.phone,
-    email: lead.people?.email || lead.email,
-    pipeline: lead.pipelines?.name ?? '',
-    stage: lead.pipeline_stages?.name ?? '',
-    temperature: lead.people?.temperature ?? null,
-    consultant: lead.users?.name ?? null,
-    property: propertyLabel(lead.properties),
-    lastContactAt: lead.person_id ? lastContacts.get(lead.person_id) ?? null : null,
-  }))
+  // Uma linha por contacto: a lead mais recente dá o consultor e o imóvel, e
+  // Pipeline e Fase mostram todas as escolhidas onde o contacto está.
+  const rows = [...byKey.entries()].map(([key, group]): ExportRow => {
+    const lead = group[0]
+    return {
+      key,
+      name: lead.people?.name || lead.name,
+      phone: lead.people?.phone || lead.phone,
+      email: lead.people?.email || lead.email,
+      pipeline: distinctNames(group.map(l => l.pipelines?.name)),
+      stage: distinctNames(group.map(l => l.pipeline_stages?.name)),
+      temperature: lead.people?.temperature ?? null,
+      consultant: lead.users?.name ?? null,
+      property: propertyLabel(lead.properties),
+      lastContactAt: lead.person_id ? lastContacts.get(lead.person_id) ?? null : null,
+    }
+  })
 
   return rows
     .filter(row => {

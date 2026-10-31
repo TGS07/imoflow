@@ -18,10 +18,32 @@ function formatDate(date: string | null): string {
   return date ? new Date(date).toLocaleDateString('pt-PT') : '—'
 }
 
+function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      style={{
+        padding: '6px 14px',
+        borderRadius: 'var(--radius-full)',
+        fontSize: 'var(--fs-sm)',
+        fontWeight: 600,
+        cursor: 'pointer',
+        background: active ? 'var(--gold)' : 'transparent',
+        color: active ? 'white' : 'var(--muted)',
+        border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`,
+        transition: 'all 0.15s var(--ease)',
+      }}
+    >
+      {label}
+    </button>
+  )
+}
+
 export default function ExportarPage() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [stages, setStages] = useState<PipelineStage[]>([])
-  const [pipelineId, setPipelineId] = useState('')
+  const [pipelineIds, setPipelineIds] = useState<string[]>([])
   const [stageIds, setStageIds] = useState<string[]>([])
   const [temperature, setTemperature] = useState('')
   const [rows, setRows] = useState<ExportRow[]>([])
@@ -36,7 +58,7 @@ export default function ExportarPage() {
     fetch('/api/pipeline-stages').then(r => r.ok ? r.json() : []).then(setStages).catch(() => {})
   }, [])
 
-  const params = new URLSearchParams({ pipeline_id: pipelineId, stage_ids: stageIds.join(',') })
+  const params = new URLSearchParams({ pipeline_ids: pipelineIds.join(','), stage_ids: stageIds.join(',') })
   if (temperature) params.set('temperature', temperature)
   const query = params.toString()
   const hasStages = stageIds.length > 0
@@ -66,21 +88,28 @@ export default function ExportarPage() {
     return () => { stale = true }
   }, [query, hasStages])
 
-  function selectPipeline(id: string) {
-    setPipelineId(id)
-    setStageIds([])
-    setRows([])
-    setLoadedQuery('')
-    setExcluded(new Set())
-  }
-
-  function toggleStage(id: string) {
-    const next = stageIds.includes(id) ? stageIds.filter(s => s !== id) : [...stageIds, id]
+  function applyStages(next: string[]) {
     setStageIds(next)
     if (next.length === 0) {
       setRows([])
       setLoadedQuery('')
+      setExcluded(new Set())
     }
+  }
+
+  // Tirar uma pipeline tira também as fases dela; as outras mantêm-se escolhidas.
+  function togglePipeline(id: string) {
+    if (pipelineIds.includes(id)) {
+      setPipelineIds(pipelineIds.filter(p => p !== id))
+      const removed = new Set(stages.filter(s => s.pipeline_id === id).map(s => s.id))
+      applyStages(stageIds.filter(s => !removed.has(s)))
+    } else {
+      setPipelineIds([...pipelineIds, id])
+    }
+  }
+
+  function toggleStage(id: string) {
+    applyStages(stageIds.includes(id) ? stageIds.filter(s => s !== id) : [...stageIds, id])
   }
 
   function toggleRow(key: string) {
@@ -121,7 +150,7 @@ export default function ExportarPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pipeline_id: pipelineId,
+          pipeline_ids: pipelineIds,
           stage_ids: stageIds,
           temperature: temperature || null,
           selected_keys: selectedRows.map(r => r.key),
@@ -141,7 +170,7 @@ export default function ExportarPage() {
     }
   }
 
-  const pipelineStages = stages.filter(s => s.pipeline_id === pipelineId)
+  const selectedPipelines = pipelines.filter(p => pipelineIds.includes(p.id))
   const withoutEmail = selectedRows.filter(r => !r.email).length
   const withoutPhone = selectedRows.filter(r => !r.phone).length
 
@@ -153,7 +182,7 @@ export default function ExportarPage() {
           <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>
             {rows.length > 0
               ? `${selectedRows.length} selecionados · ${withoutEmail} sem email · ${withoutPhone} sem telefone`
-              : 'Escolhe a pipeline e as fases dos contactos a exportar.'}
+              : 'Escolhe uma ou mais pipelines e as fases dos contactos a exportar.'}
           </p>
         </div>
         <button onClick={createExcel} disabled={selectedRows.length === 0 || loading || downloading} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
@@ -162,11 +191,25 @@ export default function ExportarPage() {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
-        <select className="input" value={pipelineId} onChange={e => selectPipeline(e.target.value)} style={{ width: 'auto', minWidth: 200, background: 'var(--surface)' }} aria-label="Pipeline">
-          <option value="">Escolher pipeline</option>
-          {pipelines.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+      <p style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'var(--text)', marginBottom: 'var(--space-2)' }}>Pipelines</p>
+      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+        {pipelines.map(p => (
+          <Chip key={p.id} label={p.name} active={pipelineIds.includes(p.id)} onClick={() => togglePipeline(p.id)} />
+        ))}
+      </div>
+
+      {selectedPipelines.map(p => (
+        <div key={p.id} style={{ marginBottom: 'var(--space-3)' }}>
+          <p style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'var(--text)', marginBottom: 'var(--space-2)' }}>Fases de {p.name}</p>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center' }}>
+            {stages.filter(s => s.pipeline_id === p.id).map(s => (
+              <Chip key={s.id} label={s.name} active={stageIds.includes(s.id)} onClick={() => toggleStage(s.id)} />
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center', margin: 'var(--space-4) 0 var(--space-6)' }}>
         <select className="input" value={temperature} onChange={e => setTemperature(e.target.value)} style={{ width: 'auto', minWidth: 200, background: 'var(--surface)' }} aria-label="Temperatura">
           {TEMPERATURE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -178,37 +221,11 @@ export default function ExportarPage() {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
-        {pipelineStages.map(s => {
-          const active = stageIds.includes(s.id)
-          return (
-            <button
-              key={s.id}
-              onClick={() => toggleStage(s.id)}
-              aria-pressed={active}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                fontSize: 'var(--fs-sm)',
-                fontWeight: 600,
-                cursor: 'pointer',
-                background: active ? 'var(--gold)' : 'transparent',
-                color: active ? 'white' : 'var(--muted)',
-                border: `1px solid ${active ? 'var(--gold)' : 'var(--border)'}`,
-                transition: 'all 0.15s var(--ease)',
-              }}
-            >
-              {s.name}
-            </button>
-          )
-        })}
-      </div>
-
       {error && <p style={{ color: 'var(--red)', fontSize: 'var(--fs-base)', marginBottom: 'var(--space-4)' }}>{error}</p>}
 
       <div className="card" style={{ overflow: 'hidden' }}>
         {stageIds.length === 0 ? (
-          <EmptyState illustration="search" title="Escolhe as fases" description="Os contactos aparecem aqui depois de escolheres a pipeline e pelo menos uma fase." />
+          <EmptyState illustration="search" title="Escolhe as fases" description="Os contactos aparecem aqui depois de escolheres pelo menos uma pipeline e uma fase." />
         ) : !loading && rows.length === 0 ? (
           <EmptyState illustration="search" title="Nenhum contacto nestes filtros" description="Experimenta outras fases ou outra temperatura." />
         ) : (
@@ -241,7 +258,7 @@ export default function ExportarPage() {
                     <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{row.email ?? 'Sem email'}</div>
                   </td>
                   <td style={{ color: 'var(--muted)', fontSize: 12 }}>{row.phone ?? '—'}</td>
-                  <td className="hide-mobile" style={{ color: 'var(--muted)', fontSize: 12 }}>{row.stage}</td>
+                  <td className="hide-mobile" style={{ color: 'var(--muted)', fontSize: 12 }}>{selectedPipelines.length > 1 ? `${row.pipeline} · ${row.stage}` : row.stage}</td>
                   <td className="hide-mobile" style={{ color: 'var(--muted)', fontSize: 12 }}>{row.consultant ?? '—'}</td>
                   <td className="hide-mobile" style={{ color: 'var(--muted)', fontSize: 12 }}>{formatDate(row.lastContactAt)}</td>
                 </tr>

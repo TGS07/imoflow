@@ -5,16 +5,18 @@ import { loadExportRows, TEMPERATURE_FILTERS, type ExportFilters } from '@/lib/e
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-function parseFilters(pipelineId: unknown, stageIds: unknown, temperature: unknown): ExportFilters | null {
-  if (typeof pipelineId !== 'string' || !UUID.test(pipelineId)) return null
-  if (!Array.isArray(stageIds) || stageIds.length === 0) return null
-  if (!stageIds.every(id => typeof id === 'string' && UUID.test(id))) return null
-  if (temperature && !(TEMPERATURE_FILTERS as readonly unknown[]).includes(temperature)) return null
-  return { pipelineId, stageIds, temperature: temperature ? String(temperature) : null }
+function isIdList(value: unknown): value is string[] {
+  return Array.isArray(value) && value.length > 0 && value.every(id => typeof id === 'string' && UUID.test(id))
 }
 
-// Sessão, perfil e pipeline da própria agência: comum à pré-visualização e ao ficheiro.
-async function authorize(pipelineId: string) {
+function parseFilters(pipelineIds: unknown, stageIds: unknown, temperature: unknown): ExportFilters | null {
+  if (!isIdList(pipelineIds) || !isIdList(stageIds)) return null
+  if (temperature && !(TEMPERATURE_FILTERS as readonly unknown[]).includes(temperature)) return null
+  return { pipelineIds: [...new Set(pipelineIds)], stageIds, temperature: temperature ? String(temperature) : null }
+}
+
+// Sessão, perfil e pipelines da própria agência: comum à pré-visualização e ao ficheiro.
+async function authorize(pipelineIds: string[]) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { failure: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
@@ -26,19 +28,19 @@ async function authorize(pipelineId: string) {
     .single()
   if (!profile) return { failure: NextResponse.json({ error: 'Profile not found' }, { status: 404 }) }
 
-  const { data: pipeline } = await supabase
+  const { data: pipelines } = await supabase
     .from('pipelines')
     .select('id, name')
-    .eq('id', pipelineId)
+    .in('id', pipelineIds)
     .eq('agency_id', profile.agency_id)
-    .single()
-  if (!pipeline) return { failure: NextResponse.json({ error: 'Pipeline inválida' }, { status: 404 }) }
+  if (pipelines?.length !== pipelineIds.length) return { failure: NextResponse.json({ error: 'Pipeline inválida' }, { status: 404 }) }
 
-  return { supabase, pipeline, viewer: { userId: user.id, agencyId: profile.agency_id, role: profile.role } }
+  return { supabase, pipelines, viewer: { userId: user.id, agencyId: profile.agency_id, role: profile.role } }
 }
 
-function exportFileName(pipelineName: string): string {
-  const slug = pipelineName.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+function exportFileName(pipelineNames: string[]): string {
+  const name = pipelineNames.length === 1 ? pipelineNames[0] : 'varias pipelines'
+  const slug = name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date())
   return `contactos-${slug || 'pipeline'}-${today}.xlsx`
 }
@@ -46,13 +48,13 @@ function exportFileName(pipelineName: string): string {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const filters = parseFilters(
-    searchParams.get('pipeline_id'),
+    searchParams.get('pipeline_ids')?.split(',').filter(Boolean),
     searchParams.get('stage_ids')?.split(',').filter(Boolean),
     searchParams.get('temperature'),
   )
   if (!filters) return NextResponse.json({ error: 'Filtros inválidos' }, { status: 400 })
 
-  const auth = await authorize(filters.pipelineId)
+  const auth = await authorize(filters.pipelineIds)
   if (auth.failure) return auth.failure
 
   try {
@@ -67,11 +69,11 @@ export async function GET(request: Request) {
 // entrou na fase depois da pré-visualização não sai sem ser visto.
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}))
-  const filters = parseFilters(body.pipeline_id, body.stage_ids, body.temperature)
+  const filters = parseFilters(body.pipeline_ids, body.stage_ids, body.temperature)
   const selectedKeys = Array.isArray(body.selected_keys) ? new Set(body.selected_keys) : new Set()
   if (!filters || selectedKeys.size === 0) return NextResponse.json({ error: 'Filtros inválidos' }, { status: 400 })
 
-  const auth = await authorize(filters.pipelineId)
+  const auth = await authorize(filters.pipelineIds)
   if (auth.failure) return auth.failure
 
   try {
@@ -80,7 +82,7 @@ export async function POST(request: Request) {
     return new Response(file, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="${exportFileName(auth.pipeline.name)}"`,
+        'Content-Disposition': `attachment; filename="${exportFileName(auth.pipelines.map(p => p.name))}"`,
       },
     })
   } catch (e) {

@@ -12,7 +12,7 @@ O cliente pede listas específicas de contactos (por exemplo, os de "Frio Empree
 Incluído:
 
 - Página `/exportar`, no menu e na paleta de comandos.
-- Filtros por pipeline (uma), fases (uma ou mais) e temperatura (opcional).
+- Filtros por pipelines (uma ou mais), fases (uma ou mais) e temperatura (opcional).
 - Pré-visualização com checkboxes, pesquisa e "selecionar todos".
 - Ficheiro `.xlsx` com colunas fixas.
 - Botão "Exportar" da página Leads a abrir esta página.
@@ -20,7 +20,6 @@ Incluído:
 Fora de âmbito:
 
 - Escolha de colunas, templates guardados, exportações agendadas ou enviadas por email.
-- Exportação de várias pipelines de uma vez.
 - Botão "Exportar" da página Relatórios, porque exporta outro tipo de dados.
 - Alterações à base de dados: não há migração.
 
@@ -35,17 +34,17 @@ Fora de âmbito:
 
 ## Fluxo
 
-1. O utilizador escolhe a pipeline. Aparecem as fases dela pela ordem de `position`, nenhuma marcada.
+1. O utilizador escolhe uma ou mais pipelines. Aparecem as fases de cada uma pela ordem de `position`, nenhuma marcada.
 2. Marca uma ou mais fases e, se quiser, uma temperatura. A lista atualiza.
 3. Todos os contactos vêm com a checkbox marcada. Desmarca os que não quer. A pesquisa por nome, telefone ou email só filtra o que se vê: não altera as seleções.
 4. O topo mostra o resumo, por exemplo "18 selecionados · 5 sem email · 0 sem telefone".
 5. Clica em "Criar Excel (18 contactos)" e o ficheiro descarrega.
 
-Trocar de pipeline limpa as fases e as seleções. Mudar fases ou temperatura volta a marcar todos os contactos da nova lista.
+Tirar uma pipeline tira também as fases dela. Mudar pipelines, fases ou temperatura volta a marcar todos os contactos da nova lista.
 
 ## Regras dos dados
 
-**Uma linha por contacto.** As leads agrupam-se por `person_id`. Se a mesma pessoa tiver várias leads nas fases escolhidas, fica a mais recente (`created_at`), e é dela que vêm Fase e Imóvel.
+**Uma linha por contacto.** As leads agrupam-se por `person_id`. Se a mesma pessoa tiver várias leads nas fases escolhidas, mesmo em pipelines diferentes, sai uma linha. Consultor e Imóvel vêm da lead mais recente (`created_at`), e Pipeline e Fase mostram todos os valores, separados por vírgula.
 
 **Leads sem contacto ligado.** Lead com `person_id` nulo fica como linha própria, com nome, email e telefone da própria lead. Nas leads com contacto, usam-se os dados de `people`, e os campos vazios recorrem aos da lead.
 
@@ -71,7 +70,7 @@ Trocar de pipeline limpa as fases e as seleções. Mudar fases ou temperatura vo
 
 "Último contacto" segue a regra dos dias desde o último contacto: `contact_interactions` com `type = 'chamada'` e `outcome = 'atendeu'`. As notas ficam de fora, porque são internas e o ficheiro pode sair da agência.
 
-Formato: uma folha "Contactos", cabeçalho a negrito e fixo, filtros automáticos ligados e larguras ajustadas. Os valores entram como texto, para o Excel manter o `+351` e não interpretar nada como fórmula. O ficheiro chama-se `contactos-<pipeline>-<AAAA-MM-DD>.xlsx`, sem acentos nem espaços.
+Formato: uma folha "Contactos", cabeçalho a negrito e fixo, filtros automáticos ligados e larguras ajustadas. Os valores entram como texto, para o Excel manter o `+351` e não interpretar nada como fórmula. O ficheiro chama-se `contactos-<pipeline>-<AAAA-MM-DD>.xlsx`, sem acentos nem espaços. Com mais do que uma pipeline, chama-se `contactos-varias-pipelines-<AAAA-MM-DD>.xlsx`.
 
 ## Arquitetura
 
@@ -83,8 +82,8 @@ Tudo corre no servidor, para que a regra de permissões fique num só sítio e a
 
 **`app/api/exports/contacts/route.ts`**
 
-- `GET ?pipeline_id=&stage_ids=a,b&temperature=` devolve as linhas em JSON.
-- `POST` com `{ pipeline_id, stage_ids, temperature, selected_keys }` devolve o ficheiro. O servidor volta a carregar as linhas pelos filtros e fica só com as que estão em `selected_keys`, por isso o cliente não consegue pedir contactos fora do que pode ver. Um contacto que entre na fase entre a pré-visualização e o clique não é exportado sem ser visto.
+- `GET ?pipeline_ids=a,b&stage_ids=c,d&temperature=` devolve as linhas em JSON.
+- `POST` com `{ pipeline_ids, stage_ids, temperature, selected_keys }` devolve o ficheiro. O servidor volta a carregar as linhas pelos filtros e fica só com as que estão em `selected_keys`, por isso o cliente não consegue pedir contactos fora do que pode ver. Um contacto que entre na fase entre a pré-visualização e o clique não é exportado sem ser visto.
 
 A chave de cada linha é `p:<person_id>` ou `l:<lead_id>`.
 
@@ -98,10 +97,10 @@ A chave de cada linha é `p:<person_id>` ou `l:<lead_id>`.
 
 | Caso | Comportamento |
 |---|---|
-| Nenhuma fase escolhida | Texto a pedir para escolher fases, sem lista |
+| Nenhuma fase escolhida | Texto a pedir para escolher pipelines e fases, sem lista |
 | Sem contactos nos filtros | "Nenhum contacto nestes filtros", botão desativado |
 | Tudo desmarcado | Botão desativado |
-| Pipeline de outra agência | 404, como em `add-contacts` |
+| Alguma pipeline de outra agência | 404, como em `add-contacts` |
 | Sem sessão | 401 |
 | Filtros inválidos ou `selected_keys` vazio | 400 |
 | Falha ao gerar | Mensagem de erro na página, seleções mantidas |
