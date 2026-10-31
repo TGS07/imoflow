@@ -16,6 +16,7 @@ const moreItems: { href: string; icon: IconName; label: string; adminOnly?: bool
   { href: '/properties', icon: 'home', label: 'Imóveis' },
   { href: '/recommendations', icon: 'sparkle', label: 'Recomendações' },
   { href: '/reports', icon: 'chart', label: 'Relatórios' },
+  { href: '/exportar', icon: 'download', label: 'Exportar Excel' },
   { href: '/settings/pipeline', icon: 'settings', label: 'Definições', adminOnly: true },
   { href: '/help', icon: 'help', label: 'Ajuda' },
 ]

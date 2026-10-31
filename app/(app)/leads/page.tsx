@@ -99,7 +99,7 @@ export default function LeadsPage() {
             <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)', marginTop: 'var(--space-1)' }}>{leads.length} leads</p>
           </div>
           <div style={{ display: 'flex', gap: 'var(--space-3)', flexShrink: 0, flexWrap: 'wrap' }}>
-            <button onClick={() => {}} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button onClick={() => router.push('/exportar')} className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Icon name="send" size={14} />
               Exportar
             </button>
