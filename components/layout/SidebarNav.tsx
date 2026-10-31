@@ -20,6 +20,7 @@ const managementNavItems: { href: string; icon: IconName; label: string; badge?:
   { href: '/activities', icon: 'calendar', label: 'Atividades' },
   { href: '/properties', icon: 'home', label: 'Imóveis' },
   { href: '/reports', icon: 'chart', label: 'Relatórios', badge: 'new' },
+  { href: '/exportar', icon: 'download', label: 'Exportar Excel' },
 ]
 
 const settingsSubItems: { href: string; icon: IconName; label: string }[] = [

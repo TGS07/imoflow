@@ -20,6 +20,7 @@ const moreNavItems: { href: string; icon: IconName; label: string; badge?: 'recs
   { href: '/properties', icon: 'home', label: 'Imóveis' },
   { href: '/recommendations', icon: 'sparkle', label: 'Recomendações', badge: 'recs' },
   { href: '/reports', icon: 'chart', label: 'Relatórios', badge: 'new' },
+  { href: '/exportar', icon: 'download', label: 'Exportar Excel' },
 ]
 
 const settingsItems: { href: string; icon: IconName; label: string; colorClass: string }[] = [

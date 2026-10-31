@@ -29,6 +29,7 @@ const NAV: NavItem[] = [
   { label: 'Imóveis', href: '/properties', icon: 'home', keywords: 'propriedades casas imoveis' },
   { label: 'Atividades', href: '/activities', icon: 'calendar', keywords: 'calendario tarefas agenda' },
   { label: 'Relatórios', href: '/reports', icon: 'chart', keywords: 'estatisticas metricas relatorios' },
+  { label: 'Exportar Excel', href: '/exportar', icon: 'download', keywords: 'excel exportar contactos lista xlsx' },
   { label: 'Configurações do Pipeline', href: '/settings/pipeline', icon: 'settings', keywords: 'etapas campos definicoes' },
   { label: 'Automações', href: '/settings/automations', icon: 'zap', keywords: 'regras automatico' },
   { label: 'Formulários', href: '/settings/forms', icon: 'form', keywords: 'forms captura' },
