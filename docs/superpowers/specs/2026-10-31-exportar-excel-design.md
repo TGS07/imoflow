@@ -48,6 +48,8 @@ Tirar uma pipeline tira também as fases dela. Mudar pipelines, fases ou tempera
 
 **Leads sem contacto ligado.** Lead com `person_id` nulo fica como linha própria, com nome, email e telefone da própria lead. Nas leads com contacto, usam-se os dados de `people`, e os campos vazios recorrem aos da lead.
 
+**Leads com a fase de outra pipeline** ficam de fora: exporta-se o que o quadro mostra, por isso a fase da lead tem de pertencer à pipeline da lead.
+
 **Fases ganhas e perdidas** aparecem como as outras: só entram se forem marcadas.
 
 **Temperatura** é a de `people.temperature`. O filtro oferece Frio, Fresco, Morno, Quente e Sem temperatura. Linhas sem contacto ligado contam como "Sem temperatura".

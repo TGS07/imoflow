@@ -33,17 +33,18 @@ export type ExportRow = {
 type LeadRow = {
   id: string
   person_id: string | null
+  pipeline_id: string | null
   name: string
   email: string | null
   phone: string | null
   users: { name: string } | null
-  pipeline_stages: { name: string } | null
+  pipeline_stages: { name: string; pipeline_id: string } | null
   pipelines: { name: string } | null
   people: { name: string; email: string | null; phone: string | null; temperature: string | null } | null
   properties: { reference: string | null; title: string | null } | null
 }
 
-const LEAD_SELECT = 'id, person_id, name, email, phone, users(name), pipeline_stages(name), pipelines(name), people(name, email, phone, temperature), properties(reference, title)'
+const LEAD_SELECT = 'id, person_id, pipeline_id, name, email, phone, users(name), pipeline_stages(name, pipeline_id), pipelines(name), people(name, email, phone, temperature), properties(reference, title)'
 const PAGE_SIZE = 1000
 const CHUNK_SIZE = 200
 
@@ -65,7 +66,9 @@ async function fetchLeads(supabase: Supabase, viewer: ExportViewer, filters: Exp
 
     const { data, error } = await query
     if (error) throw new Error(error.message)
-    leads.push(...(data as unknown as LeadRow[]))
+    // Há leads com a fase de outra pipeline: o quadro não as mostra em nenhuma
+    // coluna, por isso também ficam de fora daqui.
+    leads.push(...(data as unknown as LeadRow[]).filter(l => l.pipeline_stages?.pipeline_id === l.pipeline_id))
     if (data.length < PAGE_SIZE) return leads
   }
 }
