@@ -27,29 +27,34 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
 
   const { data: stage } = await supabase
     .from('pipeline_stages')
-    .select('agency_id')
+    .select('agency_id, pipeline_id')
     .eq('id', id)
     .single()
 
   if (!stage) return NextResponse.json({ error: 'Stage not found' }, { status: 404 })
 
+  // As leads ficam na mesma pipeline: a 1ª etapa da agência podia ser de outra.
   const { data: firstStage } = await supabase
     .from('pipeline_stages')
     .select('id')
-    .eq('agency_id', stage.agency_id)
+    .eq('pipeline_id', stage.pipeline_id)
     .neq('id', id)
     .order('position', { ascending: true })
     .limit(1)
     .single()
 
-  if (!firstStage) {
-    return NextResponse.json({ error: 'Cannot delete the last stage' }, { status: 400 })
+  if (firstStage) {
+    await supabase
+      .from('leads')
+      .update({ stage_id: firstStage.id })
+      .eq('stage_id', id)
+  } else {
+    const { count } = await supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .eq('stage_id', id)
+    if (count) return NextResponse.json({ error: 'Cannot delete the last stage' }, { status: 400 })
   }
-
-  await supabase
-    .from('leads')
-    .update({ stage_id: firstStage.id })
-    .eq('stage_id', id)
 
   // Limpar regras de automação ligadas a esta etapa (avisos do editor 🔔 e
   // quaisquer regras manuais que a referenciem) — sem FK possível no jsonb.
