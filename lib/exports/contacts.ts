@@ -27,6 +27,8 @@ export type ExportRow = {
   temperature: string | null
   consultant: string | null
   property: string | null
+  link: string | null
+  notes: string | null
   lastContactAt: string | null
 }
 
@@ -37,14 +39,15 @@ type LeadRow = {
   name: string
   email: string | null
   phone: string | null
+  notes: string | null
   users: { name: string } | null
   pipeline_stages: { name: string; pipeline_id: string } | null
   pipelines: { name: string } | null
-  people: { name: string; email: string | null; phone: string | null; temperature: string | null } | null
-  properties: { reference: string | null; title: string | null } | null
+  people: { name: string; email: string | null; phone: string | null; temperature: string | null; notes: string | null; details: { idealista_url?: string } | null } | null
+  properties: { reference: string | null; title: string | null; idealista_url: string | null } | null
 }
 
-const LEAD_SELECT = 'id, person_id, pipeline_id, name, email, phone, users(name), pipeline_stages(name, pipeline_id), pipelines(name), people(name, email, phone, temperature), properties(reference, title)'
+const LEAD_SELECT = 'id, person_id, pipeline_id, name, email, phone, notes, users(name), pipeline_stages(name, pipeline_id), pipelines(name), people(name, email, phone, temperature, notes, details), properties(reference, title, idealista_url)'
 const PAGE_SIZE = 1000
 const CHUNK_SIZE = 200
 
@@ -128,6 +131,10 @@ export async function loadExportRows(supabase: Supabase, viewer: ExportViewer, f
       temperature: lead.people?.temperature ?? null,
       consultant: lead.users?.name ?? null,
       property: propertyLabel(lead.properties),
+      // O link do anúncio vive na ficha do contacto; sem ele, usa-se o do imóvel da lead.
+      link: lead.people?.details?.idealista_url?.trim() || lead.properties?.idealista_url?.trim() || null,
+      // Mesma regra do cartão do quadro: notas do contacto, senão as da lead.
+      notes: lead.people?.notes?.trim() || lead.notes?.trim() || null,
       lastContactAt: lead.person_id ? lastContacts.get(lead.person_id) ?? null : null,
     }
   })

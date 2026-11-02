@@ -68,9 +68,11 @@ Tirar uma pipeline tira também as fases dela. Mudar pipelines, fases ou tempera
 | Temperatura | `people.temperature`, com a primeira letra em maiúscula |
 | Consultor | `users.name` da lead |
 | Imóvel | Referência e título de `properties` |
+| Link do anúncio | `people.details.idealista_url`, senão `properties.idealista_url`; clicável quando começa por http(s) |
+| Notas | `people.notes`, senão `leads.notes`, a mesma regra do cartão do quadro |
 | Último contacto | Data da última chamada atendida |
 
-"Último contacto" segue a regra dos dias desde o último contacto: `contact_interactions` com `type = 'chamada'` e `outcome = 'atendeu'`. As notas ficam de fora, porque são internas e o ficheiro pode sair da agência.
+"Último contacto" segue a regra dos dias desde o último contacto: `contact_interactions` com `type = 'chamada'` e `outcome = 'atendeu'`. As notas entraram a pedido do cliente (2026-11-02), apesar de serem internas: quem envia o ficheiro para fora da agência deve ter isso em conta.
 
 Formato: uma folha "Contactos", cabeçalho a negrito e fixo, filtros automáticos ligados e larguras ajustadas. Os valores entram como texto, para o Excel manter o `+351` e não interpretar nada como fórmula. O ficheiro chama-se `contactos-<pipeline>-<AAAA-MM-DD>.xlsx`, sem acentos nem espaços. Com mais do que uma pipeline, chama-se `contactos-varias-pipelines-<AAAA-MM-DD>.xlsx`.
 
