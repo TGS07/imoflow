@@ -4,6 +4,7 @@ import { HelpButton } from '@/components/help/HelpButton'
 import { Icon } from '@/components/ui/Icon'
 import { StageNotificationsModal } from '@/components/pipeline/StageNotificationsModal'
 import { PipelineStage, CustomField, Pipeline } from '@/types'
+import { toast } from '@/lib/toast'
 
 const COLORS = ['#6B8DB5', '#C4A05A', '#8B7DB5', '#C48E5A', '#5A9E84', '#C47070', '#B57D8B', '#7B7DB5', '#5EA8A0', '#C46070']
 const SWATCH_COLORS = ['#6B8DB5', '#5A7A9E', '#8B7DB5', '#7B6DA0', '#B57D8B', '#C47070', '#C4A05A', '#C48E5A', '#5A9E84', '#4A8270', '#5EA8A0', '#6B7280']
@@ -133,11 +134,8 @@ export default function PipelineSettingsPage() {
   async function applyTemplate(template: PipelineTemplate) {
     if (!selectedPipelineId) return
     if (stages.length > 0 && !confirm(`Isto vai substituir todas as etapas atuais pelas do template "${template.name}". Continuar?`)) return
-    // Delete existing stages
-    for (const stage of stages) {
-      await fetch(`/api/pipeline-stages/${stage.id}`, { method: 'DELETE' })
-    }
-    // Create new stages from template
+    // Create new stages from template — primeiro, para as leads das etapas
+    // antigas terem para onde ir dentro da mesma pipeline
     const newStages: PipelineStage[] = []
     for (let i = 0; i < template.stages.length; i++) {
       const t = template.stages[i]
@@ -155,6 +153,15 @@ export default function PipelineSettingsPage() {
         }),
       })
       if (res.ok) newStages.push(await res.json())
+    }
+    if (newStages.length < template.stages.length) {
+      setStages([...stages, ...newStages])
+      toast('Não foi possível criar todas as etapas do template. As etapas antigas foram mantidas.', 'error')
+      return
+    }
+    // Delete existing stages
+    for (const stage of stages) {
+      await fetch(`/api/pipeline-stages/${stage.id}`, { method: 'DELETE' })
     }
     setStages(newStages)
   }
@@ -187,7 +194,11 @@ export default function PipelineSettingsPage() {
 
   async function deleteStage(id: string) {
     if (!confirm('Eliminar esta etapa? Os leads serão movidos para a primeira etapa.')) return
-    await fetch(`/api/pipeline-stages/${id}`, { method: 'DELETE' })
+    const res = await fetch(`/api/pipeline-stages/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      toast('Não é possível eliminar a última etapa de uma pipeline com leads.', 'error')
+      return
+    }
     setStages(prev => prev.filter(s => s.id !== id))
   }
 

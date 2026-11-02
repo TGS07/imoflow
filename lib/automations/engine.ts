@@ -45,7 +45,7 @@ export async function triggerAutomations(event: AutomationEvent, client?: Supaba
   // 3. Buscar dados do lead
   const { data: lead } = await supabase
     .from('leads')
-    .select('id, name, email, phone, assigned_to, agency_id, stage_id')
+    .select('id, name, email, phone, assigned_to, agency_id, stage_id, pipeline_id')
     .eq('id', event.leadId)
     .single()
 
@@ -149,6 +149,7 @@ type LeadData = {
   assigned_to: string | null
   agency_id: string
   stage_id: string
+  pipeline_id: string | null
 }
 
 async function buildTemplateVars(
@@ -227,31 +228,35 @@ async function executeAction(
   }
 
   if (rule.action_type === 'move_stage') {
-    let targetStageId = config.to_stage_id as string | undefined
+    const targetStage = config.to_stage_id ?? config.to_stage_name
 
-    if (!targetStageId && config.to_stage_name) {
-      const { data: stage } = await supabase
-        .from('pipeline_stages')
-        .select('id')
-        .ilike('name', String(config.to_stage_name))
-        .limit(1)
-        .single()
+    // A etapa resolve-se sempre dentro da pipeline da lead: as regras podem não
+    // ter pipeline_id e, no cron, o service client ignora o RLS — sem este
+    // filtro um nome como "Frio" apanhava etapas de outras agências.
+    let stageQuery = supabase
+      .from('pipeline_stages')
+      .select('id')
+      .eq('agency_id', agencyId)
+      .eq('pipeline_id', lead.pipeline_id)
+    stageQuery = config.to_stage_id
+      ? stageQuery.eq('id', String(config.to_stage_id))
+      : stageQuery.ilike('name', String(config.to_stage_name))
 
-      targetStageId = stage?.id
-    }
+    const { data: stage } = await stageQuery.limit(1).maybeSingle()
 
-    if (!targetStageId) {
-      throw new Error(`Stage "${config.to_stage_name ?? config.to_stage_id}" não encontrado`)
+    if (!targetStage || !stage) {
+      throw new Error(`Stage "${targetStage}" não encontrado na pipeline da lead`)
     }
 
     // NÃO chama triggerAutomations para evitar loops
     const { error } = await supabase
       .from('leads')
-      .update({ stage_id: targetStageId })
+      .update({ stage_id: stage.id })
       .eq('id', leadId)
+      .eq('agency_id', agencyId)
 
     if (error) throw new Error(error.message)
-    return { moved_to_stage_id: targetStageId }
+    return { moved_to_stage_id: stage.id }
   }
 
   if (rule.action_type === 'send_email') {

@@ -167,11 +167,15 @@ export default function LeadPage() {
     const params = new URLSearchParams({ lead_id: id })
     if (activityFilter) params.set('type', activityFilter)
 
-    const [l, a, s] = await Promise.all([
+    const [l, a] = await Promise.all([
       fetch(`/api/leads/${id}`).then(r => r.json()),
       fetch(`/api/activities?${params}`).then(r => r.json()),
-      fetch('/api/pipeline-stages').then(r => r.json()),
     ])
+    // Só as etapas da pipeline da lead — clicar numa etapa de outra pipeline
+    // deixava a lead fora de todas as colunas do quadro.
+    const s = l.pipeline_id
+      ? await fetch(`/api/pipeline-stages?pipeline_id=${l.pipeline_id}`).then(r => r.json())
+      : []
     setLead(l)
     setActivities(Array.isArray(a) ? a : [])
     setStages(s)
