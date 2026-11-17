@@ -16,9 +16,9 @@ type Props = {
 export function ContactEngagementBar({ personId, temperature, nextCallAt, onChanged, compact }: Props) {
   const [busy, setBusy] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [customOpen, setCustomOpen] = useState(false)
-  const [customDate, setCustomDate] = useState('')
-  const [callTime, setCallTime] = useState('10:00')
+  const [customDays, setCustomDays] = useState('')
+  const customN = Math.floor(Number(customDays))
+  const customValid = customDays !== '' && Number.isFinite(customN) && customN >= 1
 
   async function patch(body: Record<string, unknown>) {
     setBusy(true)
@@ -34,10 +34,8 @@ export function ContactEngagementBar({ personId, temperature, nextCallAt, onChan
 
   function setNextCall(date: string | null) {
     setPickerOpen(false)
-    setCustomOpen(false)
-    // next_call_due leva a hora (no fuso do browser) para a entrada no calendário.
-    const due = date ? new Date(`${date}T${callTime || '10:00'}`).toISOString() : null
-    patch({ next_call_at: date, next_call_due: due })
+    setCustomDays('')
+    patch({ next_call_at: date })
   }
 
   const due = nextCallAt ? daysUntil(nextCallAt) : null
@@ -63,62 +61,57 @@ export function ContactEngagementBar({ personId, temperature, nextCallAt, onChan
         })}
       </div>
 
-      <div style={{ position: 'relative' }}>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => setPickerOpen(o => !o)}
-          className={`chip${nextCallAt ? ' active' : ''}`}
-          style={due != null && due <= 0 ? { background: 'rgba(220,38,38,0.1)', color: '#DC2626', borderColor: 'rgba(220,38,38,0.4)' } : undefined}
-        >
-          📞 {nextCallAt ? `${nextCallLabel(nextCallAt)} · ${new Date(nextCallAt + 'T00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })}` : 'Próxima chamada'}
-        </button>
-        {pickerOpen && (
-          <div className="card" style={{ position: 'absolute', top: '110%', left: 0, zIndex: 40, width: 250, padding: 12, display: 'flex', flexDirection: 'column', gap: 8, boxShadow: 'var(--shadow-md)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <div className="section-label">Ligar daqui a…</div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--fs-2xs)', color: 'var(--muted)' }}>
-                às
-                <input className="input" type="time" value={callTime} onChange={e => setCallTime(e.target.value)} style={{ width: 92, padding: '4px 6px' }} aria-label="Hora da chamada" />
-              </label>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-              {NEXT_CALL_PRESETS.map(n => (
-                <button key={n} type="button" className="chip" onClick={() => setNextCall(dateInDays(n))}>{n} dia{n > 1 ? 's' : ''}</button>
-              ))}
-              <button
-                type="button"
-                className={`chip${customOpen ? ' active' : ''}`}
-                onClick={() => { setCustomOpen(o => !o); setCustomDate(nextCallAt ?? dateInDays(0)) }}
-              >📅 Personalizado</button>
-            </div>
-            {customOpen && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <input
-                  className="input"
-                  type="date"
-                  min={dateInDays(0)}
-                  value={customDate}
-                  onChange={e => setCustomDate(e.target.value)}
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  disabled={!customDate}
-                  onClick={() => setNextCall(customDate)}
-                >
-                  {customDate ? `Agendar para ${new Date(customDate + 'T00:00').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: '2-digit' })} às ${callTime || '10:00'}` : 'Escolhe um dia'}
-                </button>
-              </div>
-            )}
-            {nextCallAt && (
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNextCall(null)}>Remover próxima chamada</button>
-            )}
-            <div style={{ fontSize: 'var(--fs-2xs)', color: 'var(--muted)', lineHeight: 1.4 }}>Fica logo no calendário. No dia recebes uma notificação e o card na pipeline começa a piscar.</div>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => setPickerOpen(o => !o)}
+        className={`chip${nextCallAt ? ' active' : ''}`}
+        style={due != null && due <= 0 ? { background: 'rgba(220,38,38,0.1)', color: '#DC2626', borderColor: 'rgba(220,38,38,0.4)' } : undefined}
+        aria-expanded={pickerOpen}
+      >
+        📞 {nextCallAt ? `${nextCallLabel(nextCallAt)} · ${new Date(nextCallAt + 'T00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })}` : 'Próxima chamada'}
+      </button>
+
+      {/* Abre em linha (ocupa a largura toda) em vez de flutuar: assim nunca
+          fica cortado pelo cartão/painel onde está. */}
+      {pickerOpen && (
+        <div style={{ flexBasis: '100%', padding: 12, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--item-bg)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="section-label">Ligar daqui a…</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {NEXT_CALL_PRESETS.map(n => (
+              <button key={n} type="button" className="chip" onClick={() => setNextCall(dateInDays(n))}>{n} dia{n > 1 ? 's' : ''}</button>
+            ))}
           </div>
-        )}
-      </div>
+          <form
+            onSubmit={e => { e.preventDefault(); if (customValid) setNextCall(dateInDays(customN)) }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+          >
+            <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)' }}>Outro:</span>
+            <input
+              className="input"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              step={1}
+              placeholder="ex. 5"
+              value={customDays}
+              onChange={e => setCustomDays(e.target.value)}
+              style={{ width: 80 }}
+              aria-label="Número de dias"
+            />
+            <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--muted)' }}>dias</span>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={!customValid}>
+              {customValid ? `Agendar (${new Date(dateInDays(customN) + 'T00:00').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: '2-digit' })})` : 'Agendar'}
+            </button>
+          </form>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 'var(--fs-2xs)', color: 'var(--muted)', lineHeight: 1.4 }}>Fica no calendário. No dia recebes uma notificação e o card na pipeline pisca.</div>
+            {nextCallAt && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNextCall(null)}>Remover</button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
