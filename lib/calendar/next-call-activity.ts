@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { parseCallFromNotes } from '@/lib/contacts/note-call-date'
 
 export const DEFAULT_NEXT_CALL_TIME = '10:00'
 
@@ -58,4 +59,37 @@ export async function completeNextCallActivity(supabase: SupabaseClient, personI
     .eq('source', 'next_call')
     .eq('completed', false)
   if (error) console.error('Failed to complete next-call activity:', error.message)
+}
+
+// Data de hoje em Lisboa (YYYY-MM-DD), independente do fuso do servidor.
+export function todayLisbon(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(now)
+}
+
+// Quando as notas dizem "ligar a 25/11 - 17h", agenda a próxima chamada do
+// contacto nesse dia/hora (e a entrada no calendário). Só datas de hoje em
+// diante, e só se for diferente da que já está marcada.
+export async function applyNoteCall(
+  supabase: SupabaseClient,
+  personId: string,
+  notes: string | null | undefined,
+  fallbackUserId: string,
+): Promise<string | null> {
+  const found = parseCallFromNotes(notes)
+  if (!found || found.date < todayLisbon()) return null
+
+  const { data: person } = await supabase
+    .from('people')
+    .select('id, name, agency_id, assigned_to, phone, next_call_at')
+    .eq('id', personId)
+    .maybeSingle()
+  if (!person || person.next_call_at === found.date) return null
+
+  const { error } = await supabase.from('people').update({ next_call_at: found.date }).eq('id', personId)
+  if (error) {
+    console.error('Failed to set next_call_at from notes:', error.message)
+    return null
+  }
+  await syncNextCallActivity(supabase, person, found.date, lisbonToIso(found.date, found.time ?? DEFAULT_NEXT_CALL_TIME), fallbackUserId)
+  return found.date
 }

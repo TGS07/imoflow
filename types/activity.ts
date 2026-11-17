@@ -13,7 +13,8 @@ export type Activity = {
   end_date: string | null
   completed: boolean
   completed_at: string | null
-  source: 'manual' | 'notification' | 'next_call'
+  // 'projected' = entrada prevista só no ecrã (/api/calendar/upcoming), nunca na BD
+  source: 'manual' | 'notification' | 'next_call' | 'projected'
   notification_id: string | null
   created_at: string
   users?: { name: string; avatar_initials: string }

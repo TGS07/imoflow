@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { CalendarTimeGrid } from '@/components/activities/CalendarTimeGrid'
 import { AudioRecorder } from '@/components/shared/AudioRecorder'
 import { QuickAddFAB } from '@/components/activities/QuickAddFAB'
+import type { ProjectedItem } from '@/app/api/calendar/upcoming/route'
 
 const ACTIVITY_COLORS: Record<ActivityType, string> = {
   chamada: '#6B8DB5',
@@ -50,6 +51,8 @@ function toLocalInput(d: Date): string {
 
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<Activity[]>([])
+  // Entradas previstas (não gravadas): "falta contactar" futuros e datas especiais
+  const [projected, setProjected] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<ViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -114,6 +117,18 @@ export default function ActivitiesPage() {
       const res = await fetch(`/api/activities?${params}`)
       if (!res.ok) throw new Error()
       setActivities(await res.json())
+      try {
+        const up = await fetch(`/api/calendar/upcoming?${new URLSearchParams({ date_from: dateFrom, date_to: dateTo })}`)
+        const items: ProjectedItem[] = up.ok ? await up.json() : []
+        setProjected(items
+          .filter(i => !filterType || i.type === filterType)
+          .map(i => ({
+            id: i.id, agency_id: '', lead_id: i.lead?.id ?? null, person_id: i.person?.id ?? null, assigned_to: null,
+            type: i.type, title: i.title, description: i.description, due_date: i.due_date, end_date: null,
+            completed: false, completed_at: null, source: 'projected', notification_id: null, created_at: i.due_date,
+            leads: i.lead, people: i.person,
+          })))
+      } catch { setProjected([]) }
     } catch { setActivities([]) }
     finally { setLoading(false) }
   }, [currentDate, view, filterType])
@@ -121,6 +136,8 @@ export default function ActivitiesPage() {
   // Pendentes deriva-se das atividades já carregadas para a janela de datas
   // atual (dia/semana/mês), em vez de uma pesquisa global sem filtro de data —
   // assim a sidebar mostra só o que falta fazer no período que se está a ver.
+  const calendarItems = useMemo(() => [...activities, ...projected], [activities, projected])
+
   const pending = useMemo(
     () => activities
       .filter(a => !a.completed)
@@ -179,6 +196,7 @@ export default function ActivitiesPage() {
   }
 
   async function moveActivity(a: Activity, newStart: Date) {
+    if (a.source === 'projected') return
     const duration = a.due_date && a.end_date
       ? new Date(a.end_date).getTime() - new Date(a.due_date).getTime()
       : null
@@ -236,7 +254,7 @@ export default function ActivitiesPage() {
 
   function getActivitiesForDay(date: Date): Activity[] {
     const dayStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-    return activities.filter(a => {
+    return calendarItems.filter(a => {
       if (!a.due_date) return false
       const d = new Date(a.due_date)
       const aStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -275,6 +293,9 @@ export default function ActivitiesPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 20 }}>{ACTIVITY_ICONS[selectedActivity.type]}</span>
+                {selectedActivity.source === 'projected' && (
+                  <span title="Previsto: ainda não aconteceu">🔮</span>
+                )}
                 {selectedActivity.source === 'notification' && (
                   <span title="Criada automaticamente a partir de uma notificação">🔔</span>
                 )}
@@ -320,12 +341,18 @@ export default function ActivitiesPage() {
                 <span style={{ color: selectedActivity.completed ? 'var(--green)' : 'var(--text)' }}>{selectedActivity.completed ? 'Concluída' : 'Pendente'}</span>
               </div>
             </div>
+            {selectedActivity.source === 'projected' ? (
+              <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>
+                🔮 Previsto — ainda não aconteceu. Fica real no próprio dia (notificação + entrada no calendário) se até lá não houver contacto.
+              </div>
+            ) : (
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => toggleComplete(selectedActivity)} className={`btn ${selectedActivity.completed ? 'btn-ghost' : 'btn-primary'}`} style={{ flex: 1 }}>
                 {selectedActivity.completed ? 'Reabrir' : '✓ Concluir'}
               </button>
               <button onClick={() => deleteActivity(selectedActivity.id)} className="btn btn-danger">Eliminar</button>
             </div>
+            )}
           </div>
         </div>
       )}
@@ -447,7 +474,7 @@ export default function ActivitiesPage() {
                       <div className="cal-events" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {dayActivities.slice(0, 3).map(a => (
                           <div key={a.id} className="cal-event" onClick={() => setSelectedActivity(a)} style={{ fontSize: 10, padding: '2px 5px', borderRadius: 3, background: `${ACTIVITY_COLORS[a.type]}22`, color: ACTIVITY_COLORS[a.type], cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: a.completed ? 'line-through' : 'none', opacity: a.completed ? 0.5 : 1, ['--dot' as string]: ACTIVITY_COLORS[a.type] }}>
-                            {ACTIVITY_ICONS[a.type]} {a.title}{a.source === 'notification' && ' 🔔'}
+                            {ACTIVITY_ICONS[a.type]} {a.title}{a.source === 'notification' && ' 🔔'}{a.source === 'projected' && ' 🔮'}
                           </div>
                         ))}
                         {dayActivities.length > 3 && (
@@ -465,7 +492,7 @@ export default function ActivitiesPage() {
           {(view === 'week' || view === 'day') && (
             <CalendarTimeGrid
               days={view === 'week' ? getWeekDays() : [currentDate]}
-              activities={activities}
+              activities={calendarItems}
               colors={ACTIVITY_COLORS}
               icons={ACTIVITY_ICONS}
               onEventClick={setSelectedActivity}
