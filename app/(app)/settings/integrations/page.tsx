@@ -15,6 +15,9 @@ type Webhook = {
   pipelines?: { name: string } | null
   pipeline_stages?: { name: string } | null
   users?: { name: string } | null
+  split_group: string | null
+  // Ligações de outras contas com quem esta divide as leads (alternância)
+  split_members?: { id: string; name: string; agency: string; lead_count: number; is_active: boolean }[]
 }
 
 type Option = { id: string; name: string }
@@ -42,6 +45,8 @@ export default function IntegrationsPage() {
   const [revealed, setRevealed] = useState<Set<string>>(new Set())
   const [copied, setCopied] = useState<string | null>(null)
   const [testResult, setTestResult] = useState<Record<string, string>>({})
+  const [splitKey, setSplitKey] = useState<Record<string, string>>({})
+  const [splitBusy, setSplitBusy] = useState<string | null>(null)
   // Origem do site (vazia no render do servidor, sem mismatch na hidratação)
   const origin = useSyncExternalStore(() => () => {}, () => window.location.origin, () => '')
 
@@ -97,7 +102,33 @@ export default function IntegrationsPage() {
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) { alert(data.error ?? 'Erro ao guardar.'); return }
-    setWebhooks(prev => prev.map(w => w.id === id ? data : w))
+    setWebhooks(prev => prev.map(w => w.id === id ? { ...data, split_members: w.split_members } : w))
+  }
+
+  async function linkSplit(w: Webhook) {
+    const key = (splitKey[w.id] ?? '').trim()
+    if (!key) return
+    setSplitBusy(w.id)
+    try {
+      const res = await fetch(`/api/lead-webhooks/${w.id}/split`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { alert(data.error ?? 'Erro ao ligar a divisão.'); return }
+      setSplitKey(prev => ({ ...prev, [w.id]: '' }))
+      await load()
+    } finally { setSplitBusy(null) }
+  }
+
+  async function unlinkSplit(w: Webhook) {
+    if (!confirm('Deixar de dividir? As leads novas desta ligação passam a ficar todas nesta conta.')) return
+    setSplitBusy(w.id)
+    try {
+      const res = await fetch(`/api/lead-webhooks/${w.id}/split`, { method: 'DELETE' })
+      if (res.ok) await load()
+    } finally { setSplitBusy(null) }
   }
 
   async function remove(w: Webhook) {
@@ -250,6 +281,36 @@ export default function IntegrationsPage() {
                       {members.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                     </select>
                   </div>
+                </div>
+
+                {/* Dividir com outra conta: uma lead para cada, à vez */}
+                <div style={{ border: '1px dashed var(--border)', borderRadius: 10, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={{ ...label, marginBottom: 0 }}>Dividir leads com outra conta</span>
+                  {(w.split_members ?? []).length > 0 ? (
+                    <>
+                      <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+                        As leads alternam entre <strong>esta conta</strong> ({w.lead_count})
+                        {(w.split_members ?? []).map(m => (
+                          <span key={m.id}> e <strong>{m.agency}</strong> ({m.lead_count}{m.is_active ? '' : ', desativada'})</span>
+                        ))}
+                        : uma para cada, à vez. Se o contacto já existir numa das contas, vai para essa.
+                      </div>
+                      <div>
+                        <button type="button" className="btn btn-ghost btn-sm" disabled={splitBusy === w.id} onClick={() => unlinkSplit(w)}>Deixar de dividir</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>
+                        Na outra conta, cria uma ligação em Integrações (com a pipeline onde as leads devem entrar), copia a chave dela e cola aqui.
+                        O parceiro continua a usar só a chave desta ligação.
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <input className="input" placeholder="Chave da ligação da outra conta (imf_…)" value={splitKey[w.id] ?? ''} onChange={e => setSplitKey(prev => ({ ...prev, [w.id]: e.target.value }))} style={{ flex: '1 1 260px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12 }} />
+                        <button type="button" className="btn btn-soft btn-sm" disabled={splitBusy === w.id || !(splitKey[w.id] ?? '').trim()} onClick={() => linkSplit(w)}>{splitBusy === w.id ? 'A ligar…' : 'Dividir'}</button>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
