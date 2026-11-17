@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { resend } from '@/lib/resend'
 import { webpush } from '@/lib/web-push'
+import { mirrorNotificationToCalendar, targetFromLink } from '@/lib/calendar/mirror-notification'
+import type { ActivityType } from '@/types'
 
 export type NotificationType =
   | 'new_lead'
@@ -18,10 +20,14 @@ interface CreateNotificationParams {
   title: string
   body: string
   link?: string
+  // Entrada no calendário: por omissão TODAS as notificações aparecem no
+  // calendário (título = título da notificação, descrição = corpo). Passa
+  // `false` quando a notificação já se refere a uma atividade que lá está.
+  calendar?: false | { title?: string; type?: ActivityType }
 }
 
 export async function createNotification(params: CreateNotificationParams, client?: SupabaseClient): Promise<{ id: string } | null> {
-  const { userId, agencyId, type, title, body, link } = params
+  const { userId, agencyId, type, title, body, link, calendar } = params
   const supabase = client ?? await createClient()
 
   // 1. Inserir notificação
@@ -34,6 +40,20 @@ export async function createNotification(params: CreateNotificationParams, clien
   if (insertError || !notification) {
     console.error('Failed to insert notification:', insertError?.message)
     return null
+  }
+
+  // 1b. Espelhar no calendário
+  if (calendar !== false) {
+    await mirrorNotificationToCalendar({
+      supabase,
+      agencyId,
+      assignedTo: userId,
+      notificationId: notification.id,
+      title: calendar?.title ?? title,
+      description: body,
+      type: calendar?.type,
+      target: targetFromLink(link),
+    })
   }
 
   // 2. Apagar as mais antigas se total > 20

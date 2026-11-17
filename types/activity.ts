@@ -13,7 +13,7 @@ export type Activity = {
   end_date: string | null
   completed: boolean
   completed_at: string | null
-  source: 'manual' | 'notification'
+  source: 'manual' | 'notification' | 'next_call'
   notification_id: string | null
   created_at: string
   users?: { name: string; avatar_initials: string }

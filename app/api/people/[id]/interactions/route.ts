@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import type { InteractionOutcome } from '@/types'
 import { OUTCOMES_BY_TYPE, CONTACT_INTERACTION_TYPES, daysUntil } from '@/lib/contacts/engagement'
+import { completeNextCallActivity } from '@/lib/calendar/next-call-activity'
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -50,6 +51,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (person?.next_call_at && daysUntil(person.next_call_at) <= 0) personUpdate.next_call_at = null
   }
   await supabase.from('people').update(personUpdate).eq('id', id)
+  if ('next_call_at' in personUpdate) await completeNextCallActivity(supabase, id)
 
   return NextResponse.json(data, { status: 201 })
 }
