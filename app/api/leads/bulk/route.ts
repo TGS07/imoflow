@@ -31,6 +31,22 @@ export async function PATCH(request: Request) {
   }
 
   if (stage_id) {
+    const { data: stage } = await supabase
+      .from('pipeline_stages')
+      .select('pipeline_id')
+      .eq('id', stage_id)
+      .eq('agency_id', profile.agency_id)
+      .maybeSingle()
+    if (!stage) return NextResponse.json({ error: 'Etapa inválida' }, { status: 400 })
+
+    const { count } = await supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .in('id', ids)
+      .eq('agency_id', profile.agency_id)
+      .neq('pipeline_id', stage.pipeline_id)
+    if (count) return NextResponse.json({ error: 'A etapa não pertence à pipeline das leads' }, { status: 400 })
+
     const { error } = await supabase
       .from('leads')
       .update({ stage_id })

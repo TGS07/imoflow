@@ -86,10 +86,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       .from('pipeline_stages')
       .select('id')
       .eq('pipeline_id', leadData.pipeline_id)
+      .eq('agency_id', profile.agency_id)
       .order('position', { ascending: true })
       .limit(1)
       .maybeSingle()
-    if (firstStage) leadData.stage_id = firstStage.id
+    if (!firstStage) return NextResponse.json({ error: 'Pipeline sem etapas' }, { status: 400 })
+    leadData.stage_id = firstStage.id
+  } else if (leadData.stage_id && leadData.stage_id !== before.stage_id) {
+    const { data: stage } = await supabase
+      .from('pipeline_stages')
+      .select('pipeline_id')
+      .eq('id', leadData.stage_id)
+      .eq('agency_id', profile.agency_id)
+      .maybeSingle()
+    if (!stage || stage.pipeline_id !== before.pipeline_id) {
+      return NextResponse.json({ error: 'A etapa não pertence à pipeline da lead' }, { status: 400 })
+    }
   }
 
   let updateQuery = supabase
