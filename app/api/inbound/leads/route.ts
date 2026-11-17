@@ -22,7 +22,12 @@ type Webhook = {
   assigned_to: string | null
   is_active: boolean
   lead_count: number
+  split_group: string | null
 }
+
+type Person = { id: string; assigned_to: string | null }
+type Supabase = ReturnType<typeof createServiceClient>
+const WEBHOOK_COLUMNS = 'id, agency_id, name, pipeline_id, stage_id, assigned_to, is_active, lead_count, split_group'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -62,7 +67,7 @@ async function findWebhook(key: string | null): Promise<Webhook | null> {
   const supabase = createServiceClient()
   const { data } = await supabase
     .from('lead_webhooks')
-    .select('id, agency_id, name, pipeline_id, stage_id, assigned_to, is_active, lead_count')
+    .select(WEBHOOK_COLUMNS)
     .eq('token', key)
     .maybeSingle()
   return data && data.is_active ? (data as Webhook) : null
@@ -87,6 +92,45 @@ async function readBody(request: Request): Promise<Record<string, unknown> | nul
 }
 
 const last9 = (phone: string | null | undefined) => (phone ?? '').replace(/\D/g, '').slice(-9)
+
+// Contacto já existe nesta agência? (mesmo email, ou mesmo número pelos últimos 9 dígitos)
+async function findPerson(supabase: Supabase, agencyId: string, email: string | null, phone: string | null): Promise<Person | null> {
+  const { data: candidates } = await supabase
+    .from('people')
+    .select('id, phone, email, assigned_to')
+    .eq('agency_id', agencyId)
+    .or([email ? `email.ilike.${email.replace(/[%_,()]/g, '')}` : null, phone ? 'phone.not.is.null' : null].filter(Boolean).join(','))
+  const target9 = last9(phone)
+  return (candidates ?? []).find(p =>
+    (email && p.email?.toLowerCase() === email) || (target9.length === 9 && last9(p.phone) === target9)
+  ) ?? null
+}
+
+// Para que conta vai a lead. Sem divisão: a da própria ligação. Com divisão
+// (split_group): se o contacto já existe numa das contas, fica nessa (mesmo
+// consultor); senão vai para a próxima na alternância.
+async function routeLead(supabase: Supabase, webhook: Webhook, email: string | null, phone: string | null): Promise<{ target: Webhook; person: Person | null }> {
+  if (!webhook.split_group) {
+    return { target: webhook, person: await findPerson(supabase, webhook.agency_id, email, phone) }
+  }
+
+  const { data: members } = await supabase
+    .from('lead_webhooks')
+    .select(WEBHOOK_COLUMNS)
+    .eq('split_group', webhook.split_group)
+    .eq('is_active', true)
+    .order('created_at')
+  const group = ((members ?? []) as Webhook[]).sort((a, b) => (a.id === webhook.id ? -1 : b.id === webhook.id ? 1 : 0))
+
+  for (const member of group) {
+    const person = await findPerson(supabase, member.agency_id, email, phone)
+    if (person) return { target: member, person }
+  }
+
+  const { data: nextId } = await supabase.rpc('claim_next_split_webhook', { p_group: webhook.split_group })
+  const target = group.find(m => m.id === nextId) ?? webhook
+  return { target, person: null }
+}
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS })
@@ -116,15 +160,22 @@ export async function POST(request: Request) {
   if (!lead.phone && !lead.email) return json({ success: false, error: 'Email inválido.' }, 422)
 
   const supabase = createServiceClient()
-  const agencyId = webhook.agency_id
   const phone = lead.phone ? normalizePhone(lead.phone) : null
   const name = lead.name ?? lead.email ?? (lead.phone as string)
   const notes = buildLeadNotes(lead, webhook.name)
 
+  // Conta de destino (com divisão entre contas, pode não ser a desta chave)
+  const { target, person } = await routeLead(supabase, webhook, lead.email, phone)
+  const agencyId = target.agency_id
+  const now = new Date().toISOString()
+  if (target.id !== webhook.id) {
+    await supabase.from('lead_webhooks').update({ last_used_at: now }).eq('id', webhook.id)
+  }
+
   // Fase de destino: a escolhida na ligação, ou a 1ª da pipeline escolhida,
   // ou a 1ª pipeline da agência (resolvida aqui para a verificação de duplicados)
-  let stageId = webhook.stage_id
-  let pipelineId = webhook.pipeline_id
+  let stageId = target.stage_id
+  let pipelineId = target.pipeline_id
   if (stageId) {
     const { data: stage } = await supabase.from('pipeline_stages').select('pipeline_id').eq('id', stageId).maybeSingle()
     if (stage) pipelineId = stage.pipeline_id
@@ -139,23 +190,9 @@ export async function POST(request: Request) {
     stageId = first?.id ?? null
   }
 
-  // Contacto já existe? (mesmo email, ou mesmo número pelos últimos 9 dígitos)
-  let person: { id: string; assigned_to: string | null } | null = null
-  {
-    const { data: candidates } = await supabase
-      .from('people')
-      .select('id, phone, email, assigned_to')
-      .eq('agency_id', agencyId)
-      .or([lead.email ? `email.ilike.${lead.email.replace(/[%_,()]/g, '')}` : null, phone ? 'phone.not.is.null' : null].filter(Boolean).join(','))
-    const target9 = last9(phone)
-    person = (candidates ?? []).find(p =>
-      (lead.email && p.email?.toLowerCase() === lead.email) || (target9.length === 9 && last9(p.phone) === target9)
-    ) ?? null
-  }
-
   // Admin para notificar quando não há responsável
   const { data: admin } = await supabase.from('users').select('id').eq('agency_id', agencyId).eq('role', 'admin').order('created_at').limit(1).maybeSingle()
-  const assignedTo = webhook.assigned_to ?? person?.assigned_to ?? null
+  const assignedTo = target.assigned_to ?? person?.assigned_to ?? null
   const notifyUserId = assignedTo ?? admin?.id ?? null
 
   // Já está nesta pipeline num negócio ativo → não duplicar o card: regista
@@ -176,7 +213,7 @@ export async function POST(request: Request) {
         note: `Novo pedido recebido. ${notes}`.slice(0, 4000),
       })
       await supabase.from('people').update({ last_interaction_at: new Date().toISOString() }).eq('id', person.id)
-      await supabase.from('lead_webhooks').update({ last_used_at: new Date().toISOString() }).eq('id', webhook.id)
+      await supabase.from('lead_webhooks').update({ last_used_at: now }).eq('id', target.id)
       if (notifyUserId) {
         await createNotification({
           userId: notifyUserId, agencyId, type: 'new_lead',
@@ -210,14 +247,14 @@ export async function POST(request: Request) {
     .single()
 
   if (error || !inserted) {
-    console.error('[inbound-leads] insert failed', { webhook: webhook.id, error: error?.message })
+    console.error('[inbound-leads] insert failed', { webhook: target.id, error: error?.message })
     return json({ success: false, error: 'Erro ao guardar a lead. Tente novamente.' }, 500)
   }
 
   await supabase
     .from('lead_webhooks')
-    .update({ lead_count: webhook.lead_count + 1, last_used_at: new Date().toISOString() })
-    .eq('id', webhook.id)
+    .update({ lead_count: target.lead_count + 1, last_used_at: now })
+    .eq('id', target.id)
 
   if (notifyUserId) {
     await createNotification({
