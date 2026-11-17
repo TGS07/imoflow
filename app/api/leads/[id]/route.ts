@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { applyNoteCall } from '@/lib/calendar/next-call-activity'
 import { createNotification } from '@/lib/notifications'
 import { triggerAutomations } from '@/lib/automations/engine'
 import type { Database } from '@/types/database'
@@ -104,6 +105,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // "ligar a 25/11 - 17h" nas notas da lead → próxima chamada do contacto
+  if (typeof leadData.notes === 'string' && data.person_id) {
+    await applyNoteCall(supabase, data.person_id, leadData.notes, user.id)
+  }
 
   // Upsert custom field values if provided
   if (customFieldValues && typeof customFieldValues === 'object') {

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { syncNextCallActivity } from '@/lib/calendar/next-call-activity'
+import { syncNextCallActivity, applyNoteCall } from '@/lib/calendar/next-call-activity'
 
 type LeadWithStage = {
   id: string
@@ -114,6 +114,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   // Manter as notas dos negócios do contacto em sincronia com a ficha
   if ('notes' in update) {
     await supabase.from('leads').update({ notes: update.notes }).eq('person_id', id)
+    // "ligar a 25/11 - 17h" nas notas → próxima chamada + calendário
+    if (!('next_call_at' in update)) {
+      const date = await applyNoteCall(supabase, id, update.notes as string | null, user.id)
+      if (date) return NextResponse.json({ ...data, next_call_at: date })
+    }
   }
 
   return NextResponse.json(data)
