@@ -58,6 +58,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Concluir a "próxima chamada" no calendário dá-a por cumprida no contacto
+  // (o card deixa de piscar e o cron não volta a avisar).
+  if (body.completed === true && data?.source === 'next_call' && data.person_id) {
+    await supabase.from('people').update({ next_call_at: null }).eq('id', data.person_id)
+  }
+
   // Disparar automações quando atividade é marcada como concluída e estava incompleta
   if (wasCompleted && before && !before.completed && before.lead_id) {
     // Buscar agencyId do lead

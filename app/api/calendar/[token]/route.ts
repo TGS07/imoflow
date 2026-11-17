@@ -43,7 +43,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
   const { data: activities, error: activitiesError } = await supabase
     .from('activities')
     .select('id, title, due_date, lead_id, person_id')
-    .eq('source', 'notification')
+    .in('source', ['notification', 'next_call'])
     .eq('assigned_to', user.id)
     .not('due_date', 'is', null)
 

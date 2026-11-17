@@ -2,7 +2,6 @@ import { createServiceClient } from '@/lib/supabase/service'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createNotification } from '@/lib/notifications'
-import { mirrorNotificationToCalendar } from '@/lib/calendar/mirror-notification'
 import { daysSince, followupStatus } from '@/lib/contacts/followup'
 import { matchSpecialDatesToday } from '@/lib/contacts/special-dates'
 
@@ -143,24 +142,16 @@ async function handle(request: Request) {
     if (await alreadyNotifiedRecently(supabase, userId, link, suffix, status.windowDays, now)) continue
 
     const label = it.kind === 'lead' ? 'Lead' : 'Contacto'
-    const notification = await createNotification({
+    // No calendário fica a justificação: falta contactar porque já passaram X dias.
+    await createNotification({
       userId,
       agencyId: it.agency_id,
       type: 'task_due',
       title: `${label} a precisar de contacto: ${it.name}`,
       body: `Já não há contacto com ${it.name} há ${status.daysSince} dias. ${suffix}`,
       link,
+      calendar: { title: `Falta contactar: ${it.name} (${status.daysSince} dias sem contacto)`, type: 'chamada' },
     }, supabase)
-    if (notification) {
-      await mirrorNotificationToCalendar({
-        supabase,
-        agencyId: it.agency_id,
-        assignedTo: userId,
-        notificationId: notification.id,
-        title: `Acompanhamento: ${it.name}`,
-        target: it.kind === 'lead' ? { kind: 'lead', id: it.id } : { kind: 'person', id: it.id },
-      })
-    }
     processed++
   }
 
@@ -183,24 +174,15 @@ async function handle(request: Request) {
       if (await alreadyNotifiedRecently(supabase, userId, link, suffix, 1, now)) continue
 
       const icon = match.label === 'Natal' ? '🎄' : match.label === 'Páscoa' ? '🐣' : match.label === 'Aniversário' ? '🎂' : '✦'
-      const notification = await createNotification({
+      await createNotification({
         userId,
         agencyId: sp.agency_id,
         type: 'special_date',
         title: `${icon} ${match.label} hoje: ${sp.name}`,
         body: `Hoje é uma data especial para ${sp.name}. ${suffix}`,
         link,
+        calendar: { title: `${icon} ${match.label}: ${sp.name}` },
       }, supabase)
-      if (notification) {
-        await mirrorNotificationToCalendar({
-          supabase,
-          agencyId: sp.agency_id,
-          assignedTo: userId,
-          notificationId: notification.id,
-          title: `${match.label}: ${sp.name}`,
-          target: { kind: 'person', id: sp.id },
-        })
-      }
       processed++
     }
   }
@@ -224,24 +206,25 @@ async function handle(request: Request) {
     if (await alreadyNotifiedRecently(supabase, userId, link, suffix, 365, now)) continue
 
     const late = cp.next_call_at !== todayLisbon
-    const notification = await createNotification({
+    // A chamada agendada já está no calendário (atividade source 'next_call',
+    // criada ao agendar). Só espelhamos se não existir (agendamentos antigos).
+    const { data: openCall } = await supabase
+      .from('activities')
+      .select('id')
+      .eq('person_id', cp.id)
+      .eq('source', 'next_call')
+      .eq('completed', false)
+      .limit(1)
+      .maybeSingle()
+    await createNotification({
       userId,
       agencyId: cp.agency_id,
       type: 'task_due',
       title: `📞 ${late ? 'Chamada em atraso' : 'Ligar hoje'}: ${cp.name}`,
       body: `Está na hora de ligar a ${cp.name}${cp.phone ? ` (${cp.phone})` : ''}. ${suffix}`,
       link,
+      calendar: openCall ? false : { title: `Ligar: ${cp.name}`, type: 'chamada' },
     }, supabase)
-    if (notification) {
-      await mirrorNotificationToCalendar({
-        supabase,
-        agencyId: cp.agency_id,
-        assignedTo: userId,
-        notificationId: notification.id,
-        title: `Ligar: ${cp.name}`,
-        target: { kind: 'person', id: cp.id },
-      })
-    }
     processed++
   }
 

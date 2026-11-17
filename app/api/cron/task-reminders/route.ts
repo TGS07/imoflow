@@ -41,6 +41,8 @@ export async function GET(request: Request) {
       title: `Atividade com prazo hoje: ${activity.title}`,
       body: `A atividade "${activity.title}" vence hoje.`,
       link: activity.lead_id ? `/leads/${activity.lead_id}` : undefined,
+      // A própria atividade já está no calendário — não duplicar.
+      calendar: false,
     }, supabase)
     notified++
   }

@@ -1,7 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { createNotification } from '@/lib/notifications'
-import { mirrorNotificationToCalendar } from '@/lib/calendar/mirror-notification'
 import { AutomationEvent, AutomationRule } from '@/types'
 import { ActivityType } from '@/types/activity'
 import { sendLeadEmail } from '@/lib/email/send'
@@ -205,24 +204,15 @@ async function executeAction(
   }
 
   if (rule.action_type === 'send_notification') {
-    const notification = await createNotification({
+    await createNotification({
       userId: assignedTo,
       agencyId,
       type: 'automation_rule_triggered',
       title: rule.name,
       body: String(config.message ?? rule.name),
       link: `/leads/${leadId}`,
+      calendar: { title: STAGE_WARNING_TRIGGERS.includes(rule.trigger_type) ? `Etapa: ${lead.name}` : `${rule.name}: ${lead.name}` },
     }, supabase)
-    if (notification && STAGE_WARNING_TRIGGERS.includes(rule.trigger_type)) {
-      await mirrorNotificationToCalendar({
-        supabase,
-        agencyId,
-        assignedTo,
-        notificationId: notification.id,
-        title: `Etapa: ${lead.name}`,
-        target: { kind: 'lead', id: leadId },
-      })
-    }
     return { notification_sent: true }
   }
 
