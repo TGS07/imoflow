@@ -24,11 +24,13 @@ const ALIASES: Record<Exclude<keyof InboundLead, 'extras' | 'budget'> | 'budget'
   email: ['email', 'e_mail', 'mail', 'email_address'],
   message: ['message', 'mensagem', 'notes', 'notas', 'nota', 'comment', 'comments', 'comentario', 'observacoes', 'descricao', 'description'],
   source: ['source', 'origem', 'fonte', 'platform', 'plataforma', 'canal', 'channel', 'utm_source'],
-  campaign: ['campaign', 'campanha', 'utm_campaign', 'form_name', 'formulario', 'ad_name', 'anuncio'],
+  campaign: ['campaign', 'campaign_name', 'campanha', 'utm_campaign', 'form_name', 'formulario', 'ad_name', 'anuncio'],
   zone: ['zone', 'zona', 'localizacao', 'location', 'cidade', 'city', 'concelho'],
   typology: ['typology', 'tipologia'],
   budget: ['budget', 'orcamento', 'preco', 'price', 'valor', 'max_price'],
 }
+
+const ALL_ALIASES = new Set(Object.values(ALIASES).flat())
 
 // "Nome Completo" / "e-mail" / "Telemóvel" → nome_completo / e_mail / telemovel
 export function normalizeKey(key: string): string {
@@ -110,9 +112,20 @@ export function parseInboundLead(raw: Record<string, unknown>): InboundLead {
   }
 
   // Ruído técnico que não interessa ao consultor
-  const IGNORE = new Set(['key', 'api_key', 'token', 'secret', 'id', 'lead_id', 'created_time', 'timestamp', 'form_id', 'page_id', 'adgroup_id', 'ad_id', 'campaign_id'])
+  // (inclui as colunas técnicas da folha de leads do Meta no Google Sheets)
+  const IGNORE = new Set([
+    'key', 'api_key', 'token', 'secret', 'id', 'lead_id', 'created_time', 'timestamp',
+    'form_id', 'page_id', 'adgroup_id', 'ad_id', 'campaign_id',
+    'adset_id', 'adset_name', 'is_organic', 'lead_status', 'inbox_url',
+  ])
+  // Campos já guardados noutro alias (ex.: "name" e "nome" com o mesmo valor)
+  const picked = new Set(
+    [lead.name, lead.phone, lead.email, lead.message, lead.source, lead.campaign, lead.zone, lead.typology]
+      .filter(Boolean).map(v => String(v).toLowerCase())
+  )
   for (const [k, v] of byKey) {
     if (used.has(k) || IGNORE.has(k)) continue
+    if (ALL_ALIASES.has(k) && picked.has(String(toText(v, 300)).toLowerCase())) continue
     const text = toText(v, 300)
     if (text && lead.extras.length < 15) lead.extras.push([k.replace(/_/g, ' '), text])
   }
