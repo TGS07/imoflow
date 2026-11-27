@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { generateWebhookToken } from '@/lib/inbound/token'
+import { createServiceClient } from '@/lib/supabase/service'
 
 // Ligações externas de leads (Definições → Integrações). Apenas admin; a RLS
 // da tabela também só deixa administradores da agência ler/escrever.
@@ -24,7 +25,29 @@ export async function GET() {
     .eq('agency_id', profile.agency_id)
     .order('created_at', { ascending: true })
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  // Contas com quem cada ligação divide as leads. Estão noutras agências (a RLS
+  // não as mostra), por isso lê-se com a service role — só nome e contagens,
+  // nunca a chave.
+  const groups = [...new Set((data ?? []).map(w => w.split_group).filter((g): g is string => !!g))]
+  const membersByGroup = new Map<string, { id: string; name: string; agency: string; lead_count: number; is_active: boolean }[]>()
+  if (groups.length) {
+    const { data: members } = await createServiceClient()
+      .from('lead_webhooks')
+      .select('id, name, split_group, lead_count, is_active, agencies(name)')
+      .in('split_group', groups)
+      .order('created_at')
+    for (const m of members ?? []) {
+      const list = membersByGroup.get(m.split_group) ?? []
+      list.push({ id: m.id, name: m.name, agency: (m.agencies as unknown as { name: string } | null)?.name ?? '—', lead_count: m.lead_count, is_active: m.is_active })
+      membersByGroup.set(m.split_group, list)
+    }
+  }
+
+  return NextResponse.json((data ?? []).map(w => ({
+    ...w,
+    split_members: w.split_group ? (membersByGroup.get(w.split_group) ?? []).filter(m => m.id !== w.id) : [],
+  })))
 }
 
 export async function POST(request: Request) {
