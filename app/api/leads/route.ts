@@ -126,6 +126,16 @@ export async function POST(request: Request) {
         .maybeSingle()
       if (firstStage) leadData.stage_id = firstStage.id
     }
+  } else {
+    const { data: stage } = await supabase
+      .from('pipeline_stages')
+      .select('pipeline_id')
+      .eq('id', leadData.stage_id)
+      .eq('agency_id', profile.agency_id)
+      .maybeSingle()
+    if (!stage || (leadData.pipeline_id && stage.pipeline_id !== leadData.pipeline_id)) {
+      return NextResponse.json({ error: 'A etapa não pertence à pipeline da lead' }, { status: 400 })
+    }
   }
 
   const { data, error } = await supabase
